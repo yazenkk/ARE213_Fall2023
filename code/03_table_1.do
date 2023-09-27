@@ -41,7 +41,20 @@ iebaltab `covar_list', ///
 	total ///
 	stats(desc(sd) pair(t)) ///
 	nostars ///
+	addnote("Notes: Insert footnote") 				///
+	nonote 								/// 
 	replace
+	
+// adjust footnote width
+import delimited "$do_loc/tables/table1_balance.tex", clear
+fix_import
+count if strpos(text, "\multicolumn{8}") > 0 // confirm there's that line to fix
+assert `r(N)' == 1
+replace text = subinstr(text, "\multicolumn{8}", "\multicolumn{9}", .) if ///
+	strpos(text, "Notes:") > 0
+outfile using "$do_loc/tables/table1_balance.tex", ///
+	noquote wide replace
+
 
 
 

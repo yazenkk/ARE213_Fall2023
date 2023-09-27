@@ -13,6 +13,13 @@ Q1.c Produce analysis dta
 
 use "$dta_loc/data/pset1", clear
 
+
+// label variables
+label define yesno 0 "No" 1 "Yes"
+label define tobacco_lab 0 "Non-smoker" 1 "Smoker"
+label values tobacco tobacco_lab
+
+
 ** Q1.a Fix missing values -----------------------------------------------------
 // we are told andn can confirm that all variables except for cardiac - wgain 
 // are without unassigned missing values.
@@ -97,6 +104,8 @@ qui ds
 local all_vars `r(varlist)'
 egen miss_ct = rowmiss(`all_vars')
 gen  miss_any = (miss_ct > 0)
+label define miss_any_lab 0 "No missings observations" 1 "Some missing observations"
+label values miss_any miss_any_lab
 // foreach var of varlist `all_vars' {
 // 	tab miss_any, sum(`var')
 // }
@@ -105,10 +114,53 @@ gen  miss_any = (miss_ct > 0)
 
 // Compare group averages
 preserve
+	// see all in excel
 	iebaltab `all_vars', ///
 		grpvar(miss_any) ///
-		savexlsx("$dta_loc/q1_missingbalance.xlsx") ///
+		savexlsx("$dta_loc/table0_missingbalance.xlsx") ///
 		replace
+		
+	// smaller set to be published
+	local balance_list dbrwt ///
+						tobacco ///
+						mrace3_3 ///
+						moth_hisp /// hisp_moth
+						dmeduc ///
+						dmage ///
+						male /// csex
+						alcohol ///
+						adequacy ///
+						phyper ///
+						diabetes ///
+						anemia ///
+						dgestat ///
+						totord9 ///
+						isllb10 ///
+						dlivord ///
+						dplural
+						
+	iebaltab `balance_list', ///
+		grpvar(miss_any) ///
+		rowvarlabels ///
+		stats(desc(sd) pair(t)) ///
+		nostars ///
+		savetex("$do_loc/tables/table0_missingbalance.tex") ///
+		addnote("Notes: Insert footnote") 				///
+		nonote 								/// 
+		texnotewidth(1) 		///	
+		replace
+
+		
+	// adjust footnote width
+	import delimited "$do_loc/tables/table0_missingbalance.tex", clear
+	fix_import
+	count if strpos(text, "\multicolumn{6}") > 0 // confirm there's that line to fix
+	assert `r(N)' == 1
+	replace text = subinstr(text, "\multicolumn{6}", "\multicolumn{7}", .) if ///
+		strpos(text, "Notes:") > 0
+	outfile using "$do_loc/tables/table0_missingbalance.tex", ///
+		noquote wide replace
+
 restore
 
 /*
@@ -126,10 +178,6 @@ drop miss*
 assert _N == 114610 // as required in prompt.
 
 
-// label variables
-label define yesno 0 "No" 1 "Yes"
-label define tobacco_lab 0 "Non-smoker" 1 "Smoker"
-label values tobacco tobacco_lab
 
 
 save "$dta_loc/data/pset1_clean.dta", replace
