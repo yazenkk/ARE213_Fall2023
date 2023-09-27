@@ -53,7 +53,37 @@ local covar_list 	alcohol ///
 
 
 
-reg dbrwt tobacco `covar_list'
+eststo: reg dbrwt tobacco `covar_list'
+
+#delimit ;
+local footnote 
+	`"
+	Insert footnote
+	"' ;
+#delimit cr
+
+local footnote = trim(itrim("``footnote''"))
+
+
+esttab using "$do_loc/tables/table3_reg_adj.tex",   ///
+	style(tex)											///
+	title("Question 3: regression adjustment") 	 		///
+	nogaps												///
+	label            									///
+	wrap 												///
+	cells (b(fmt(2)) se(fmt(2) par))					///
+	stats(N, 											///
+		  fmt(%9.0f)									///
+		  labels("Observations")) 						///
+	drop()												///
+	postfoot("\hline\hline" 							///
+			 "\multicolumn{@span}{p{0.85\textwidth}}{\footnotesize \textit{Notes:} `footnote'}" ///
+			 "\end{tabular}" ///
+			 "\end{table}" ) ///
+	replace
+
+
+
 
 
 

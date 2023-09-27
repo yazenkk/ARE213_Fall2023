@@ -126,4 +126,10 @@ drop miss*
 assert _N == 114610 // as required in prompt.
 
 
+// label variables
+label define yesno 0 "No" 1 "Yes"
+label define tobacco_lab 0 "Non-smoker" 1 "Smoker"
+label values tobacco tobacco_lab
+
+
 save "$dta_loc/data/pset1_clean.dta", replace

@@ -14,15 +14,33 @@ treatment, when the treatment is binary.)
 
 
 use "$dta_loc/data/pset1_clean.dta", clear
-
+ds tobacco, not
 
 // generate balance table
 qui ds tobacco, not // display all but binary treatment var
-iebaltab `r(varlist)', ///
+local covar_list 	mrace3_3 ///
+					moth_hisp /// hisp_moth
+					dmeduc ///
+					dmage ///
+					male /// csex
+					alcohol ///
+					adequacy ///
+					phyper ///
+					diabetes ///
+					anemia ///
+					dgestat ///
+					totord9 ///
+					isllb10 ///
+					dlivord ///
+					dplural
+
+iebaltab `covar_list', ///
 	grpvar(tobacco) ///
-	savexlsx("$dta_loc/q1_treatmentbalance.xlsx") ///
+	savetex("$do_loc/tables/table1_balance.tex") ///
 	rowvarlabels ///
 	total ///
+	stats(desc(sd) pair(t)) ///
+	nostars ///
 	replace
 
 

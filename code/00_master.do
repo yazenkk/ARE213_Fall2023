@@ -28,10 +28,10 @@ if "`c(username)'" == "yfkashlan" {
 
 stop
 // install programs
-do "$do_loc/01_programs.do"
+do "$do_loc/code/01_programs.do"
 
 // clean
-do "$do_loc/02_clean.do"
+do "$do_loc/code/02_clean.do"
 
 
 
