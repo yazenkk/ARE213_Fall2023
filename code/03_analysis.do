@@ -36,7 +36,7 @@ local balance_list dbrwt ///
 					hisp_moth ///
 					dmeduc ///
 					dmage ///
-					male /// csex
+					csex /// 
 					alcohol ///
 					adequacy ///
 					phyper ///
@@ -53,7 +53,7 @@ iebaltab `balance_list', ///
 	rowvarlabels ///
 	stats(desc(sd) pair(t)) ///
 	nostars ///
-	savetex("$do_loc/tables/table0_missingbalance.tex") ///
+	savetex("$do_loc/tables/table0_balance_miss.tex") ///
 	addnote("Notes: Insert footnote") 				///
 	nonote 								/// 
 	texnotewidth(1) 		///	
@@ -61,13 +61,13 @@ iebaltab `balance_list', ///
 
 preserve
 	// adjust footnote width
-	import delimited "$do_loc/tables/table0_missingbalance.tex", clear
+	import delimited "$do_loc/tables/table0_balance_miss.tex", clear
 	fix_import
 	count if strpos(text, "\multicolumn{6}") > 0 // confirm there's that line to fix
 	assert `r(N)' == 1
 	replace text = subinstr(text, "\multicolumn{6}", "\multicolumn{7}", .) if ///
 		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table0_missingbalance.tex", ///
+	outfile using "$do_loc/tables/table0_balance_miss.tex", ///
 		noquote wide replace
 
 restore
@@ -91,7 +91,7 @@ larger average rate of tobacco use during pregnancy.
 use "$dta_loc/data/pset1_clean.dta", clear
 
 local covar_list 	mrace3_3 ///
-					moth_hisp /// hisp_moth
+					hisp_moth /// 
 					dmeduc ///
 					dmage ///
 					csex /// 
@@ -225,6 +225,41 @@ di `num_controls'
 
 * ----------------------------------------------------------------------------- * 
 * Question 4b: 
+local covar_list 	mrace3_3 ///
+					hisp_moth /// 
+					dmeduc ///
+					dmage ///
+					csex /// 
+					alcohol ///
+					adequacy ///
+					phyper ///
+					diabetes ///
+					anemia ///
+					dgestat ///
+					totord9 ///
+					isllb10 ///
+					dlivord ///
+					dplural
+//
+
+
+logit tobacco `covar_list'
+predict phatx, pr
+
+tab tobacco, sum(phatx )
+
+sort `covar_list'
+
+twoway (histogram phatx if tobacco==0, color(green%25)) ///
+	   (histogram phatx if tobacco==1, color(red%25)), ///   
+       legend(label(1 "Observed non-smokers") label(2 "Observed smokers")) ///
+	   xtitle("Pr(tobacco{sub:i}=1|X{sub:i})") ///
+	   saving("phatx_overlap", replace)
+
+graph export "$do_loc/graphs/phatx_overlap.png", ///
+	width(1200) height(900) ///
+	replace
+
 
 * ----------------------------------------------------------------------------- * 
 * Question 4c: 
