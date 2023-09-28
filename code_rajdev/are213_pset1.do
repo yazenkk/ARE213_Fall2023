@@ -6,146 +6,142 @@
 
 	Title: 		are213_pset1.do
 
- 	Outline:
+ 	Outline:	Analysis
 
  	Input: 		pset1.dta
 
 	Output:		pset1_cleaned.dta
 
 	Modified:	Rajdev Brar on 23 Sep 2023
+				Yazen K 9/27/2023
 
 */
 * ============================================================================= *
 
-	clear all
-	clear matrix
-
-	set more off
-	set varabbrev off
-	set linesize 100
-
-	cap log close
-	set linesize 225
-
-
-
-* ============================================================================= *
-* Set initial configurations and globals + import data 
-* ============================================================================= *
-	
-* global for main directory 
-	if c(username) == "rajdevb" {
-		global directory	"/Users/rajdevb/Dropbox/ARE213/Pset1"
-	}
-
-
-* globals for datasets
-	global raw_data					"${directory}/raw_data/pset1.dta"
-	global intermediate_output		"${directory}/intermediate_output"
-		
-	
-* install required packages	
-	* ssc install  dmout
-
 * import data 
-	use "${raw_data}", clear 
+use "$dta_loc/data/pset1_clean.dta", clear
 	
+
+
 * ============================================================================= *
-* Question 1
+* Question 1 (c-d)
 * ============================================================================= *
-
-* ----------------------------------------------------------------------------- * 
-* Question 1a: Fix missing values  (replace with .a if missing)
-	* check missing values for vars: cardiac lung diabetes herpes chyper phyper pre4000 preterm tobacco cigar6 alcohol drink5 wgain
-	
-	tab1 cardiac lung diabetes herpes chyper phyper pre4000 preterm tobacco cigar6 alcohol drink5 wgain, m 
-	
-	* variables with 9=missing(=unknown/not stated)
-	foreach var of varlist cardiac lung diabetes herpes chyper phyper pre4000 preterm alcohol  tobacco {
-		replace 	 `var'=.a if (`var'==9) 
-	}
-	
-	* variables with 6=missing(=unknown/not stated)
-	replace cigar6=.a if (cigar6==6)
-	
-	* variables with 5=missing(=unknown/not stated)
-	replace drink5=.a if (drink5==5)
-	
-	* variables with 99=missing(=unknown/not stated)
-	replace wgain=.a if (wgain==99)
-	  
-	 * foreach var with missing=.a, label value of .a 
-	 foreach var of varlist cardiac lung diabetes herpes chyper phyper pre4000 preterm tobacco cigar6 alcohol drink5 wgain {
-	label define `var' .a "Missing", modify 
-	}
- 
- 
-* check tabulations to see missing values have been recoded 
-	tab1 cardiac lung diabetes herpes chyper phyper pre4000 preterm tobacco cigar6 alcohol drink5 wgain, m
-
-  
-* ----------------------------------------------------------------------------- * 
-* Question 1b: Recode indicator variables
-
-* indicator variables: rectype pldel3 dmar csex anemia cardiac lung herpes chyper phyper pre4000 preterm tobacco alcohol  
-
-	recode rectype (2=0)
-	lab define rectype_lab 0 "Nonresident" 1 "Resident", add
-	lab values rectype rectype_lab 
-	
-	recode pldel3 (2=0) 
-	lab define pldel3_lab  0 "Not in a hospital" 1 "In a hospital", add 
-	lab value pldel3 pldel3_lab 
-	
-	recode dmar (2=0)
-	lab define dmar_lab 0 "Unmarried" 1 "Married", add
-	lab value dmar dmar_lab 
-	
-	recode csex (2=0)
-	lab define csex_lab 0 "Female" 1 "Male", add 
-	lab value csex csex_lab 
-	
-	recode anemia cardiac lung herpes chyper phyper pre4000 preterm tobacco alcohol  (2=0)
-	lab define yesno_lab 0 "No" 1 "Yes", add 
-	lab values anemia cardiac lung herpes chyper phyper pre4000 preterm tobacco alcohol yesno_lab    
-	
-	
-* unordered categorical variables 	
-	* recode mrace3 as a set of indicator variables 
-	tab mrace3, gen(mrace3_)
-	lab var mrace3_1 "Race of mother: Black" 
-	lab var mrace3_2 "Race of mother: Not white or black" 
-	lab var mrace3_3 "Race of mother: White"
-	lab values mrace3_? yesno_lab 
-
-* coarsen ormoth orfath into indicator variables 
-	clonevar hisp_fath=orfath
-	clonevar hisp_moth=ormoth
-	recode hisp_moth hisp_fath (2=1) (3=1) (4=1) (5=1)
-	lab define hisp_moth_lab 0 "Non-hispanic origin of mother" 1 "Hispanic origin of mother" , add
-	lab define hisp_fath_lab 0 "Non-hispanic origin of father" 1 "Hispanic origin of father" , add
-	lab values hisp_moth hisp_fath hisp_mot_lab 
-	lab var hisp_moth "Hispanic origin of mother" 
-	lab var hisp_fath "Hispanic origin of father"
-	tab1 hisp_moth hisp_fath, m
-		
-* drop stresfip, birmon, and weekday
-	tab1 stresfip birmon weekday, m 
-	drop stresfip birmon weekday
 
 * ----------------------------------------------------------------------------- * 
 * Question 1c: Produce analysis dataset 
 
-* drop observations with any missing values
-	foreach var of varlist * { 
-	drop if mi(`var')
-	}
-	
-* PENDING: ARE missing values non-random 	
+// Drop any observation with missing values and verify it has 114,610 observations. 
+qui ds
+local all_vars `r(varlist)'
+egen miss_ct = rowmiss(`all_vars')
+gen  miss_any = (miss_ct > 0)
+label define miss_any_lab 0 "No missings observations" 1 "Some missing observations"
+label values miss_any miss_any_lab
+// foreach var of varlist `all_vars' {
+// 	tab miss_any, sum(`var')
+// }
+
+//Q: Do the data appear to be missing completely at random?
+
+// Compare group averages
+
+local balance_list dbrwt ///
+					tobacco ///
+					mrace3_3 ///
+					hisp_moth ///
+					dmeduc ///
+					dmage ///
+					male /// csex
+					alcohol ///
+					adequacy ///
+					phyper ///
+					diabetes ///
+					anemia ///
+					dgestat ///
+					totord9 ///
+					isllb10 ///
+					dlivord ///
+					dplural
+					
+iebaltab `balance_list', ///
+	grpvar(miss_any) ///
+	rowvarlabels ///
+	stats(desc(sd) pair(t)) ///
+	nostars ///
+	savetex("$do_loc/tables/table0_missingbalance.tex") ///
+	addnote("Notes: Insert footnote") 				///
+	nonote 								/// 
+	texnotewidth(1) 		///	
+	replace
+
+preserve
+	// adjust footnote width
+	import delimited "$do_loc/tables/table0_missingbalance.tex", clear
+	fix_import
+	count if strpos(text, "\multicolumn{6}") > 0 // confirm there's that line to fix
+	assert `r(N)' == 1
+	replace text = subinstr(text, "\multicolumn{6}", "\multicolumn{7}", .) if ///
+		strpos(text, "Notes:") > 0
+	outfile using "$do_loc/tables/table0_missingbalance.tex", ///
+		noquote wide replace
+
+restore
+
+/*
+ANS: 
+No, there are some differences in covariate averages between observations with 
+no and some nmissing observations. One limitation to my test is that the standard
+errors are small because the sample is large. The key variable to look at here is 
+the treatment variable, tobacco. Indeed, the dropped observations exhibit a 
+larger average rate of tobacco use during pregnancy.
+*/
+
+
+
 
 * ----------------------------------------------------------------------------- * 
 * Question 1d: Generate summary table 
-* PENDING
+
+local covar_list 	mrace3_3 ///
+					moth_hisp /// hisp_moth
+					dmeduc ///
+					dmage ///
+					csex /// 
+					alcohol ///
+					adequacy ///
+					phyper ///
+					diabetes ///
+					anemia ///
+					dgestat ///
+					totord9 ///
+					isllb10 ///
+					dlivord ///
+					dplural
+
+// generate balance table
+iebaltab `covar_list', ///
+	grpvar(tobacco) ///
+	savetex("$do_loc/tables/table1_balance.tex") ///
+	rowvarlabels ///
+	total ///
+	stats(desc(sd) pair(t)) ///
+	nostars ///
+	addnote("Notes: Insert footnote") 				///
+	nonote 								/// 
+	replace
+	
+// adjust footnote width of latex output
+preserve
+	import delimited "$do_loc/tables/table1_balance.tex", clear
+	fix_import
+	count if strpos(text, "\multicolumn{8}") > 0 // confirm there's that line to fix
+	assert `r(N)' == 1
+	replace text = subinstr(text, "\multicolumn{8}", "\multicolumn{9}", .) if ///
+		strpos(text, "Notes:") > 0
+	outfile using "$do_loc/tables/table1_balance.tex", ///
+		noquote wide replace
+restore
+
 	
 * ============================================================================= *
 * Question 2

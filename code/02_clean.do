@@ -14,6 +14,11 @@ Q1.c Produce analysis dta
 use "$dta_loc/data/pset1", clear
 
 
+* ============================================================================= *
+* Question 1 (a-b)
+* ============================================================================= *
+
+
 // label variables
 label define yesno 0 "No" 1 "Yes"
 label define tobacco_lab 0 "Non-smoker" 1 "Smoker"
@@ -63,7 +68,6 @@ label var dmar "Mother: married"
 label var rectype "Resident in state and county of occurance"
 label var pldel3 "Born in hospital"
 label var csex "Male"
-rename csex male
 
 
 // Recode mrace3 as a set of indicator variables
@@ -77,14 +81,14 @@ label var mrace3_3 "Mother race: black"
 
 // Coarsen ormoth and orfath into indicator variables
 tab ormoth 
-gen moth_hisp = ormoth 
-replace moth_hisp = 1 if ormoth > 0 & !missing(ormoth)
-label var moth_hisp "Mother race: hispanic"
+gen hisp_moth = ormoth 
+replace hisp_moth = 1 if ormoth > 0 & !missing(ormoth)
+label var hisp_moth "Mother race: hispanic"
 
 tab orfath
-gen fath_hisp = orfath 
-replace fath_hisp = 1 if orfath > 0 & !missing(orfath)
-label var fath_hisp "Father race: hispanic"
+gen hisp_fath = orfath 
+replace hisp_fath = 1 if orfath > 0 & !missing(orfath)
+label var hisp_fath "Father race: hispanic"
 
 drop ormoth orfath
 
@@ -97,87 +101,15 @@ tab weekday
 drop stresfip birmon weekday
 
 
+save "$dta_loc/data/pset1_clean_miss.dta", replace
 
-** Q1.c Produce analysis dta ---------------------------------------------------
-// Drop any observation with missing values and verify it has 114,610 observations. 
-qui ds
-local all_vars `r(varlist)'
-egen miss_ct = rowmiss(`all_vars')
-gen  miss_any = (miss_ct > 0)
-label define miss_any_lab 0 "No missings observations" 1 "Some missing observations"
-label values miss_any miss_any_lab
-// foreach var of varlist `all_vars' {
-// 	tab miss_any, sum(`var')
-// }
 
-//Q: Do the data appear to be missing completely at random?
-
-// Compare group averages
-preserve
-	// see all in excel
-	iebaltab `all_vars', ///
-		grpvar(miss_any) ///
-		savexlsx("$dta_loc/table0_missingbalance.xlsx") ///
-		replace
-		
-	// smaller set to be published
-	local balance_list dbrwt ///
-						tobacco ///
-						mrace3_3 ///
-						moth_hisp /// hisp_moth
-						dmeduc ///
-						dmage ///
-						male /// csex
-						alcohol ///
-						adequacy ///
-						phyper ///
-						diabetes ///
-						anemia ///
-						dgestat ///
-						totord9 ///
-						isllb10 ///
-						dlivord ///
-						dplural
-						
-	iebaltab `balance_list', ///
-		grpvar(miss_any) ///
-		rowvarlabels ///
-		stats(desc(sd) pair(t)) ///
-		nostars ///
-		savetex("$do_loc/tables/table0_missingbalance.tex") ///
-		addnote("Notes: Insert footnote") 				///
-		nonote 								/// 
-		texnotewidth(1) 		///	
-		replace
-
-		
-	// adjust footnote width
-	import delimited "$do_loc/tables/table0_missingbalance.tex", clear
-	fix_import
-	count if strpos(text, "\multicolumn{6}") > 0 // confirm there's that line to fix
-	assert `r(N)' == 1
-	replace text = subinstr(text, "\multicolumn{6}", "\multicolumn{7}", .) if ///
-		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table0_missingbalance.tex", ///
-		noquote wide replace
-
-restore
-
-/*
-ANS: 
-No, there are some differences in covariate averages between observations with 
-no and some nmissing observations. One limitation to my test is that the standard
-errors are small because the sample is large. The key variable to look at here is 
-the treatment variable, tobacco. Indeed, the dropped observations exhibit a 
-larger average rate of tobacco use during pregnancy.
-*/
-
-// drop anyway to achieve final obs count of 114,610.
+// drop missings to achieve final obs count of 114,610.
 drop if miss_any == 1
 drop miss*
-assert _N == 114610 // as required in prompt.
-
-
+assert _N == 114610 // as required in prompt
 
 
 save "$dta_loc/data/pset1_clean.dta", replace
+
+

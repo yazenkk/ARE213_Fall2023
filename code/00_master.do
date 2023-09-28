@@ -6,11 +6,20 @@ Date created: 9/24/2024
 
 
 */
+* ============================================================================= *
+* Set initial configurations and globals + import data 
+* ============================================================================= *
 
 clear all
 version 16.1
+clear matrix
 
+set more off
+set varabbrev off
+set linesize 100
 
+cap log close
+set linesize 225
 
 
 if "`c(username)'" == "yfkashlan" {
@@ -25,6 +34,14 @@ if "`c(username)'" == "yfkashlan" {
 	adopath + "//Client/C$/Users/yfkas/Documents/stata_packages"
 	
 }
+if `c(username)' == "rajdevb" {
+	global directory	"/Users/rajdevb/Dropbox/ARE213/Pset1"
+	
+	global raw_data					"${directory}/raw_data/pset1.dta"
+	global intermediate_output		"${directory}/intermediate_output"
+	
+}
+
 
 stop
 // install programs

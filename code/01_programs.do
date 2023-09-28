@@ -16,6 +16,7 @@ foreach program in `net_program_list' {
 ssc install heatplot
 ssc install palettes, replace
 ssc install colrspace, replace
+ssc install dmout
 
 do "$do_loc/code/my_programs/fix_import.do"
 
