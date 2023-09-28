@@ -1,13 +1,17 @@
+* ============================================================================= *
+* 							ARE 213: Problem set 1
+* 			Group members: Rajdev Brar, Yazen Kashlan, Cassandra Turk 
+* ============================================================================= *
+
 /*
 Master do file for PSet 1
 Course: AER 213
-Author: Yazen
 Date created: 9/24/2024
-
-
 */
+
+
 * ============================================================================= *
-* Set initial configurations and globals + import data 
+* Set initial configurations and globals
 * ============================================================================= *
 
 clear all
@@ -50,7 +54,8 @@ do "$do_loc/code/01_programs.do"
 // clean
 do "$do_loc/code/02_clean.do"
 
-
+// analyze
+do "$do_loc/code/03_analysis.do"
 
 
 

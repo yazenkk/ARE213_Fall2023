@@ -5,7 +5,6 @@ Author: YK
 Outline:
 Q1.a Fix missing values
 Q1.b Recode indicators 
-Q1.c Produce analysis dta
 
 */
 
@@ -103,6 +102,13 @@ drop stresfip birmon weekday
 
 save "$dta_loc/data/pset1_clean_miss.dta", replace
 
+// Drop any observation with missing values and verify it has 114,610 observations. 
+qui ds
+local all_vars `r(varlist)'
+egen miss_ct = rowmiss(`all_vars')
+gen  miss_any = (miss_ct > 0)
+label define miss_any_lab 0 "No missings observations" 1 "Some missing observations"
+label values miss_any miss_any_lab
 
 // drop missings to achieve final obs count of 114,610.
 drop if miss_any == 1

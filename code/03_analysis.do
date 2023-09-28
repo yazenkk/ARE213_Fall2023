@@ -1,16 +1,13 @@
 * ============================================================================= *
-* 							ARE 213: Problem set 1
-* 			Group members: Rajdev Brar, Yazen Kashlan, Cassandra Turk 
-* ============================================================================= *
 /*
 
 	Title: 		are213_pset1.do
 
  	Outline:	Analysis
 
- 	Input: 		pset1.dta
+ 	Input: 		pset1_clean.dta
 
-	Output:		pset1_cleaned.dta
+	Output:		tables
 
 	Modified:	Rajdev Brar on 23 Sep 2023
 				Yazen K 9/27/2023
@@ -18,9 +15,6 @@
 */
 * ============================================================================= *
 
-* import data 
-use "$dta_loc/data/pset1_clean.dta", clear
-	
 
 
 * ============================================================================= *
@@ -29,22 +23,13 @@ use "$dta_loc/data/pset1_clean.dta", clear
 
 * ----------------------------------------------------------------------------- * 
 * Question 1c: Produce analysis dataset 
-
-// Drop any observation with missing values and verify it has 114,610 observations. 
-qui ds
-local all_vars `r(varlist)'
-egen miss_ct = rowmiss(`all_vars')
-gen  miss_any = (miss_ct > 0)
-label define miss_any_lab 0 "No missings observations" 1 "Some missing observations"
-label values miss_any miss_any_lab
-// foreach var of varlist `all_vars' {
-// 	tab miss_any, sum(`var')
-// }
-
 //Q: Do the data appear to be missing completely at random?
 
-// Compare group averages
+* import data 
+use "$dta_loc/data/pset1_clean_miss.dta", clear
 
+
+// Compare group averages
 local balance_list dbrwt ///
 					tobacco ///
 					mrace3_3 ///
@@ -102,6 +87,9 @@ larger average rate of tobacco use during pregnancy.
 * ----------------------------------------------------------------------------- * 
 * Question 1d: Generate summary table 
 
+*Import data
+use "$dta_loc/data/pset1_clean.dta", clear
+
 local covar_list 	mrace3_3 ///
 					moth_hisp /// hisp_moth
 					dmeduc ///
@@ -141,6 +129,9 @@ preserve
 	outfile using "$do_loc/tables/table1_balance.tex", ///
 		noquote wide replace
 restore
+
+
+
 
 	
 * ============================================================================= *
