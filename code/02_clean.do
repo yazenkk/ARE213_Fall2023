@@ -111,7 +111,7 @@ use "$dta_loc/data/pset1", clear
 	gen 	dmeduc_3 = (dmeduc>=13 & dmeduc<=17) 
 	lab var dmeduc_3 "Highest education: College or more" 
 	foreach var of varlist dmeduc_* {
-	replace `var'=. if mi(dmeduc)
+		replace `var'=. if mi(dmeduc)
 	}
 	
 	tab adequacy, gen(adequacy_)

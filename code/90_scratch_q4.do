@@ -6,30 +6,27 @@ set graphics off
 // Scratch Q4.
 use "$dta_loc/data/pset1_clean.dta", clear
 
-local covar_list 	mrace3_3 ///
-					hisp_moth /// 
-					dmeduc ///
-					dmage ///
-					csex /// 
-					alcohol ///
-					adequacy ///
-					phyper ///
-					diabetes ///
-					anemia ///
-					dgestat ///
-					totord9 ///
-					isllb10 ///
-					dlivord ///
-					dplural
-//
+// rajdev
+global covar_list alcohol mrace3_2 mrace3_3 hisp_moth ///
+				cardiac pre4000 phyper chyper diabetes anemia lung  ///
+				dmeduc_1 dmeduc_2 dmeduc_3 dgestat /// 
+				csex dmar dlivord dplural /// 
+				adequacy_2 adequacy_3 cntocpop_2 cntocpop_3 cntocpop_4  ///
+				isllb10_2 isllb10_3 isllb10_4 isllb10_5 isllb10_6 isllb10_7 isllb10_8 isllb10_9 isllb10_10 ///
+				totord9_2 totord9_3 totord9_4 totord9_5 totord9_6 totord9_7 totord9_8 dplural_1
+				
+// cass
+// global covar_list alcohol mrace3_2 mrace3_3 hisp_moth adequacy cardiac pre4000 ///
+// 				phyper chyper diabetes anemia lung wgain dmeduc dgestat dmage dmar ///
+// 				csex totord9 isllb10 dlivord dplural
 
 
-logit tobacco `covar_list'
+logit tobacco $covar_list
 predict phatx, pr
 
 tab tobacco, sum(phatx )
 
-sort `covar_list'
+sort $covar_list
 
 twoway (histogram phatx if tobacco==0, color(green%25)) ///
 	   (histogram phatx if tobacco==1, color(red%25)), ///   
@@ -45,12 +42,13 @@ graph export "$do_loc/graphs/phatx_overlap.png", ///
 	
 ** -----------------------------------------------------------------------------
 ** -----------------------------------------------------------------------------
-// 	4c. Assess balance
+// 	4c. 
+// Assess balance
 xtile phatx_bins = phatx, nq(10)
 
 // Within bins of p(X) compare X among treated and controls
 // run regs controlling for bins so that D is within bin
-iebaltab `covar_list', ///
+iebaltab $covar_list, ///
 	grpvar(tobacco) ///
 	fixedeffect(phatx_bins) ///
 	rowvarlabels ///
@@ -77,15 +75,22 @@ restore
 
 ** -----------------------------------------------------------------------------
 ** -----------------------------------------------------------------------------
-// 4d: blocking (chosen because matching is computationally fun but not as and convincing risks discarding some observations).
+// 4d: blocking (chosen because matching is computationally fun but not as 
+// and convincing risks discarding some observations).
 
-reg dbrwt tobacco#phatx_bins
+reg dbrwt tobacco##phatx_bins
 mat A = r(table)
+mat list A
+mat c = A["b","1.tobacco"]
+mat list c
+local baseeffect = c[1,1]
+
 mat b = A["b", "1.tobacco#1.phatx_bins" .. "1.tobacco#10.phatx_bins"]
+mat list b
 
 // initialize 
-local ate_numerator =0 
-local att_numerator =0 
+local ate_numerator = 0 
+local att_numerator = 0 
 // mat list b
 forval i = 1/`=colsof(b)' {
 	
@@ -107,19 +112,19 @@ forval i = 1/`=colsof(b)' {
 	local att_numerator = `att_numerator' + `b`i'' * `w_t_`i''
 }
 // get ATE and ATT
-local ate = round(`ate_numerator'/`w_sum', 0.001)
-local att = round(`att_numerator'/`w_t_sum', 0.001)
-
+local ate = `baseeffect' + round(`ate_numerator'/`w_sum', 0.001)
+local att = `baseeffect' + round(`att_numerator'/`w_t_sum', 0.001)
+ 
 // display
 dis "ATE: = `ate'"
 dis "ATT: = `att'" // makes sense that ATT > ATE
-
+ 
 
 ** -----------------------------------------------------------------------------
 ** -----------------------------------------------------------------------------
 // 4e
-teffects ipw (dbrwt) (tobacco, logit), ate // testing Stata command without luck
-teffects ipw (dbrwt) (tobacco, logit), atet
+// teffects ipw (dbrwt) (tobacco, logit), ate // testing Stata command without luck
+// teffects ipw (dbrwt) (tobacco, logit), atet
 
 ** ATE -------------------------------------------------------------------------
 // regress Y on D with IPW weights and no controls
@@ -139,7 +144,7 @@ egen numerator1 = total(tobacco*dbrwt/phatx)
 egen denom1 = total(tobacco/phatx)
 egen numerator2 = total((1-tobacco)*dbrwt/(1-phatx))
 egen denom2 = total((1-tobacco)/(1-phatx))
-gen ate_hat = numerator1/denom1 - numerator2/denom2
+gen ate_hat = (numerator1/denom1) - (numerator2/denom2)
 sum ate_hat
 // seems to replicate well?
 
@@ -157,6 +162,23 @@ egen element2_temp = total(((tobacco-phatx)* dbrwt)/(1-phatx))
 gen element2 = element2_temp/_N
 gen att_hat = element1 * element2
 sum att_hat // -303.50
+
+
+** Q5a -------------------------------------------------------------------------
+** ATE -------------------------------------------------------------------------
+
+foreach var of varlist $covar_list { // generate interactions
+	egen m_`var' = mean(`var') 			// bar
+	gen dm_`var' = `var' - m_`var' 		// X-X_bar
+	gen tbco_`var' = tobacco*dm_`var' 	// D(X-X_bar)
+}
+regress dbrwt tobacco $covar_list tbco_* [pw=ipw1], noconstant
+
+
+
+
+
+
 
 
 

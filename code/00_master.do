@@ -28,10 +28,8 @@ set linesize 225
 
 if "`c(username)'" == "yfkashlan" {
 	
-	local mainfolder "//Client/C$/Users/yfkas/OneDrive/Documents"
-	
-	global do_loc  "`mainfolder'/GitHub/ARE213_Fall2023"
-	global dta_loc "`mainfolder'/personal/Berk/01_Courses/04_fall_23/ARESEC 213 Metrics/PSet1"
+	global do_loc  "//Client/C$/Users/yfkas/OneDrive/Documents/GitHub/ARE213_Fall2023"
+	global dta_loc "//Client/C$/Users/yfkas/CEGA Dropbox/Yazen Kashlan/ARE213/Pset1"
 	
 	// programs
 	net set ado "//Client/C$\Users/yfkas/Documents/stata_packages"
