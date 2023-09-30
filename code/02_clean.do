@@ -90,6 +90,13 @@ tab weekday
 drop stresfip birmon weekday
 
 
+// Code to create dummies out of categorical variables
+* drop birattnd isllb10  from covariate list 
+tab cntocpop, gen(cntocpop_)
+tab adequacy, gen(adequacy_)
+drop cntocpop  adequacy
+* plurality?
+
 
 ** Q1.c Produce analysis dta ---------------------------------------------------
 // Drop any observation with missing values and verify it has 114,610 observations. 

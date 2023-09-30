@@ -52,7 +52,7 @@ if "`c(username)'" == "rajdevb" {
 	global do_loc	"`mainfolder'/Dropbox/ARE213/Pset1"
 	global dta_loc	"`mainfolder'/Dropbox/ARE213/Pset1"
 }
-e
+
 
 
 

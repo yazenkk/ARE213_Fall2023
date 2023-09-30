@@ -96,14 +96,14 @@ tab weekday
 // These are discrete state and time variables best considered as categorical
 drop stresfip birmon weekday
 
-
+/*
 // Code to create dummies out of categorical variables
 drop birattnd isllb10 
 tab cntocpop, gen(cntocpop_)
 tab adequacy, gen(adequacy_)
 drop cntocpop  adequacy
 * plurality?
-
+*/
 
 ** Q1.c Produce analysis dta ---------------------------------------------------
 // Drop any observation with missing values and verify it has 114,610 observations. 
@@ -116,7 +116,7 @@ gen  miss_any = (miss_ct > 0)
 // }
 
 //Q: Do the data appear to be missing completely at random?
-
+/*
 // Compare group averages
 preserve
 	iebaltab `all_vars', ///
@@ -124,7 +124,7 @@ preserve
 		savexlsx("$dta_loc/q1_missingbalance.xlsx") ///
 		replace
 restore
-
+*/
 /*
 ANS: 
 No, there are some differences in covariate averages between observations with 
