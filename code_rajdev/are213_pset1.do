@@ -73,7 +73,8 @@
 	
 	* variables with 99=missing(=unknown/not stated)
 	replace wgain=.a if (wgain==99)
-	  
+
+	
 	 * foreach var with missing=.a, label value of .a 
 	 foreach var of varlist cardiac lung diabetes herpes chyper phyper pre4000 preterm tobacco cigar6 alcohol drink5 wgain {
 	label define `var' .a "Missing", modify 
@@ -175,7 +176,7 @@
 	
 	
 * create global of controls 
-	local 	control_vars 	alcohol mrace3_2 mrace3_3 hisp_moth ///
+	global 	control_vars 	alcohol mrace3_2 mrace3_3 hisp_moth ///
 							adequacy cardiac pre4000 phyper chyper diabetes anemia lung wgain ///
 							dmeduc dgestat dmage csex dmar  totord9 isllb10 dlivord dplural 
 							
@@ -203,13 +204,12 @@ di `num_controls'
 		unab varlist: $control_vars 
 		unab exclude: `control_num' 
 		local control_exclude: list varlist-exclude 
-		eststo: reg dbrwt tobacco `control_exclude', robust
-		
+		eststo: reg dbrwt tobacco `control_exclude', robust	
 	}
 	
 	esttab * using "${intermediate_output}/reg_output.csv", replace ///
 					cells(b(fmt(3) pvalue(p) star) se(par fmt(3))) 
-					
+
 * ----------------------------------------------------------------------------- * 
 * Question 3b: 
 * PENDING
@@ -227,7 +227,39 @@ di `num_controls'
 * Question 3e: Oaxaca-Blinder estimator for ATE and ATT
 * PENDING 
 
+			
+	foreach var of varlist $control_vars {
+	* gen var = (X_i -X)	
+	egen mean_`var' = mean(`var')
+	gen diffmean_`var'=`var'-mean_`var'
+	* gen (Xi-X)Di 
+	gen int_`var'=diffmean_`var'*tobacco
+	}
+	
+	* Model for group 1 = ATE 
+	reg dbrwt $control_vars tobacco int_*, robust
+	
+	oaxaca dbrwt  $control_vars, by(tobacco) noisily
+e
 
+.         reg dbrwt $control_vars tobacco int_*
+
+      Source |       SS           df       MS      Number of obs   =   114,616
+-------------+----------------------------------   F(45, 114570)   =   1727.96
+       Model |  1.5867e+10        45   352609397   Prob > F        =    0.0000
+    Residual |  2.3379e+10   114,570  204060.953   R-squared       =    0.4043
+-------------+----------------------------------   Adj R-squared   =    0.4041
+       Total |  3.9247e+10   114,615  342421.902   Root MSE        =    451.73
+
+-------------------------------------------------------------------------------
+        dbrwt |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+      alcohol |  -23.91911   20.86971    -1.15   0.252    -64.82342     16.9852
+     mrace3_2 |  -173.6592   9.792702   -17.73   0.000    -192.8527   -154.4656
+     mrace3_3 |  -132.0141   5.201656   -25.38   0.000    -142.2093   -121.8189
+    hisp_moth |  -89.19239   7.890132   -11.30   0.000    -104.6569   -73.72785
+     adequacy |   -24.0311   2.953937    -8.14   0.000    -29.82077   -18.24143
+      cardiac |  -18.58678   17.43184    -1.07   0.286    -52.75291    15.57935
 
 
 * ============================================================================= *

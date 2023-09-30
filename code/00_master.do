@@ -1,16 +1,35 @@
+* ============================================================================= *
+* 							ARE 213: Problem set 1
+* 	Group members: Rajdev Brar, Yazen Kashlan, Cassandra Turk, Max Snyder 
+* ============================================================================= *
 /*
-Master do file for PSet 1
-Course: AER 213
-Author: Yazen
-Date created: 9/24/2024
 
+	Title: 		00_master.do.do
 
+ 	Outline:
+
+ 	Input: 		pset1.dta
+
+	Output:		pset1_cleaned.dta
+
+	Date created: 9/24/2024
 */
 
-clear all
-version 16.1
+* ============================================================================= *
 
 
+	clear all
+	version 15
+	clear matrix
+
+	set more off
+	set varabbrev off
+	set linesize 100
+
+	cap log close
+	set linesize 225
+
+* ============================================================================= *
 
 
 if "`c(username)'" == "yfkashlan" {
@@ -26,7 +45,19 @@ if "`c(username)'" == "yfkashlan" {
 	
 }
 
-stop
+
+if "`c(username)'" == "rajdevb" {
+
+	local mainfolder "/Users/rajdevb/Desktop"
+	
+	global do_loc	"`mainfolder'/Dropbox/ARE213/Pset1"
+	global dta_loc	"`mainfolder'/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023"
+}
+
+
+
+
+
 // install programs
 do "$do_loc/code/01_programs.do"
 
