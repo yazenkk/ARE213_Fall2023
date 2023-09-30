@@ -1,18 +1,25 @@
+* ============================================================================= *
+* 							ARE 213: Problem set 1
+* 	Group members: Rajdev Brar, Yazen Kashlan, Cassandra Turk, Max Snyder 
+* ============================================================================= *
 /*
-Cleaning script
-Author: YK
 
-Outline:
-Q1.a Fix missing values
-Q1.b Recode indicators 
-Q1.c Produce analysis dta
+	Title: 		02_clean.do.do
+
+ 	Outline:	Q1.a Fix missing values
+				Q1.b Recode indicators 
+				Q1.c Produce analysis dta
+
+ 	Input: 		pset1_cleaned.dta 
+
+	Output:	
+
+	Date created: 9/24/2024
 
 */
 
-
-
 use "$dta_loc/data/pset1", clear
-
+e
 ** Q1.a Fix missing values -----------------------------------------------------
 // we are told andn can confirm that all variables except for cardiac - wgain 
 // are without unassigned missing values.
