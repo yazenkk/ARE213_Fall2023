@@ -104,6 +104,7 @@ gen  miss_any = (miss_ct > 0)
 //Q: Do the data appear to be missing completely at random?
 
 // Compare group averages
+
 preserve
 	iebaltab `all_vars', ///
 		grpvar(miss_any) ///

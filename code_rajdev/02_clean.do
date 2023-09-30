@@ -19,7 +19,7 @@
 */
 
 use "$dta_loc/data/pset1", clear
-e
+
 ** Q1.a Fix missing values -----------------------------------------------------
 // we are told andn can confirm that all variables except for cardiac - wgain 
 // are without unassigned missing values.
@@ -96,6 +96,13 @@ tab weekday
 // These are discrete state and time variables best considered as categorical
 drop stresfip birmon weekday
 
+
+// Code to create dummies out of categorical variables
+drop birattnd isllb10 
+tab cntocpop, gen(cntocpop_)
+tab adequacy, gen(adequacy_)
+drop cntocpop  adequacy
+* plurality?
 
 
 ** Q1.c Produce analysis dta ---------------------------------------------------

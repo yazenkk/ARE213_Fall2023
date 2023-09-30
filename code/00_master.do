@@ -17,7 +17,6 @@
 
 * ============================================================================= *
 
-
 	clear all
 	version 15
 	clear matrix
@@ -48,12 +47,12 @@ if "`c(username)'" == "yfkashlan" {
 
 if "`c(username)'" == "rajdevb" {
 
-	local mainfolder "/Users/rajdevb/Desktop"
+	local mainfolder "/Users/rajdevb"
 	
 	global do_loc	"`mainfolder'/Dropbox/ARE213/Pset1"
-	global dta_loc	"`mainfolder'/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023"
+	global dta_loc	"`mainfolder'/Dropbox/ARE213/Pset1"
 }
-
+e
 
 
 
