@@ -27,21 +27,55 @@ local covar_list 	alcohol ///
 					dlivord ///
 					dplural
 
+local covar_list alcohol hisp_moth cardiac pre4000  ///
+				 phyper chyper diabetes anemia lung ///
+				 csex dmar mrace3_2 mrace3_3 
 
-// regress dbrwt `covar_list' if tobacco == 1
-// estimates store tobac1
-//
-// regress dbrwt `covar_list' if tobacco == 0
-// estimates store tobac0
-//
-// // compare means using suest to account for covariance
-// suest tobac1 tobac0
-// test [tobac1_mean = tobac0_mean]
-//
-// estimates clear
-//
-// // contrast with oaxaca command
-// oaxaca dbrwt `covar_list', by(tobacco) suest
+					
+regress dbrwt `covar_list' if tobacco == 1
+estimates store tobac1
+predict e_ya if tobacco == 1, xb
+egen e_ya_mu = mean(e_ya)
+
+regress dbrwt `covar_list'  if tobacco == 0
+estimates store tobac0
+predict e_yb if tobacco == 0, xb
+egen e_yb_mu = mean(e_yb)
+
+// compare means using suest to account for covariance
+suest tobac1 tobac0
+test [tobac1_mean = tobac0_mean]
+
+// new approach
+gen R_vector = e_ya_mu - e_yb_mu
+sum R_vector
+stop
+
+
+estimates clear
+
+// contrast with oaxaca command
+oaxaca dbrwt `covar_list', by(tobacco) noisily
+stop
+
+foreach var of varlist `covar_list' {
+	
+	* gen int_`var' = `var'*tobacco 
+		
+	* gen var = (X_i -X)	
+	egen mean_`var' = mean(`var')
+	gen diffmean_`var' = `var'-mean_`var'
+	
+	* gen (Xi-X)Di 
+	gen int_`var' = diffmean_`var'*tobacco
+	
+}
+	
+reg dbrwt tobacco `covar_list' int_*, robust
+oaxaca dbrwt `covar_list', by(tobacco) relax noisily
+
+
+stop
 
 
 // -----------------------------------------------------------------------------
@@ -71,20 +105,25 @@ dis "`interact_x'"
 
 regress dbrwt `covar_list' `interact_x' if tobacco == 1
 estimates store tobac1
+predict e_ya if tobacco == 1, xb
 
 regress dbrwt `covar_list' `interact_x' if tobacco == 0
 estimates store tobac0
+predict e_yb if tobacco == 0, xb
 
 // compare means using suest to account for covariance
 suest tobac1 tobac0
 test [tobac1_mean = tobac0_mean]
 
+// new approach
+gen R_vector = e_ya - e_yb
+sum R_vector
+stop
+
 
 // contrast with oaxaca command
-oaxaca dbrwt `covar_list' `interact_x', by(tobacco) suest relax
+oaxaca dbrwt `covar_list' `interact_x', by(tobacco) suest relax noisily
 
 
 // Q: Should we use full interaction? We'd have to cut down on our covariate list.
-
-
 

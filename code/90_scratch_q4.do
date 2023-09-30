@@ -1,5 +1,8 @@
 
 pause on 
+set graphics off
+
+
 // Scratch Q4.
 use "$dta_loc/data/pset1_clean.dta", clear
 
@@ -40,6 +43,8 @@ graph export "$do_loc/graphs/phatx_overlap.png", ///
 	
 	
 	
+** -----------------------------------------------------------------------------
+** -----------------------------------------------------------------------------
 // 	4c. Assess balance
 xtile phatx_bins = phatx, nq(10)
 
@@ -70,6 +75,7 @@ preserve
 
 restore
 
+** -----------------------------------------------------------------------------
 ** -----------------------------------------------------------------------------
 // 4d: blocking (chosen because matching is computationally fun but not as and convincing risks discarding some observations).
 
@@ -110,12 +116,47 @@ dis "ATT: = `att'" // makes sense that ATT > ATE
 
 
 ** -----------------------------------------------------------------------------
+** -----------------------------------------------------------------------------
 // 4e
-See overleaf
+teffects ipw (dbrwt) (tobacco, logit), ate // testing Stata command without luck
+teffects ipw (dbrwt) (tobacco, logit), atet
+
+** ATE -------------------------------------------------------------------------
+// regress Y on D with IPW weights and no controls
+gen ipw1 = tobacco/phatx + (1-tobacco)/(1-phatx) // generate ATE weights
+regress dbrwt tobacco [pw=ipw1]
+
+	// for ATT below
+	mat b = e(b)[1,1]
+	local ate = b[1,1]
+	dis `ate'
+	qui sum tobacco // get Pr(D=1)
+	dis `ate'/`r(mean)' // nope! DNE ATT below
 
 
+// alternative approach: ATE_hat
+egen numerator1 = total(tobacco*dbrwt/phatx)
+egen denom1 = total(tobacco/phatx)
+egen numerator2 = total((1-tobacco)*dbrwt/(1-phatx))
+egen denom2 = total((1-tobacco)/(1-phatx))
+gen ate_hat = numerator1/denom1 - numerator2/denom2
+sum ate_hat
+// seems to replicate well?
 
 
+** ATT -------------------------------------------------------------------------
+// regress Y on D with new IPW weights and no controls
+gen ipw2 = (tobacco-phatx)/(1-phatx) // generate ATT weights
+// problem: ipw2 includes negative weights
+regress dbrwt tobacco [pw=ipw2] // can't get this to run. Need right weights
+
+// alternative approach: ATT_hat
+egen element1_temp = total(tobacco)
+gen element1 = _N/element1_temp
+egen element2_temp = total(((tobacco-phatx)* dbrwt)/(1-phatx)) 
+gen element2 = element2_temp/_N
+gen att_hat = element1 * element2
+sum att_hat // -303.50
 
 
 

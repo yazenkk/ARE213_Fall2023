@@ -114,7 +114,7 @@ iebaltab `covar_list', ///
 	total ///
 	stats(desc(sd) pair(t)) ///
 	nostars ///
-	addnote("Notes: Insert footnote") 				///
+	addnote("Notes: Insert footnote") 	///
 	nonote 								/// 
 	replace
 	
