@@ -1,7 +1,7 @@
 * ============================================================================= *
 /*
 
-	Title: 		are213_pset1.do
+	Title: 		03_analysis.do
 
  	Outline:	Analysis
 
@@ -9,13 +9,13 @@
 
 	Output:		tables
 
-	Modified:	Rajdev Brar on 23 Sep 2023
-				Yazen K 9/27/2023
 
 */
 * ============================================================================= *
 
 
+
+				
 
 * ============================================================================= *
 * Question 1 (c-d)
@@ -28,26 +28,23 @@
 * import data 
 use "$dta_loc/data/pset1_clean_miss.dta", clear
 
-
 // Compare group averages
 local balance_list dbrwt ///
 					tobacco ///
 					mrace3_3 ///
 					hisp_moth ///
-					dmeduc ///
+					dmeduc_1 dmeduc_2 dmeduc_3  ///
 					dmage ///
 					csex /// 
 					alcohol ///
-					adequacy ///
 					phyper ///
 					diabetes ///
 					anemia ///
 					dgestat ///
-					totord9 ///
-					isllb10 ///
 					dlivord ///
-					dplural
-					
+					dplural_1 
+/* PENDING: FIGURE OUT WHY THIS IEBALTAB ISN'T RUNNING "stats()" not allowed 
+	
 iebaltab `balance_list', ///
 	grpvar(miss_any) ///
 	rowvarlabels ///
@@ -58,7 +55,7 @@ iebaltab `balance_list', ///
 	nonote 								/// 
 	texnotewidth(1) 		///	
 	replace
-
+ 
 preserve
 	// adjust footnote width
 	import delimited "$do_loc/tables/table0_balance_miss.tex", clear
@@ -71,16 +68,7 @@ preserve
 		noquote wide replace
 
 restore
-
-/*
-ANS: 
-No, there are some differences in covariate averages between observations with 
-no and some nmissing observations. One limitation to my test is that the standard
-errors are small because the sample is large. The key variable to look at here is 
-the treatment variable, tobacco. Indeed, the dropped observations exhibit a 
-larger average rate of tobacco use during pregnancy.
-*/
-
+  */
 
 
 
@@ -92,20 +80,18 @@ use "$dta_loc/data/pset1_clean.dta", clear
 
 local covar_list 	mrace3_3 ///
 					hisp_moth /// 
-					dmeduc ///
+					dmeduc_1 dmeduc_2 dmeduc_3   ///
 					dmage ///
 					csex /// 
 					alcohol ///
-					adequacy ///
 					phyper ///
 					diabetes ///
 					anemia ///
 					dgestat ///
-					totord9 ///
-					isllb10 ///
 					dlivord ///
-					dplural
+					dplural_1
 
+/*		 PENDING: FIX		
 // generate balance table
 iebaltab `covar_list', ///
 	grpvar(tobacco) ///
@@ -129,8 +115,7 @@ preserve
 	outfile using "$do_loc/tables/table1_balance.tex", ///
 		noquote wide replace
 restore
-
-
+*/ 
 
 
 	
@@ -142,32 +127,26 @@ restore
 
 	
 	* difference in means table: birthweight by mother's smoker status 
-	dmout dbrwt, by(tobacco) 
+	reg dbrwt tobacco 
+
 * PENDING: OUTSHEET 
-* PENDING: Do we need to do manually 
 	
 	* means in birthweight by number of cigars smoked by mother on average 
 	tabstat dbrwt, by(cigar6) stats(mean N)
-* PENDING: outsheet
-
 
 * ----------------------------------------------------------------------------- * 
 * Question 2b: 
 	
-	* outsheet list of all variables to manually classify as controls or not 
-	preserve
-		describe, replace clear 
-		list
-	restore
-	
 	
 * create global of controls 
-	local 	control_vars 	alcohol mrace3_2 mrace3_3 hisp_moth ///
-							adequacy cardiac pre4000 phyper chyper diabetes anemia lung wgain ///
-							dmeduc dgestat dmage csex dmar  totord9 isllb10 dlivord dplural 
-							
-
-
+	global 	control_vars 	alcohol mrace3_2 mrace3_3 hisp_moth ///
+							cardiac pre4000 phyper chyper diabetes anemia lung  ///
+							dmeduc_1 dmeduc_2 dmeduc_3 dgestat /// 
+							csex dmar dlivord dplural phyper /// 
+							adequacy_2 adequacy_3 cntocpop_2 cntocpop_3 cntocpop_4  ///
+							isllb10_2 isllb10_3 isllb10_4 isllb10_5 isllb10_6 isllb10_7 isllb10_8 isllb10_9 isllb10_10 ///
+							totord9_2 totord9_3 totord9_4 totord9_5 totord9_6 totord9_7 totord9_8 dplural_1 
+			
 * ----------------------------------------------------------------------------- * 
 * ============================================================================= *
 * Question 3: 
@@ -184,6 +163,19 @@ di `num_controls'
 	* with controls 
 	eststo: reg dbrwt tobacco $control_vars, robust 
 	
+
+	esttab * using "${intermediate_output}/reg_output.csv", replace ///
+					cells(b(fmt(3) pvalue(p) star) se(par fmt(3))) 
+					
+*  PENDING: ADD TO LATEX
+					
+* ----------------------------------------------------------------------------- * 
+* Question 3b: Results sensitive to dropping controls one at a time?
+
+preserve 
+
+	
+
 	* drop controls one at a time 
 	forvalues i=1/`num_controls' {
 		local control_num: word `i' of $control_vars 
@@ -196,27 +188,62 @@ di `num_controls'
 	
 	esttab * using "${intermediate_output}/reg_output.csv", replace ///
 					cells(b(fmt(3) pvalue(p) star) se(par fmt(3))) 
-					
-* ----------------------------------------------------------------------------- * 
-* Question 3b: 
-* PENDING
+			
+restore 
+* PENDING: ADD TO LATEX 
 
 * ----------------------------------------------------------------------------- * 
-* Question 3c: 
-* PENDING
+* Question 3c: Control for covariates in a more flexible functional form 
 
-
+	gen dgestat_sq=dgestat*dgestat 
+	gen dmage_sq=dmage*dmage
+	gen int_tobacco_dmage=tobacco*dmage
+	
+	eststo q3c: reg dbrwt $control_vars tobacco dgestat_sq dmage_sq int_tobacco_dmage, robust 
+* PENDING: Add to latex 
+	
 * ----------------------------------------------------------------------------- * 
 * Question 3d:  Add "bad controls"
-* PENDING 
+
+reg dbrwt tobacco $control_vars, robust 
+reg dbrwt tobacco $control_vars omaps fmaps cigar6  drink5, robust 
+
+* PENDING: Add to latex 
 
 * ----------------------------------------------------------------------------- *  
 * Question 3e: Oaxaca-Blinder estimator for ATE and ATT
-* PENDING 
 
 
 
+global oaxaca_control_vars alcohol  mrace3_2 mrace3_3 hisp_moth cardiac anemia lung dmar csex pre4000 phyper chyper diabetes   
 
+	* generate variables needed for oaxaca 
+	foreach var of varlist $oaxaca_control_vars {
+	* demean controls 
+	egen `var'_mean=mean(`var')
+	gen `var'demean=(`var'-`var'_mean)
+	* interaction of tobacco with demeaned controls 
+	gen `var'demeantobacco = `var'demean*tobacco
+	}
+	
+	* oaxaca estimate via regression 
+	reg dbrwt tobacco $oaxaca_control_vars *demeantobacco, robust 
+	
+	* 	estimating coeff
+	reg dbrwt tobacco $oaxaca_control_vars if tobacco==1, robust 
+	predict tob1h 
+	
+	reg dbrwt tobacco $oaxaca_control_vars if tobacco==0, robust 
+	predict tob0h 
+	
+	* ATE 
+	* oaxaca coefficient by differencing 
+	gen oaxaca_ate =tob1h-tob0h
+	di oaxaca_ate
+
+* PENDING : add to latex 
+
+e
 * ============================================================================= *
 * Question 4: PROPENSITY SCORE MATCHING  
 * ============================================================================= *

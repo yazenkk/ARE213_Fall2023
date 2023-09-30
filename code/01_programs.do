@@ -1,5 +1,5 @@
 /*
-Programs to be installe
+Programs to be installed
 
 */
 
