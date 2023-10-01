@@ -8,14 +8,10 @@
  	Input: 		pset1_clean.dta
 
 	Output:		tables
-
-
 */
 * ============================================================================= *
 
-
-local q3 = 0
-				
+			
 
 * ============================================================================= *
 * Question 1 (c-d)
@@ -131,7 +127,6 @@ restore
 * ----------------------------------------------------------------------------- * 
 * Question 2a: Compute mean difference in birthweight by smoking status 
 
-	
 	* difference in means table: birthweight by mother's smoker status 
 	eststo: reg dbrwt tobacco , robust
 	esttab using "$do_loc/tables/table2_diffmeans.tex", nostar label  tex  replace  se
@@ -142,11 +137,9 @@ restore
 
 
 * ---------------------------------------------------------------------------- * 
-* Question 2b: 
-	
+* Question 2b: choose controls
 	
 * create global of controls 
-	// rajdev
 	global covar_list alcohol mrace3_2 mrace3_3 hisp_moth ///
 						adequacy_2 adequacy_3 ///
 						cardiac pre4000 phyper diabetes anemia lung  ///
@@ -157,10 +150,6 @@ restore
 						isllb10_2 isllb10_3 isllb10_4 isllb10_5 isllb10_6 isllb10_7 isllb10_8 isllb10_9 isllb10_10 ///
 						dplural_1 
 						
-	// cass (old list)
-// 	global covar_list alcohol mrace3_2 mrace3_3 hisp_moth adequacy cardiac pre4000 ///
-// 					phyper chyper diabetes anemia lung wgain dmeduc dgestat dmage dmar ///
-// 					csex totord9 isllb10 dlivord dplural
 
 * ----------------------------------------------------------------------------- * 
 * ============================================================================= *
@@ -173,18 +162,23 @@ restore
 local num_controls: list sizeof covar_list
 di `num_controls'
  
+	eststo clear
+	
 	* without controls 
 	eststo: reg dbrwt tobacco , robust 
 
 	* with controls 
 	eststo: reg dbrwt tobacco $covar_list, robust 
-	sum $covar_list
 
-// 	esttab * using "${intermediate_output}/reg_output.csv", replace ///
-// 					cells(b(fmt(3) pvalue(p) star) se(par fmt(3))) 
-					
-*  PENDING: ADD TO LATEX
-					
+
+ 	esttab * using "${intermediate_output}/reg_3a",  ///
+ 					 nostar label  tex  replace  se nogaps compress ///
+					 prehead(`"\begin{table}"' `"\small"' ///
+					`"\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}"' ///
+					`"\begin{tabular}{l*{2}{c}}"') ///
+					postfoot(`"\end{tabular}"' `"\end{table}"')
+						
+		e
 * ----------------------------------------------------------------------------- * 
 * Question 3b: Results sensitive to dropping controls one at a time?
 
