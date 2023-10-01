@@ -1,0 +1,64 @@
+{
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{4}{c}}
+\hline\hline
+                                                  &\multicolumn{1}{c}{(1)}&\multicolumn{1}{c}{(2)}&\multicolumn{1}{c}{(3)}&\multicolumn{1}{c}{(4)}\\
+                                                  &\multicolumn{1}{c}{Birthweight (grams)}&\multicolumn{1}{c}{Birthweight (grams)}&\multicolumn{1}{c}{Birthweight (grams)}&\multicolumn{1}{c}{Birthweight (grams)}\\
+                                                  &        b/se&        b/se&        b/se&        b/se\\
+\hline
+Tobacco use during pregnancy (yes=1)              &     -240.48&     -209.59&     -115.55&     -111.77\\
+                                                  &      (4.63)&      (4.06)&     (18.50)&      (9.87)\\
+Alcohol use during pregnancy (yes=1)              &            &      -60.20&      -55.30&       53.23\\
+                                                  &            &     (14.65)&     (14.44)&     (28.69)\\
+Mother race: Other (yes=1)                        &            &     -185.51&     -194.63&     -187.99\\
+                                                  &            &      (9.36)&      (9.27)&      (9.37)\\
+Mother race: Hispanic (yes=1)                     &            &      -97.19&      -97.48&      -94.29\\
+                                                  &            &      (7.79)&      (7.60)&      (7.74)\\
+Adequacy of care: Intermediate (yes=1)            &            &      -41.11&      -35.25&      -41.78\\
+                                                  &            &      (3.60)&      (3.51)&      (3.58)\\
+cardiac disease mother                            &            &      -25.69&      -32.08&      -24.51\\
+                                                  &            &     (16.62)&     (16.33)&     (16.50)\\
+Previous infant 4000+ grams (yes=1)               &            &      392.04&      396.23&      394.14\\
+                                                  &            &     (12.16)&     (11.95)&     (12.13)\\
+Number of live births, now dead                   &            &       24.75&       24.35&       23.40\\
+                                                  &            &      (2.78)&      (2.71)&      (2.77)\\
+Highest education: Elementary school (yes=1)      &            &      -35.81&      -58.73&      -40.17\\
+                                                  &            &     (75.97)&     (72.73)&     (74.62)\\
+Gestation (weeks)                                 &            &      114.83&      526.43&      110.54\\
+                                                  &            &      (0.85)&      (9.80)&      (0.81)\\
+Age of mother (years)                             &            &        0.96&       11.51&        1.12\\
+                                                  &            &      (0.33)&      (2.19)&      (0.33)\\
+Mother: married (yes=1)                           &            &       41.79&       30.90&       37.48\\
+                                                  &            &      (4.23)&      (4.29)&      (4.21)\\
+Total birth order: Second child (yes=1)           &            &       11.99&       12.16&       11.89\\
+                                                  &            &      (5.11)&      (5.00)&      (5.09)\\
+Total birth order: Third child (yes=1)            &            &        9.04&       10.33&       10.51\\
+                                                  &            &      (5.98)&      (5.84)&      (5.94)\\
+Male (yes=1)                                      &            &      139.23&      138.56&      140.47\\
+                                                  &            &      (2.73)&      (2.67)&      (2.72)\\
+Interval since last birth: 0 months (yes=1)       &            &      -18.44&      -21.67&      -13.93\\
+                                                  &            &     (17.48)&     (17.43)&     (17.17)\\
+Interval since last birth: 1-11 months (yes=1)    &            &      -45.52&      -21.65&      -41.56\\
+                                                  &            &     (18.98)&     (18.29)&     (18.63)\\
+Single child birth (yes=1)                        &            &      569.68&      546.33&      565.38\\
+                                                  &            &      (9.84)&      (9.71)&      (9.63)\\
+dgestat\_sq                                        &            &            &       -5.54&            \\
+                                                  &            &            &      (0.13)&            \\
+dmage\_sq                                          &            &            &       -0.19&            \\
+                                                  &            &            &      (0.04)&            \\
+int\_tobacco\_dmage                                 &            &            &       -3.55&            \\
+                                                  &            &            &      (0.69)&            \\
+one minute agpar score                            &            &            &            &        5.28\\
+                                                  &            &            &            &      (1.53)\\
+five minute agpar score                           &            &            &            &       54.83\\
+                                                  &            &            &            &      (2.87)\\
+average number of cigarettes per day recode       &            &            &            &      -45.57\\
+                                                  &            &            &            &      (4.21)\\
+average number of drinks recode                   &            &            &            &      -53.08\\
+                                                  &            &            &            &     (12.91)\\
+\hline
+Observations                                      &      114610&      114610&      114610&      114610\\
+Full list of covariates included                  &            &           X&           X&           X\\
+\hline\hline
+\end{tabular}
+}
