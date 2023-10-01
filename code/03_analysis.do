@@ -287,18 +287,28 @@ global oaxaca_covar_list alcohol mrace3_2 mrace3_3 hisp_moth ///
 	gen `var'demeantobacco = `var'demean*tobacco
 	}
 	
+	eststo clear 
 	* oaxaca estimate via regression 
 	reg dbrwt tobacco $oaxaca_covar_list *demeantobacco, robust 
 	
 	* estimating coeff
-	reg dbrwt tobacco $oaxaca_covar_list if tobacco==1, robust 
+	eststo: reg dbrwt  $oaxaca_covar_list if tobacco==1, robust 
 	predict tob1h 
 	predict tob1h_1 if tobacco==1
 	
-	reg dbrwt tobacco $oaxaca_covar_list if tobacco==0, robust 
+	eststo: reg dbrwt  $oaxaca_covar_list if tobacco==0, robust 
 	predict tob0h 
 	predict tob0h_1 if tobacco==1
 	
+	esttab using "$do_loc/tables/table3e_oaxaca.tex", nostar label  tex  replace  ///
+	style(tex)											///
+	nogaps												///
+	nobaselevels 										///
+	noconstant											///
+	varwidth(50)										///
+	wrap 												///
+	cells (b(fmt(2)) se(fmt(2) par)) mtitle("birthweight if tobacco=1" "birthweight if tobacco=0")					
+
 	foreach var of varlist tob1h tob1h_1 tob0h tob0h_1 { 
 	egen mean_`var' = mean(`var')
 	}
