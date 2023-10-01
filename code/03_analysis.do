@@ -8,7 +8,7 @@
  	Input: 		pset1_clean.dta
 
 	Output:		tables
-	
+
 */
 * ============================================================================= *
 
@@ -45,7 +45,7 @@ local balance_list dbrwt ///
 					dplural_1 
 					
 	
-/* PENDING YK to check; this is not running for RB  
+/* PENDING YK to check
 iebaltab `balance_list', ///
 	grpvar(miss_any) ///
 	rowvarlabels normdiff starsno /// 
@@ -128,7 +128,6 @@ restore
 * ----------------------------------------------------------------------------- * 
 * Question 2a: Compute mean difference in birthweight by smoking status 
 
-	
 	* difference in means table: birthweight by mother's smoker status 
 	eststo: reg dbrwt tobacco , robust
 	esttab using "$do_loc/tables/table2_diffmeans.tex", nostar label  tex  replace  se
@@ -139,11 +138,9 @@ restore
 
 
 * ---------------------------------------------------------------------------- * 
-* Question 2b: 
-	
+* Question 2b: choose controls
 	
 * create global of controls 
-	// rajdev
 	global covar_list alcohol mrace3_2 mrace3_3 hisp_moth ///
 						adequacy_2 adequacy_3 ///
 						cardiac pre4000 phyper diabetes anemia lung  ///
@@ -154,25 +151,24 @@ restore
 						isllb10_2 isllb10_3 isllb10_4 isllb10_5 isllb10_6 isllb10_7 isllb10_8 isllb10_9 isllb10_10 ///
 						dplural_1 
 						
-	// cass (old list)
-// 	global covar_list alcohol mrace3_2 mrace3_3 hisp_moth adequacy cardiac pre4000 ///
-// 					phyper chyper diabetes anemia lung wgain dmeduc dgestat dmage dmar ///
-// 					csex totord9 isllb10 dlivord dplural
 
 * ----------------------------------------------------------------------------- * 
 * ============================================================================= *
 * Question 3: 
 * ============================================================================= *
+
 * See 3a after 3b
+
 * ----------------------------------------------------------------------------- * 
 * Question 3b: Results sensitive to dropping controls one at a time?
 use "$dta_loc/data/pset1_clean.dta", clear
 
 eststo clear
 preserve 
+
 	local num_controls: list sizeof global(covar_list)
 	di `num_controls'
-		
+
 	* drop controls one at a time 
 	forvalues i=1/`num_controls' {
 // 		dis "`i'"
@@ -376,22 +372,22 @@ forval i = 1/10 {
 	qui sum tobacco if phatx_bins == `i'
 	assert !inlist(`r(mean)', 0, 1)
 }
-
-
+	
+	
 // Within bins of p(X) compare X among treated and controls
 // run regs controlling for bins so that D is within bin
 iebaltab $covar_list, ///
 	grpvar(tobacco) ///
 	fixedeffect(phatx_bins) ///
 	rowvarlabels ///
-	stats(desc(sd) pair(t)) ///
-	nostars ///
+	starsno  ///
 	savetex("$do_loc/tables/table4_balance_pbins.tex") ///
-	addnote("Notes: Insert footnote") 				///
-	nonote 								/// 
+	tblnote("Notes: Insert footnote") 				///
+	tblnonote 								/// 
 	texnotewidth(1) 		///	
-	replace
-
+	replace  
+	
+/* YK to fix
 preserve
 	// adjust footnote width
 	import delimited "$do_loc/tables/table4_balance_pbins.tex", clear
@@ -404,6 +400,7 @@ preserve
 		noquote wide replace
 
 restore
+*/
 
 
 * ----------------------------------------------------------------------------- * 
