@@ -44,7 +44,7 @@ local balance_list dbrwt ///
 					dplural_1 
 					
 	
-/* PENDING YK to check; this is not running for RB  
+/* PENDING YK to check
 iebaltab `balance_list', ///
 	grpvar(miss_any) ///
 	rowvarlabels normdiff starsno /// 
@@ -178,13 +178,11 @@ di `num_controls'
 					`"\begin{tabular}{l*{2}{c}}"') ///
 					postfoot(`"\end{tabular}"' `"\end{table}"')
 						
-		e
+		
 * ----------------------------------------------------------------------------- * 
 * Question 3b: Results sensitive to dropping controls one at a time?
 
 preserve 
-
-	
 
 	* drop controls one at a time 
 	forvalues i=1/`num_controls' {
@@ -330,22 +328,22 @@ forval i = 1/10 {
 	qui sum tobacco if phatx_bins == `i'
 	assert !inlist(`r(mean)', 0, 1)
 }
-
-
+	
+	
 // Within bins of p(X) compare X among treated and controls
 // run regs controlling for bins so that D is within bin
 iebaltab $covar_list, ///
 	grpvar(tobacco) ///
 	fixedeffect(phatx_bins) ///
 	rowvarlabels ///
-	stats(desc(sd) pair(t)) ///
-	nostars ///
+	starsno  ///
 	savetex("$do_loc/tables/table4_balance_pbins.tex") ///
-	addnote("Notes: Insert footnote") 				///
-	nonote 								/// 
+	tblnote("Notes: Insert footnote") 				///
+	tblnonote 								/// 
 	texnotewidth(1) 		///	
-	replace
-
+	replace  
+	
+/* YK to fix
 preserve
 	// adjust footnote width
 	import delimited "$do_loc/tables/table4_balance_pbins.tex", clear
@@ -358,6 +356,7 @@ preserve
 		noquote wide replace
 
 restore
+*/
 
 
 * ----------------------------------------------------------------------------- * 

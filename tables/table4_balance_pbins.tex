@@ -1,98 +1,47 @@
-%%% Table created in Stata by command iebaltab
-%%% (https://github.com/worldbank/ietoolkit)
-%%% (https://dimewiki.worldbank.org/iebaltab)
-%%% The command was specified exactly like this: 
-%%% iebaltab alcohol mrace3_2 mrace3_3 hisp_moth adequacy_2 adequacy_3 cardiac pre4000 phyper chyper diabetes anemia lung dlivord dmeduc_1 dmeduc_2 dmeduc_3 dgestat dmage dmar totord9_2 totord9_3 totord9_4 totord9_5 totord9_6 totord9_7 totord9_8 cntocpop_2 cntocpop_3 cntocpop_4 csex isllb10_2 isllb10_3 isllb10_4 isllb10_5 isllb10_6 isllb10_7 isllb10_8 isllb10_9 isllb10_10 dplural_1, grpvar(tobacco) fixedeffect(phatx_bins) rowvarlabels stats(desc(sd) pair(t)) nostars savetex("//Client/C$/Users/yfkas/OneDrive/Documents/GitHub/ARE213_Fall2023/tables/table4_balance_pbins.tex") addnote("Notes: Insert footnote") nonote texnotewidth(1) replace
-
-\begin{tabular}{@{\extracolsep{5pt}}lcccccc}
+\begin{tabular}{@{\extracolsep{5pt}}lccccc}
 \\[-1.8ex]\hline \hline \\[-1.8ex]
- & \multicolumn{2}{c}{(1)}  & \multicolumn{2}{c}{(2)}  & \multicolumn{2}{c}{(1)-(2)} \\
- & \multicolumn{2}{c}{Non-smoker}  & \multicolumn{2}{c}{Smoker}  & \multicolumn{2}{c}{Pairwise t-test}  \\
-Variable & N & Mean/(SD) & N & Mean/(SD) & N & t-statistics \\ \hline \\[-1.8ex] 
-Alcohol use during pregnancy (yes=1)   & 96344    & 0.005    & 18266    & 0.035    & 114610    & 0.631   \\
- &   & (0.070)  &   & (0.184)  &   &  \\ [1ex]
-Mother race: Other (yes=1)   & 96344    & 0.023    & 18266    & 0.004    & 114610    & 4.090***   \\
- &   & (0.149)  &   & (0.061)  &   &  \\ [1ex]
-Mother race: Black (yes=1)   & 96344    & 0.118    & 18266    & 0.127    & 114610    & 1.113   \\
- &   & (0.323)  &   & (0.333)  &   &  \\ [1ex]
-Mother race: Hispanic (yes=1)   & 96344    & 0.038    & 18266    & 0.024    & 114610    & 1.621   \\
- &   & (0.191)  &   & (0.153)  &   &  \\ [1ex]
-Adequacy of care: Intermediate (yes=1)   & 96344    & 0.198    & 18266    & 0.257    & 114610    & -0.922   \\
- &   & (0.399)  &   & (0.437)  &   &  \\ [1ex]
-Adequacy of care: Inadequate (yes=1)   & 96344    & 0.039    & 18266    & 0.077    & 114610    & -0.411   \\
- &   & (0.192)  &   & (0.267)  &   &  \\ [1ex]
-cardiac disease mother   & 96344    & 0.007    & 18266    & 0.006    & 114610    & 0.118   \\
- &   & (0.084)  &   & (0.078)  &   &  \\ [1ex]
-Previous infant 4000+ grams (yes=1)   & 96344    & 0.016    & 18266    & 0.008    & 114610    & 0.947   \\
- &   & (0.124)  &   & (0.091)  &   &  \\ [1ex]
-Pregnancy-related hypertension (yes=1)   & 96344    & 0.033    & 18266    & 0.020    & 114610    & 0.949   \\
- &   & (0.178)  &   & (0.141)  &   &  \\ [1ex]
-chronic hypertension   & 96344    & 0.008    & 18266    & 0.007    & 114610    & 0.374   \\
- &   & (0.089)  &   & (0.081)  &   &  \\ [1ex]
-Mother has diabetes (yes=1)   & 96344    & 0.027    & 18266    & 0.027    & 114610    & 0.030   \\
- &   & (0.162)  &   & (0.162)  &   &  \\ [1ex]
-Mother has anemia (yes=1)   & 96344    & 0.009    & 18266    & 0.014    & 114610    & -0.193   \\
- &   & (0.096)  &   & (0.116)  &   &  \\ [1ex]
-Mother has acute or chronic lung disease (yes=1)   & 96344    & 0.007    & 18266    & 0.010    & 114610    & -0.282   \\
- &   & (0.082)  &   & (0.098)  &   &  \\ [1ex]
-Number of live births, now dead   & 96344    & 1.949    & 18266    & 2.181    & 114610    & -2.923***   \\
- &   & (1.153)  &   & (1.265)  &   &  \\ [1ex]
-Highest education: Elementary school (yes=1)   & 96344    & 0.024    & 18266    & 0.019    & 114610    & 0.471   \\
- &   & (0.154)  &   & (0.136)  &   &  \\ [1ex]
-Highest education: High school (yes=1)   & 96344    & 0.457    & 18266    & 0.776    & 114610    & -2.274**   \\
- &   & (0.498)  &   & (0.417)  &   &  \\ [1ex]
-Highest education: College or more (yes=1)   & 96344    & 0.518    & 18266    & 0.206    & 114610    & 2.041**   \\
- &   & (0.500)  &   & (0.404)  &   &  \\ [1ex]
-Gestation (weeks)   & 96344    & 39.173    & 18266    & 39.047    & 114610    & 0.553   \\
- &   & (2.391)  &   & (2.710)  &   &  \\ [1ex]
-Age of mother (years)   & 96344    & 28.057    & 18266    & 26.173    & 114610    & 1.337   \\
- &   & (5.667)  &   & (5.606)  &   &  \\ [1ex]
-Mother: married (yes=1)   & 96344    & 0.793    & 18266    & 0.518    & 114610    & 3.488***   \\
- &   & (0.405)  &   & (0.500)  &   &  \\ [1ex]
-Total birth order: Second child (yes=1)   & 96344    & 0.308    & 18266    & 0.286    & 114610    & -2.250**   \\
- &   & (0.462)  &   & (0.452)  &   &  \\ [1ex]
-Total birth order: Third child (yes=1)   & 96344    & 0.188    & 18266    & 0.213    & 114610    & -2.808***   \\
- &   & (0.391)  &   & (0.409)  &   &  \\ [1ex]
-Total birth order: Fourth child (yes=1)   & 96344    & 0.092    & 18266    & 0.121    & 114610    & -1.574   \\
- &   & (0.289)  &   & (0.327)  &   &  \\ [1ex]
-Total birth order: Fifth child (yes=1)   & 96344    & 0.042    & 18266    & 0.066    & 114610    & -0.437   \\
- &   & (0.200)  &   & (0.249)  &   &  \\ [1ex]
-Total birth order: Sixth child (yes=1)   & 96344    & 0.020    & 18266    & 0.034    & 114610    & -0.062   \\
- &   & (0.140)  &   & (0.182)  &   &  \\ [1ex]
-Total birth order: Seventh child (yes=1)   & 96344    & 0.008    & 18266    & 0.018    & 114610    & -0.143   \\
- &   & (0.091)  &   & (0.133)  &   &  \\ [1ex]
-Total birth order: Eight child or more (yes=1)   & 96344    & 0.010    & 18266    & 0.015    & 114610    & 0.067   \\
- &   & (0.097)  &   & (0.122)  &   &  \\ [1ex]
-Population of county of origin: 500k to 1000k (yes=1)   & 96344    & 0.163    & 18266    & 0.109    & 114610    & 1.609   \\
- &   & (0.370)  &   & (0.312)  &   &  \\ [1ex]
-Population of county of origin: 250k to 500k (yes=1)   & 96344    & 0.322    & 18266    & 0.325    & 114610    & -0.165   \\
- &   & (0.467)  &   & (0.468)  &   &  \\ [1ex]
-Population of county of origin: 100k to 250k (yes=1)   & 96344    & 0.204    & 18266    & 0.269    & 114610    & -1.593   \\
- &   & (0.403)  &   & (0.443)  &   &  \\ [1ex]
-Male (yes=1)   & 96344    & 0.514    & 18266    & 0.518    & 114610    & -0.104   \\
- &   & (0.500)  &   & (0.500)  &   &  \\ [1ex]
-Interval since last birth: 0 months (yes=1)   & 96344    & 0.009    & 18266    & 0.007    & 114610    & -0.194   \\
- &   & (0.094)  &   & (0.086)  &   &  \\ [1ex]
-Interval since last birth: 1-11 months (yes=1)   & 96344    & 0.007    & 18266    & 0.013    & 114610    & -0.373   \\
- &   & (0.081)  &   & (0.114)  &   &  \\ [1ex]
-Interval since last birth: 12-17 months (yes=1)   & 96344    & 0.052    & 18266    & 0.078    & 114610    & -0.981   \\
- &   & (0.223)  &   & (0.268)  &   &  \\ [1ex]
-Interval since last birth: 18-23 months (yes=1)   & 96344    & 0.082    & 18266    & 0.083    & 114610    & -1.176   \\
- &   & (0.274)  &   & (0.276)  &   &  \\ [1ex]
-Interval since last birth: 24-35 months (yes=1)   & 96344    & 0.151    & 18266    & 0.135    & 114610    & -1.426   \\
- &   & (0.359)  &   & (0.342)  &   &  \\ [1ex]
-Interval since last birth: 36-47 months (yes=1)   & 96344    & 0.101    & 18266    & 0.097    & 114610    & -1.560   \\
- &   & (0.301)  &   & (0.296)  &   &  \\ [1ex]
-Interval since last birth: 48-59 months (yes=1)   & 96344    & 0.057    & 18266    & 0.060    & 114610    & -1.282   \\
- &   & (0.232)  &   & (0.238)  &   &  \\ [1ex]
-Interval since last birth: 60-71 months (yes=1)   & 96344    & 0.034    & 18266    & 0.041    & 114610    & -0.908   \\
- &   & (0.182)  &   & (0.199)  &   &  \\ [1ex]
-Interval since last birth: 72 months or over (yes=1)   & 96344    & 0.077    & 18266    & 0.130    & 114610    & -0.250   \\
- &   & (0.266)  &   & (0.336)  &   &  \\ [1ex]
-Single child birth (yes=1)   & 96344    & 0.972    & 18266    & 0.978    & 114610    & -0.234   \\
- &   & (0.164)  &   & (0.147)  &   &  \\ [1ex]
+  & \multicolumn{2}{c}{(1)}  & \multicolumn{2}{c}{(2)}  & \multicolumn{1}{c}{T-test}  \\
+ & \multicolumn{2}{c}{Non-smoker}  & \multicolumn{2}{c}{Smoker}  & \multicolumn{1}{c}{Difference}  \\
+  Variable & N & Mean/SE  & N & Mean/SE   & (1)-(2)  \\ \hline \\[-1.8ex] 
+Alcohol use during pregnancy (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.005 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.035 \\ (0.001) \end{tabular} &    -0.030 \rule{0pt}{0pt}\\
+Mother race: Other (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.023 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.004 \\ (0.000) \end{tabular} &     0.019 \rule{0pt}{3ex}\\
+Mother race: Black (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.118 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.127 \\ (0.002) \end{tabular} &    -0.009 \rule{0pt}{3ex}\\
+Mother race: Hispanic (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.038 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.024 \\ (0.001) \end{tabular} &     0.014 \rule{0pt}{3ex}\\
+Adequacy of care: Intermediate (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.198 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.257 \\ (0.003) \end{tabular} &    -0.058 \rule{0pt}{3ex}\\
+Adequacy of care: Inadequate (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.039 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.077 \\ (0.002) \end{tabular} &    -0.039 \rule{0pt}{3ex}\\
+cardiac disease mother & 96344 & \begin{tabular}[t]{@{}c@{}} 0.007 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.006 \\ (0.001) \end{tabular} &     0.001 \rule{0pt}{3ex}\\
+Previous infant 4000+ grams (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.016 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.008 \\ (0.001) \end{tabular} &     0.007 \rule{0pt}{3ex}\\
+Pregnancy-related hypertension (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.033 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.020 \\ (0.001) \end{tabular} &     0.012 \rule{0pt}{3ex}\\
+Mother has diabetes (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.027 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.027 \\ (0.001) \end{tabular} &     0.000 \rule{0pt}{3ex}\\
+Mother has anemia (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.009 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.014 \\ (0.001) \end{tabular} &    -0.004 \rule{0pt}{3ex}\\
+Mother has acute or chronic lung disease (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.007 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.010 \\ (0.001) \end{tabular} &    -0.003 \rule{0pt}{3ex}\\
+Number of live births, now dead & 96344 & \begin{tabular}[t]{@{}c@{}} 1.949 \\ (0.004) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 2.181 \\ (0.009) \end{tabular} &    -0.231 \rule{0pt}{3ex}\\
+Highest education: Elementary school (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.024 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.019 \\ (0.001) \end{tabular} &     0.005 \rule{0pt}{3ex}\\
+Highest education: High school (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.457 \\ (0.002) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.776 \\ (0.003) \end{tabular} &    -0.318 \rule{0pt}{3ex}\\
+Highest education: College or more (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.518 \\ (0.002) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.206 \\ (0.003) \end{tabular} &     0.312 \rule{0pt}{3ex}\\
+Gestation (weeks) & 96344 & \begin{tabular}[t]{@{}c@{}} 39.173 \\ (0.008) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 39.047 \\ (0.020) \end{tabular} &     0.126 \rule{0pt}{3ex}\\
+Age of mother (years) & 96344 & \begin{tabular}[t]{@{}c@{}} 28.057 \\ (0.018) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 26.173 \\ (0.041) \end{tabular} &     1.883 \rule{0pt}{3ex}\\
+Mother: married (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.793 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.518 \\ (0.004) \end{tabular} &     0.275 \rule{0pt}{3ex}\\
+Total birth order: Second child (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.308 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.286 \\ (0.003) \end{tabular} &     0.022 \rule{0pt}{3ex}\\
+Total birth order: Third child (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.188 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.213 \\ (0.003) \end{tabular} &    -0.025 \rule{0pt}{3ex}\\
+Total birth order: Fourth child (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.092 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.121 \\ (0.002) \end{tabular} &    -0.029 \rule{0pt}{3ex}\\
+Total birth order: Fifth child (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.042 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.066 \\ (0.002) \end{tabular} &    -0.024 \rule{0pt}{3ex}\\
+Total birth order: Sixth child (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.020 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.034 \\ (0.001) \end{tabular} &    -0.014 \rule{0pt}{3ex}\\
+Total birth order: Seventh child (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.008 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.018 \\ (0.001) \end{tabular} &    -0.010 \rule{0pt}{3ex}\\
+Total birth order: Eight child or more (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.010 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.015 \\ (0.001) \end{tabular} &    -0.006 \rule{0pt}{3ex}\\
+Male (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.514 \\ (0.002) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.518 \\ (0.004) \end{tabular} &    -0.004 \rule{0pt}{3ex}\\
+Interval since last birth: 0 months (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.009 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.007 \\ (0.001) \end{tabular} &     0.002 \rule{0pt}{3ex}\\
+Interval since last birth: 1-11 months (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.007 \\ (0.000) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.013 \\ (0.001) \end{tabular} &    -0.007 \rule{0pt}{3ex}\\
+Interval since last birth: 12-17 months (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.052 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.078 \\ (0.002) \end{tabular} &    -0.026 \rule{0pt}{3ex}\\
+Interval since last birth: 18-23 months (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.082 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.083 \\ (0.002) \end{tabular} &    -0.002 \rule{0pt}{3ex}\\
+Interval since last birth: 24-35 months (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.151 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.135 \\ (0.003) \end{tabular} &     0.016 \rule{0pt}{3ex}\\
+Interval since last birth: 36-47 months (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.101 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.097 \\ (0.002) \end{tabular} &     0.004 \rule{0pt}{3ex}\\
+Interval since last birth: 48-59 months (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.057 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.060 \\ (0.002) \end{tabular} &    -0.003 \rule{0pt}{3ex}\\
+Interval since last birth: 60-71 months (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.034 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.041 \\ (0.001) \end{tabular} &    -0.007 \rule{0pt}{3ex}\\
+Interval since last birth: 72 months or over (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.077 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.130 \\ (0.002) \end{tabular} &    -0.053 \rule{0pt}{3ex}\\
+Single child birth (yes=1) & 96344 & \begin{tabular}[t]{@{}c@{}} 0.972 \\ (0.001) \end{tabular} & 18266 & \begin{tabular}[t]{@{}c@{}} 0.978 \\ (0.001) \end{tabular} &    -0.005 \rule{0pt}{3ex}\\
 \hline \hline \\[-1.8ex]
 %%% This is the note. If it does not have the correct margins, use texnotewidth() option or change the number before '\textwidth' in line below to fit it to table size.
-\multicolumn{6}{@{} p{1\textwidth}}{Notes: Insert footnote}
-
+\multicolumn{6}{@{} p{1\textwidth}}
+{\textit{Notes}: Notes: Insert footnote}
 \end{tabular}
