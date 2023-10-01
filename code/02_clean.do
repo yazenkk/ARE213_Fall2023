@@ -164,6 +164,7 @@ use "$dta_loc/data/pset1", clear
 	lab var dgestat  "Gestation (weeks)"
 	lab var dlivord  "Number of live births, now dead"
 	lab var pre4000  "Previous infant 4000+ grams (yes=1)"
+	lab var lung 	 "Mother has acute or chronic lung disease (yes=1)"
 
 
 	qui ds

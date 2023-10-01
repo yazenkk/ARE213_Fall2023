@@ -104,12 +104,13 @@ iebaltab `covar_list', ///
 	savetex("$do_loc/tables/table1_balance.tex") ///
 	rowvarlabels ///
 	total ///
-	stats(desc(sd) pair(t)) ///
-	nostars ///
-	addnote("Notes: Insert footnote") 	///
-	nonote 								/// 
-	replace
+	starsno ///
+	tblnote("Notes: Insert footnote") 	///
+	tblnonote 	 						/// 
+	replace normdiff  onerow
 	
+	e
+/* YK to fix 
 // adjust footnote width of latex output
 preserve
 	import delimited "$do_loc/tables/table1_balance.tex", clear
