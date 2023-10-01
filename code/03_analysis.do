@@ -35,28 +35,29 @@ local balance_list dbrwt ///
 					hisp_moth ///
 					dmeduc_1 dmeduc_2 dmeduc_3  ///
 					dmage ///
+					dmar ///
 					csex /// 
 					alcohol ///
 					phyper ///
 					diabetes ///
+					lung ///
 					anemia ///
+					pre4000 /// 
 					dgestat ///
 					dlivord ///
 					dplural_1 
 					
-/* PENDING: FIGURE OUT WHY THIS IEBALTAB ISN'T RUNNING "stats()" not allowed 
 	
 iebaltab `balance_list', ///
 	grpvar(miss_any) ///
-	rowvarlabels ///
-	stats(desc(sd) pair(t)) ///
-	nostars ///
+	rowvarlabels normdiff starsno /// 
 	savetex("$do_loc/tables/table0_balance_miss.tex") ///
-	addnote("Notes: Insert footnote") 				///
-	nonote 								/// 
-	texnotewidth(1) 		///	
-	replace
- 
+	tblnote("Notes: Insert footnote") 				///
+	tblnonote 				/// 
+	texnotewidth(1) replace  		
+	
+	
+/* PENDING YK to check; this is not running for RB  
 preserve
 	// adjust footnote width
 	import delimited "$do_loc/tables/table0_balance_miss.tex", clear
@@ -67,7 +68,6 @@ preserve
 		strpos(text, "Notes:") > 0
 	outfile using "$do_loc/tables/table0_balance_miss.tex", ///
 		noquote wide replace
-
 restore
   */
 
@@ -79,32 +79,37 @@ restore
 *Import data
 use "$dta_loc/data/pset1_clean.dta", clear
 
-local covar_list 	mrace3_3 ///
-					hisp_moth /// 
-					dmeduc_1 dmeduc_2 dmeduc_3   ///
+local covar_list 	dbrwt ///
+					mrace3_3 ///
+					hisp_moth ///
+					dmeduc_1 dmeduc_2 dmeduc_3  ///
 					dmage ///
+					dmar ///
 					csex /// 
 					alcohol ///
 					phyper ///
 					diabetes ///
+					lung ///
 					anemia ///
+					pre4000 /// 
 					dgestat ///
 					dlivord ///
 					dplural_1
 
-/*		 PENDING: FIX		
+		
 // generate balance table
 iebaltab `covar_list', ///
 	grpvar(tobacco) ///
 	savetex("$do_loc/tables/table1_balance.tex") ///
 	rowvarlabels ///
 	total ///
-	stats(desc(sd) pair(t)) ///
-	nostars ///
-	addnote("Notes: Insert footnote") 	///
-	nonote 								/// 
-	replace
+	starsno ///
+	tblnote("Notes: Insert footnote") 	///
+	tblnonote 	 						/// 
+	replace normdiff  onerow
 	
+	
+/* YK to fix 
 // adjust footnote width of latex output
 preserve
 	import delimited "$do_loc/tables/table1_balance.tex", clear
@@ -128,12 +133,13 @@ restore
 
 	
 	* difference in means table: birthweight by mother's smoker status 
-	reg dbrwt tobacco 
-
-* PENDING: OUTSHEET 
+	eststo: reg dbrwt tobacco 
+	esttab using "$do_loc/tables/table2_diffmeans.tex", nostar label  tex  replace  se
+	eststo clear 
 	
 	* means in birthweight by number of cigars smoked by mother on average 
 	tabstat dbrwt, by(cigar6) stats(mean N)
+
 
 * ----------------------------------------------------------------------------- * 
 * Question 2b: 
@@ -143,7 +149,7 @@ restore
 	// rajdev
 	global covar_list alcohol mrace3_2 mrace3_3 hisp_moth ///
 						adequacy_2 adequacy_3 ///
-						cardiac pre4000 phyper chyper diabetes anemia lung  ///
+						cardiac pre4000 phyper diabetes anemia lung  ///
 						dlivord dmeduc_1 dmeduc_2 dmeduc_3 dgestat /// 
 						dmage dmar ///
 						totord9_2 totord9_3 totord9_4 totord9_5 totord9_6 totord9_7 totord9_8 ///
@@ -151,7 +157,7 @@ restore
 						csex  /// 
 						isllb10_2 isllb10_3 isllb10_4 isllb10_5 isllb10_6 isllb10_7 isllb10_8 isllb10_9 isllb10_10 ///
 						dplural_1 
-						
+						e
 	// cass (old list)
 // 	global covar_list alcohol mrace3_2 mrace3_3 hisp_moth adequacy cardiac pre4000 ///
 // 					phyper chyper diabetes anemia lung wgain dmeduc dgestat dmage dmar ///

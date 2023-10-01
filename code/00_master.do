@@ -15,7 +15,7 @@ Date created: 9/24/2024
 * ============================================================================= *
 
 clear all
-version 16.1
+version 15
 clear matrix
 
 set more off
