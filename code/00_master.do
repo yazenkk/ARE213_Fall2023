@@ -48,7 +48,6 @@ if "`c(username)'" == "rajdevb" {
 }
 
 
-stop
 
 // install programs
 do "$do_loc/code/01_programs.do"
