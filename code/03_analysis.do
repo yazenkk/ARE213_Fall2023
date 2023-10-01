@@ -133,7 +133,7 @@ restore
 
 	
 	* difference in means table: birthweight by mother's smoker status 
-	eststo: reg dbrwt tobacco 
+	eststo: reg dbrwt tobacco , robust
 	esttab using "$do_loc/tables/table2_diffmeans.tex", nostar label  tex  replace  se
 	eststo clear 
 	
@@ -141,7 +141,7 @@ restore
 	tabstat dbrwt, by(cigar6) stats(mean N)
 
 
-* ----------------------------------------------------------------------------- * 
+* ---------------------------------------------------------------------------- * 
 * Question 2b: 
 	
 	
@@ -153,11 +153,10 @@ restore
 						dlivord dmeduc_1 dmeduc_2 dmeduc_3 dgestat /// 
 						dmage dmar ///
 						totord9_2 totord9_3 totord9_4 totord9_5 totord9_6 totord9_7 totord9_8 ///
-						cntocpop_2 cntocpop_3 cntocpop_4  ///
 						csex  /// 
 						isllb10_2 isllb10_3 isllb10_4 isllb10_5 isllb10_6 isllb10_7 isllb10_8 isllb10_9 isllb10_10 ///
 						dplural_1 
-						e
+						
 	// cass (old list)
 // 	global covar_list alcohol mrace3_2 mrace3_3 hisp_moth adequacy cardiac pre4000 ///
 // 					phyper chyper diabetes anemia lung wgain dmeduc dgestat dmage dmar ///
@@ -170,8 +169,8 @@ restore
 * ----------------------------------------------------------------------------- * 
 * Question 3a: Basic, uninteracted linear regression model to estimate impact of smoking  
 
-if `q3' == 1 {
-local num_controls: list sizeof $covar_list
+
+local num_controls: list sizeof covar_list
 di `num_controls'
  
 	* without controls 
@@ -234,9 +233,17 @@ reg dbrwt tobacco $covar_list omaps fmaps cigar6  drink5, robust
 
 
 
-global oaxaca_covar_list alcohol  mrace3_2 mrace3_3 hisp_moth cardiac anemia ///
-						 lung dmar csex pre4000 phyper chyper diabetes   
+global oaxaca_covar_list alcohol mrace3_2 mrace3_3 hisp_moth ///
+						adequacy_2 adequacy_3 ///
+						cardiac pre4000 phyper diabetes anemia lung  ///
+						dlivord dmeduc_1 dmeduc_2 dmeduc_3  /// 
+						dmar ///
+						totord9_2 totord9_3 totord9_4 totord9_5 totord9_6 totord9_7 totord9_8 ///				
+						csex  /// 
+						isllb10_2 isllb10_3 isllb10_4 isllb10_5 isllb10_6 isllb10_7 isllb10_8 isllb10_9 isllb10_10 ///
+						dplural_1 
 
+						
 	* generate variables needed for oaxaca 
 	foreach var of varlist $oaxaca_covar_list {
 	* demean controls 
@@ -249,21 +256,33 @@ global oaxaca_covar_list alcohol  mrace3_2 mrace3_3 hisp_moth cardiac anemia ///
 	* oaxaca estimate via regression 
 	reg dbrwt tobacco $oaxaca_covar_list *demeantobacco, robust 
 	
-	* 	estimating coeff
+	* estimating coeff
 	reg dbrwt tobacco $oaxaca_covar_list if tobacco==1, robust 
 	predict tob1h 
+	predict tob1h_1 if tobacco==1
 	
 	reg dbrwt tobacco $oaxaca_covar_list if tobacco==0, robust 
 	predict tob0h 
+	predict tob0h_1 if tobacco==1
+	
+	foreach var of varlist tob1h tob1h_1 tob0h tob0h_1 { 
+	egen mean_`var' = mean(`var')
+	}
 	
 	* ATE 
 	* oaxaca coefficient by differencing 
-	gen oaxaca_ate = tob1h - tob0h
+	gen oaxaca_ate = mean_tob1h - mean_tob0h
 	di oaxaca_ate
+	
+	* ATT 
+	gen oaxaca_att = mean_tob1h_1 - mean_tob0h_1
+	di oaxaca_att 
+	
+	
 
 * PENDING : add to latex 
 
-}
+
 
 * ============================================================================= *
 * Question 4: PROPENSITY SCORE MATCHING  
