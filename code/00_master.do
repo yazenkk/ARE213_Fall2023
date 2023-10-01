@@ -25,6 +25,8 @@ set linesize 100
 cap log close
 set linesize 225
 
+// See used in lasso step Q5b. 
+global seed_q5b 1234
 
 if "`c(username)'" == "yfkashlan" {
 	

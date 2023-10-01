@@ -44,6 +44,7 @@ local balance_list dbrwt ///
 					dplural_1 
 					
 	
+/* PENDING YK to check; this is not running for RB  
 iebaltab `balance_list', ///
 	grpvar(miss_any) ///
 	rowvarlabels normdiff starsno /// 
@@ -53,7 +54,6 @@ iebaltab `balance_list', ///
 	texnotewidth(1) replace  		
 	
 	
-/* PENDING YK to check; this is not running for RB  
 preserve
 	// adjust footnote width
 	import delimited "$do_loc/tables/table0_balance_miss.tex", clear
@@ -93,6 +93,7 @@ local covar_list 	dbrwt ///
 					dplural_1
 
 		
+/* YK to fix 
 // generate balance table
 iebaltab `covar_list', ///
 	grpvar(tobacco) ///
@@ -105,7 +106,6 @@ iebaltab `covar_list', ///
 	replace normdiff  onerow
 	
 	
-/* YK to fix 
 // adjust footnote width of latex output
 preserve
 	import delimited "$do_loc/tables/table1_balance.tex", clear
@@ -316,7 +316,21 @@ graph export "$do_loc/graphs/phatx_overlap.png", ///
 * Question 4c: 
 
 // Assess balance
-xtile phatx_bins = phatx, nq(10)
+** old binning approach
+// xtile phatx_bins = phatx, nq(10)
+
+** New binning approach. Equal sized bins, not on deciles
+gen phatx_bins = .
+forval i = 1/10 {
+	replace phatx_bins = `i' if `i'/10-1/10 <= phatx & phatx < `i'/10 // omit upper bound
+}
+
+// assert overlap within each bin
+forval i = 1/10 {
+	qui sum tobacco if phatx_bins == `i'
+	assert !inlist(`r(mean)', 0, 1)
+}
+
 
 // Within bins of p(X) compare X among treated and controls
 // run regs controlling for bins so that D is within bin
@@ -392,12 +406,12 @@ forval i = 1/`=colsof(b)' {
 // get ATE and ATT
 local ate = `baseeffect' + round(`ate_numerator'/`w_sum', 0.001)
 local att = `baseeffect' + round(`att_numerator'/`w_t_sum', 0.001)
- 
+
 // display
 dis "ATE: = `ate'"
 dis "ATT: = `att'" // makes sense that ATT > ATE
 
-	
+
 
 * ----------------------------------------------------------------------------- * 
 * Question 4e: 
@@ -424,7 +438,7 @@ egen numerator2 = total((1-tobacco)*dbrwt/(1-phatx))
 egen denom2 	= total((1-tobacco)/(1-phatx))
 gen ate_hat 	= (numerator1/denom1) - (numerator2/denom2)
 sum ate_hat
-// seems to replicate well?
+// replicates well
 
 
 ** ATT -------------------------------------------------------------------------
@@ -439,7 +453,7 @@ gen element1 = _N/element1_temp
 egen element2_temp = total(((tobacco-phatx)* dbrwt)/(1-phatx)) 
 gen element2 = element2_temp/_N
 gen att_hat = element1 * element2
-sum att_hat // -303.50
+sum att_hat //
 
 
 
@@ -459,6 +473,67 @@ regress dbrwt tobacco $covar_list tbco_* [pw=ipw1], noconstant
 
 * ----------------------------------------------------------------------------- * 
 * Question 5b: 
-// TONIGHT 9/30/2023
+
+// interactions
+local covars_to_interact $covar_list
+loc n1 : list sizeof covars_to_interact // for interaction loop
+dis `n1'
+
+local i_ct = 1
+foreach i in `covars_to_interact' {
+	
+	dis "Covar `i'"
+	local j_start = `i_ct' + 1
+	
+	forval j = `j_start'/`n1' {
+		
+		local word_j : word `j' of `covars_to_interact'
+		dis "    `word_j'"
+		
+		// generate combo
+		qui gen `i'_`word_j' = `i' * `word_j'
+		label var `i'_`word_j' "`i' * `word_j'"
+		
+		// collect interactions as list
+		local covars_interact `covars_interact' `i'_`word_j'
+// 		dis "Interaction = `i'_`word_j'"
+// 		pause
+	}
+	local i_ct = `i_ct' + 1
+}
+dis "`covars_interact'"
+
+global covars_lasso $covar_list `covars_interact'
+
+
+** Lasso steps
+set seed $seed_q5b // defined in 00_master.do
+
+// regress Y on X and collect selected covariates
+lasso linear dbrwt $covars_lasso, rseed("$seed_q5b") // linear model
+eststo lasso_logit_y
+global selectedvars_y `e(allvars_sel)'
+dis "Selected vars: `e(allvars_sel)'"
+
+// regress D on X and collect selected covariates
+lasso logit tobacco $covars_lasso, rseed("$seed_q5b") // logit model
+eststo lasso_logit_d
+global selectedvars_d `e(allvars_sel)'
+dis "Selected vars: `e(allvars_sel)'"
+
+
+/* Notes on lasso options:
+- lasso standardizes variables by default. See manual p. 152. (seed in 00_master_ps2.do)
+*/
+
+// Regress Y on D and union of selected covariates from two lasso regs above
+global lasso_covars_union: list global(selectedvars_y) | global(selectedvars_d)
+reg dbrwt tobacco $lasso_covars_union
+
+// ATE 
+
+
+
+
 
 
