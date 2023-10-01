@@ -1,7 +1,4 @@
 
-// squares
-local covar_squares dgestat_sq dmage_sq // from Q3c
-
 // interactions
 local covars_to_interact $covar_list
 loc n1 : list sizeof covars_to_interact // for interaction loop
