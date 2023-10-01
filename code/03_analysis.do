@@ -80,7 +80,6 @@ restore
 use "$dta_loc/data/pset1_clean.dta", clear
 
 local covar_list 	dbrwt ///
-					tobacco ///
 					mrace3_3 ///
 					hisp_moth ///
 					dmeduc_1 dmeduc_2 dmeduc_3  ///
@@ -109,7 +108,7 @@ iebaltab `covar_list', ///
 	tblnonote 	 						/// 
 	replace normdiff  onerow
 	
-	e
+	
 /* YK to fix 
 // adjust footnote width of latex output
 preserve
@@ -134,12 +133,13 @@ restore
 
 	
 	* difference in means table: birthweight by mother's smoker status 
-	reg dbrwt tobacco 
-
-* PENDING: OUTSHEET 
+	eststo: reg dbrwt tobacco 
+	esttab using "$do_loc/tables/table2_diffmeans.tex", nostar label  tex  replace  se
+	eststo clear 
 	
 	* means in birthweight by number of cigars smoked by mother on average 
 	tabstat dbrwt, by(cigar6) stats(mean N)
+
 
 * ----------------------------------------------------------------------------- * 
 * Question 2b: 
@@ -157,7 +157,7 @@ restore
 						csex  /// 
 						isllb10_2 isllb10_3 isllb10_4 isllb10_5 isllb10_6 isllb10_7 isllb10_8 isllb10_9 isllb10_10 ///
 						dplural_1 
-						
+						e
 	// cass (old list)
 // 	global covar_list alcohol mrace3_2 mrace3_3 hisp_moth adequacy cardiac pre4000 ///
 // 					phyper chyper diabetes anemia lung wgain dmeduc dgestat dmage dmar ///
