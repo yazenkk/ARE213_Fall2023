@@ -344,7 +344,20 @@ tab tobacco, sum(phatx)
 // sort $covar_list // browse predictions with covariate cells
 // br $covar_list phatx
 
-// PENDING: PRINT LOGIT
+esttab using "$do_loc/tables/table_4a.tex",   			///
+	style(tex)											///
+	nogaps												///
+	nobaselevels 										///
+	noconstant											///
+	label            									///
+	varwidth(50)										///
+	wrap 												///
+	cells (b(fmt(2)) se(fmt(2) par))					///
+	stats(N, 											///
+		  fmt(%9.0f)									///
+		  labels("Observations")) 	///
+	eqlabel(none) ///
+	replace
 
 * ----------------------------------------------------------------------------- * 
 * Question 4b: testing overlap
@@ -386,6 +399,7 @@ forval i = 1/10 {
 	
 // Within bins of p(X) compare X among treated and controls
 // run regs controlling for bins so that D is within bin
+/* YK to fix
 iebaltab $covar_list, ///
 	grpvar(tobacco) ///
 	fixedeffect(phatx_bins) ///
@@ -397,7 +411,6 @@ iebaltab $covar_list, ///
 	texnotewidth(1) 		///	
 	replace  
 	
-/* YK to fix
 preserve
 	// adjust footnote width
 	import delimited "$do_loc/tables/table4_balance_pbins.tex", clear
@@ -457,8 +470,8 @@ forval i = 1/`=colsof(b)' {
 }
 
 // get ATE and ATT
-local ate_block = `baseeffect' + round(`ate_numerator'/`w_sum', 0.001)
-local att_block = `baseeffect' + round(`att_numerator'/`w_t_sum', 0.001)
+local ate_block = round(`baseeffect' + `ate_numerator'/`w_sum', 0.01)
+local att_block = round(`baseeffect' + `att_numerator'/`w_t_sum', 0.01)
 
 // display
 dis "ATE: = `ate_block'"
@@ -490,7 +503,7 @@ egen numerator2 = total((1-tobacco)*dbrwt/(1-phatx))
 egen denom2 	= total((1-tobacco)/(1-phatx))
 gen ate_hat 	= (numerator1/denom1) - (numerator2/denom2)
 sum ate_hat
-local ate_ipw `r(mean)'
+local ate_ipw = round(`r(mean)', 0.01)
 // replicates well
 
 
@@ -507,7 +520,7 @@ egen element2_temp = total(((tobacco-phatx)* dbrwt)/(1-phatx))
 gen element2 = element2_temp/_N
 gen att_hat = element1 * element2
 sum att_hat //
-local att_ipw `r(mean)'
+local att_ipw = round(`r(mean)', 0.01)
 
 
 
@@ -524,6 +537,7 @@ local att_ipw `r(mean)'
 		file write fh "\begin{tabular}{lcc}" _n
 		file write fh "\hline\hline" _n
 		file write fh "Estimation method & ATE & ATT \\ [0.5ex]" _n
+		file write fh "\hline" _n
 		file write fh "Blocking & `ate_block' & `att_block' \\ " _n
 		file write fh "IPW 		& `ate_ipw'   & `att_ipw' \\ " _n
 		file write fh "\hline\hline" _n		
