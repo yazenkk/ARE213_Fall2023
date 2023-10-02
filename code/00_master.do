@@ -14,6 +14,9 @@ Date created: 9/24/2024
 * Set initial configurations and globals
 * ============================================================================= *
 
+log using "$do_loc/pset1_logfile.smcl", replace smcl
+
+
 clear all
 version 15
 clear matrix
@@ -48,7 +51,6 @@ if "`c(username)'" == "rajdevb" {
 }
 
 
-
 // install programs
 do "$do_loc/code/01_programs.do"
 
@@ -58,5 +60,7 @@ do "$do_loc/code/02_clean.do"
 // analyze
 do "$do_loc/code/03_analysis.do"
 
+log close
+translate "$do_loc/pset1_logfile.smcl" "$do_loc/pset1_logfile.pdf"
 
 

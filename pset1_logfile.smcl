@@ -1,0 +1,1120 @@
+{smcl}
+{txt}{sf}{ul off}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}//Client/C$/Users/yfkas/OneDrive/Documents/GitHub/ARE213_Fall2023/pset1_logfile.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res} 2 Oct 2023, 10:14:44
+{txt}
+{com}. 
+. // install programs
+. do "$do_loc/code/01_programs.do"
+{txt}
+{com}. /*
+> Programs to be installed
+> 
+> */
+. 
+. 
+. 
+. local net_program_list ietoolkit // for iebaltab
+{txt}
+{com}. 
+. foreach program in `net_program_list' {c -(}
+{txt}  2{com}.     net install `program', from ("http://fmwww.bc.edu/RePEc/bocode/i")
+{txt}  3{com}. {c )-}
+checking {hilite:ietoolkit} consistency and verifying not already installed...
+all files already exist and are up to date.
+{txt}
+{com}. 
+. 
+. 
+. // ssc install heatplot
+. // ssc install palettes, replace
+. // ssc install colrspace, replace
+. ssc install dmout
+{txt}checking {hilite:dmout} consistency and verifying not already installed...
+all files already exist and are up to date.
+
+{com}. ssc install oaxaca
+{txt}checking {hilite:oaxaca} consistency and verifying not already installed...
+all files already exist and are up to date.
+
+{com}. 
+. do "$do_loc/code/my_programs/fix_import.do"
+{txt}
+{com}. // This program stacks latex file into single column after tex file is 
+. // read in using import delimited
+. 
+. capture prog drop fix_import 
+{txt}
+{com}. prog define fix_import
+{txt}  1{com}. 
+.                 // but first change numerics to strings
+.                 quietly ds, not(type string)
+{txt}  2{com}.                 foreach var in `r(varlist)' {c -(}
+{txt}  3{com}.                         tostring `var', replace
+{txt}  4{com}.                         // clear out missings
+.                         replace `var' = "" if `var' == "." 
+{txt}  5{com}.                 {c )-}
+{txt}  6{com}.                 
+.                 quietly ds
+{txt}  7{com}.                 local var_count : word count `r(varlist)'
+{txt}  8{com}.                 qui gen text = v1
+{txt}  9{com}.                 forval i = 2/`var_count' {c -(}
+{txt} 10{com}.                         replace text = text + "," + v`i' if v`i' != "" 
+{txt} 11{com}.                 {c )-}
+{txt} 12{com}.                 keep text
+{txt} 13{com}. end
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. 
+. 
+{txt}end of do-file
+
+{com}. 
+. // clean
+. do "$do_loc/code/02_clean.do"
+{txt}
+{com}. * ============================================================================= *
+. *                                                       ARE 213: Problem set 1
+. *                       Group members: Rajdev Brar, Yazen Kashlan, Cassandra Turk 
+. * ============================================================================= *
+. /*
+> 
+>         Title:          are213_pset1.do
+> 
+>         Outline:
+> 
+>         Input:          pset1.dta
+> 
+>         Output:         pset1_cleaned.dta
+> 
+>         Modified:       Rajdev Brar on 23 Sep 2023
+> 
+> */
+. * ============================================================================= *
+. 
+. 
+. use "$dta_loc/data/pset1", clear
+{txt}
+{com}. 
+. 
+. * ============================================================================= *
+. * Question 1 (a-b)
+. * ============================================================================= 
+. 
+.         // label values
+.         label define yesno                               0 "No"                 1 "Yes"
+{txt}
+{com}.         label define tobacco_lab                 0 "Non-smoker" 1 "Smoker"
+{txt}
+{com}.         label values tobacco tobacco_lab
+{txt}
+{com}. 
+. 
+. ** Q1.a Fix missing values -----------------------------------------------------
+. * We are told and can confirm that all variables except for cardiac - wgain are without unassigned missing values.
+. 
+.         * check missing values for vars: cardiac lung diabetes herpes chyper phyper pre4000 preterm tobacco cigar6 alcohol drink5 wgain
+.         tab1 cardiac lung diabetes herpes chyper phyper pre4000 preterm tobacco cigar6 alcohol drink5 wgain, m 
+
+{res}-> tabulation of cardiac  
+
+    {txt}cardiac {c |}
+    disease {c |}
+     mother {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      1,186        0.73        0.73
+{txt}          2 {c |}{res}    160,224       99.21       99.95
+{txt}          9 {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of lung  
+
+   {txt}acute or {c |}
+    chronic {c |}
+       lung {c |}
+    disease {c |}
+     mother {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      1,336        0.83        0.83
+{txt}          2 {c |}{res}    160,074       99.12       99.95
+{txt}          9 {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of diabetes  
+
+   {txt}diabetes {c |}
+     mother {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      4,147        2.57        2.57
+{txt}          2 {c |}{res}    157,263       97.38       99.95
+{txt}          9 {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of herpes  
+
+    {txt}genital {c |}
+     herpes {c |}
+     mother {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      1,032        0.64        0.64
+{txt}          2 {c |}{res}    160,372       99.31       99.94
+{txt}          8 {c |}{res}          6        0.00       99.95
+{txt}          9 {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of chyper  
+
+    {txt}chronic {c |}
+hypertensio {c |}
+          n {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      1,308        0.81        0.81
+{txt}          2 {c |}{res}    160,102       99.14       99.95
+{txt}          9 {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of phyper  
+
+  {txt}pregnancy {c |}
+    related {c |}
+hypertensio {c |}
+          n {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      4,929        3.05        3.05
+{txt}          2 {c |}{res}    156,481       96.90       99.95
+{txt}          9 {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of pre4000  
+
+   {txt}previous {c |}
+infant 4000 {c |}
+    or more {c |}
+      grams {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      2,176        1.35        1.35
+{txt}          2 {c |}{res}    159,234       98.60       99.95
+{txt}          9 {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of preterm  
+
+   {txt}previous {c |}
+    preterm {c |}
+     infant {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      2,626        1.63        1.63
+{txt}          2 {c |}{res}    158,784       98.32       99.95
+{txt}          9 {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of tobacco  
+
+{txt}tobacco use {c |}
+     during {c |}
+  pregnancy {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+     Smoker {c |}{res}     31,977       19.80       19.80
+{txt}          2 {c |}{res}    129,285       80.06       99.86
+{txt}          9 {c |}{res}        231        0.14      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of cigar6  
+
+    {txt}average {c |}
+  number of {c |}
+ cigarettes {c |}
+    per day {c |}
+     recode {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}    129,285       80.06       80.06
+{txt}          1 {c |}{res}      6,706        4.15       84.21
+{txt}          2 {c |}{res}     12,920        8.00       92.21
+{txt}          3 {c |}{res}      9,269        5.74       97.95
+{txt}          4 {c |}{res}      1,330        0.82       98.77
+{txt}          5 {c |}{res}         59        0.04       98.81
+{txt}          6 {c |}{res}      1,924        1.19      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of alcohol  
+
+{txt}alcohol use {c |}
+     during {c |}
+  pregnancy {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      5,074        3.14        3.14
+{txt}          2 {c |}{res}    156,129       96.68       99.82
+{txt}          9 {c |}{res}        290        0.18      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of drink5  
+
+    {txt}average {c |}
+  number of {c |}
+     drinks {c |}
+     recode {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}    156,129       96.68       96.68
+{txt}          1 {c |}{res}        749        0.46       97.14
+{txt}          2 {c |}{res}        504        0.31       97.45
+{txt}          3 {c |}{res}        336        0.21       97.66
+{txt}          4 {c |}{res}        489        0.30       97.97
+{txt}          5 {c |}{res}      3,286        2.03      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of wgain  
+
+{txt}weight gain {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}      1,332        0.82        0.82
+{txt}          1 {c |}{res}        164        0.10        0.93
+{txt}          2 {c |}{res}        277        0.17        1.10
+{txt}          3 {c |}{res}        273        0.17        1.27
+{txt}          4 {c |}{res}        375        0.23        1.50
+{txt}          5 {c |}{res}        591        0.37        1.87
+{txt}          6 {c |}{res}        542        0.34        2.20
+{txt}          7 {c |}{res}        525        0.33        2.53
+{txt}          8 {c |}{res}        672        0.42        2.94
+{txt}          9 {c |}{res}        611        0.38        3.32
+{txt}         10 {c |}{res}      2,164        1.34        4.66
+{txt}         11 {c |}{res}        864        0.54        5.20
+{txt}         12 {c |}{res}      1,398        0.87        6.06
+{txt}         13 {c |}{res}      1,171        0.73        6.79
+{txt}         14 {c |}{res}      1,410        0.87        7.66
+{txt}         15 {c |}{res}      3,285        2.03        9.69
+{txt}         16 {c |}{res}      1,720        1.07       10.76
+{txt}         17 {c |}{res}      1,794        1.11       11.87
+{txt}         18 {c |}{res}      2,555        1.58       13.45
+{txt}         19 {c |}{res}      1,791        1.11       14.56
+{txt}         20 {c |}{res}      9,178        5.68       20.24
+{txt}         21 {c |}{res}      2,707        1.68       21.92
+{txt}         22 {c |}{res}      3,942        2.44       24.36
+{txt}         23 {c |}{res}      3,411        2.11       26.47
+{txt}         24 {c |}{res}      3,704        2.29       28.77
+{txt}         25 {c |}{res}     10,689        6.62       35.39
+{txt}         26 {c |}{res}      4,129        2.56       37.94
+{txt}         27 {c |}{res}      4,004        2.48       40.42
+{txt}         28 {c |}{res}      4,968        3.08       43.50
+{txt}         29 {c |}{res}      2,897        1.79       45.29
+{txt}         30 {c |}{res}     16,204       10.03       55.33
+{txt}         31 {c |}{res}      2,972        1.84       57.17
+{txt}         32 {c |}{res}      4,827        2.99       60.15
+{txt}         33 {c |}{res}      3,317        2.05       62.21
+{txt}         34 {c |}{res}      3,129        1.94       64.15
+{txt}         35 {c |}{res}      8,401        5.20       69.35
+{txt}         36 {c |}{res}      2,881        1.78       71.13
+{txt}         37 {c |}{res}      2,536        1.57       72.70
+{txt}         38 {c |}{res}      2,882        1.78       74.49
+{txt}         39 {c |}{res}      1,613        1.00       75.49
+{txt}         40 {c |}{res}      8,911        5.52       81.00
+{txt}         41 {c |}{res}      1,467        0.91       81.91
+{txt}         42 {c |}{res}      1,960        1.21       83.13
+{txt}         43 {c |}{res}      1,558        0.96       84.09
+{txt}         44 {c |}{res}      1,188        0.74       84.83
+{txt}         45 {c |}{res}      3,332        2.06       86.89
+{txt}         46 {c |}{res}      1,095        0.68       87.57
+{txt}         47 {c |}{res}        918        0.57       88.14
+{txt}         48 {c |}{res}        938        0.58       88.72
+{txt}         49 {c |}{res}        514        0.32       89.04
+{txt}         50 {c |}{res}      3,590        2.22       91.26
+{txt}         51 {c |}{res}        464        0.29       91.55
+{txt}         52 {c |}{res}        615        0.38       91.93
+{txt}         53 {c |}{res}        506        0.31       92.24
+{txt}         54 {c |}{res}        438        0.27       92.51
+{txt}         55 {c |}{res}        891        0.55       93.06
+{txt}         56 {c |}{res}        308        0.19       93.25
+{txt}         57 {c |}{res}        280        0.17       93.43
+{txt}         58 {c |}{res}        276        0.17       93.60
+{txt}         59 {c |}{res}        169        0.10       93.70
+{txt}         60 {c |}{res}      1,160        0.72       94.42
+{txt}         61 {c |}{res}        137        0.08       94.51
+{txt}         62 {c |}{res}        175        0.11       94.61
+{txt}         63 {c |}{res}        155        0.10       94.71
+{txt}         64 {c |}{res}        131        0.08       94.79
+{txt}         65 {c |}{res}        331        0.20       95.00
+{txt}         66 {c |}{res}         97        0.06       95.06
+{txt}         67 {c |}{res}         74        0.05       95.10
+{txt}         68 {c |}{res}         93        0.06       95.16
+{txt}         69 {c |}{res}         46        0.03       95.19
+{txt}         70 {c |}{res}        340        0.21       95.40
+{txt}         71 {c |}{res}         39        0.02       95.42
+{txt}         72 {c |}{res}         49        0.03       95.45
+{txt}         73 {c |}{res}         40        0.02       95.48
+{txt}         74 {c |}{res}         42        0.03       95.50
+{txt}         75 {c |}{res}         99        0.06       95.57
+{txt}         76 {c |}{res}         28        0.02       95.58
+{txt}         77 {c |}{res}         23        0.01       95.60
+{txt}         78 {c |}{res}         24        0.01       95.61
+{txt}         79 {c |}{res}         15        0.01       95.62
+{txt}         80 {c |}{res}        108        0.07       95.69
+{txt}         81 {c |}{res}         14        0.01       95.70
+{txt}         82 {c |}{res}         11        0.01       95.70
+{txt}         83 {c |}{res}          7        0.00       95.71
+{txt}         84 {c |}{res}         11        0.01       95.71
+{txt}         85 {c |}{res}         28        0.02       95.73
+{txt}         87 {c |}{res}          5        0.00       95.73
+{txt}         88 {c |}{res}          8        0.00       95.74
+{txt}         89 {c |}{res}          5        0.00       95.74
+{txt}         90 {c |}{res}         23        0.01       95.76
+{txt}         91 {c |}{res}          2        0.00       95.76
+{txt}         92 {c |}{res}          3        0.00       95.76
+{txt}         93 {c |}{res}          5        0.00       95.76
+{txt}         94 {c |}{res}          2        0.00       95.76
+{txt}         95 {c |}{res}          2        0.00       95.77
+{txt}         96 {c |}{res}          5        0.00       95.77
+{txt}         97 {c |}{res}          1        0.00       95.77
+{txt}         98 {c |}{res}         57        0.04       95.80
+{txt}         99 {c |}{res}      6,775        4.20      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+{txt}
+{com}.                 
+. 
+.         // From the original codebook: unknown or not stated
+.         // 99: wgain
+.         // 5: drink5
+.         // 9: alcohol tobacco preterm pre4000 phyper chyper herpes diabetes lung cardiac
+.         // 6: cigar6
+.         recode wgain (99=.m)
+{txt}(wgain: 6775 changes made)
+
+{com}.         recode drink5 (5=.m)
+{txt}(drink5: 3286 changes made)
+
+{com}.         recode cigar6 (6=.m)
+{txt}(cigar6: 1924 changes made)
+
+{com}.         recode alcohol tobacco preterm pre4000 phyper chyper herpes diabetes lung cardiac (9=.m)
+{txt}(alcohol: 290 changes made)
+(tobacco: 231 changes made)
+(preterm: 83 changes made)
+(pre4000: 83 changes made)
+(phyper: 83 changes made)
+(chyper: 83 changes made)
+(herpes: 83 changes made)
+(diabetes: 83 changes made)
+(lung: 83 changes made)
+(cardiac: 83 changes made)
+
+{com}. 
+.         // From the codebook: other unknowns
+.         // 8: herpes
+.         recode herpes (8=.d)
+{txt}(herpes: 6 changes made)
+
+{com}. 
+. 
+.         * check tabulations to see missing values have been recoded 
+.         tab1 cardiac lung diabetes herpes chyper phyper pre4000 preterm tobacco cigar6 alcohol drink5 wgain, m
+
+{res}-> tabulation of cardiac  
+
+    {txt}cardiac {c |}
+    disease {c |}
+     mother {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      1,186        0.73        0.73
+{txt}          2 {c |}{res}    160,224       99.21       99.95
+{txt}         .m {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of lung  
+
+   {txt}acute or {c |}
+    chronic {c |}
+       lung {c |}
+    disease {c |}
+     mother {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      1,336        0.83        0.83
+{txt}          2 {c |}{res}    160,074       99.12       99.95
+{txt}         .m {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of diabetes  
+
+   {txt}diabetes {c |}
+     mother {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      4,147        2.57        2.57
+{txt}          2 {c |}{res}    157,263       97.38       99.95
+{txt}         .m {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of herpes  
+
+    {txt}genital {c |}
+     herpes {c |}
+     mother {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      1,032        0.64        0.64
+{txt}          2 {c |}{res}    160,372       99.31       99.94
+{txt}         .d {c |}{res}          6        0.00       99.95
+{txt}         .m {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of chyper  
+
+    {txt}chronic {c |}
+hypertensio {c |}
+          n {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      1,308        0.81        0.81
+{txt}          2 {c |}{res}    160,102       99.14       99.95
+{txt}         .m {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of phyper  
+
+  {txt}pregnancy {c |}
+    related {c |}
+hypertensio {c |}
+          n {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      4,929        3.05        3.05
+{txt}          2 {c |}{res}    156,481       96.90       99.95
+{txt}         .m {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of pre4000  
+
+   {txt}previous {c |}
+infant 4000 {c |}
+    or more {c |}
+      grams {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      2,176        1.35        1.35
+{txt}          2 {c |}{res}    159,234       98.60       99.95
+{txt}         .m {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of preterm  
+
+   {txt}previous {c |}
+    preterm {c |}
+     infant {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      2,626        1.63        1.63
+{txt}          2 {c |}{res}    158,784       98.32       99.95
+{txt}         .m {c |}{res}         83        0.05      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of tobacco  
+
+{txt}tobacco use {c |}
+     during {c |}
+  pregnancy {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+     Smoker {c |}{res}     31,977       19.80       19.80
+{txt}          2 {c |}{res}    129,285       80.06       99.86
+{txt}         .m {c |}{res}        231        0.14      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of cigar6  
+
+    {txt}average {c |}
+  number of {c |}
+ cigarettes {c |}
+    per day {c |}
+     recode {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}    129,285       80.06       80.06
+{txt}          1 {c |}{res}      6,706        4.15       84.21
+{txt}          2 {c |}{res}     12,920        8.00       92.21
+{txt}          3 {c |}{res}      9,269        5.74       97.95
+{txt}          4 {c |}{res}      1,330        0.82       98.77
+{txt}          5 {c |}{res}         59        0.04       98.81
+{txt}         .m {c |}{res}      1,924        1.19      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of alcohol  
+
+{txt}alcohol use {c |}
+     during {c |}
+  pregnancy {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}      5,074        3.14        3.14
+{txt}          2 {c |}{res}    156,129       96.68       99.82
+{txt}         .m {c |}{res}        290        0.18      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of drink5  
+
+    {txt}average {c |}
+  number of {c |}
+     drinks {c |}
+     recode {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}    156,129       96.68       96.68
+{txt}          1 {c |}{res}        749        0.46       97.14
+{txt}          2 {c |}{res}        504        0.31       97.45
+{txt}          3 {c |}{res}        336        0.21       97.66
+{txt}          4 {c |}{res}        489        0.30       97.97
+{txt}         .m {c |}{res}      3,286        2.03      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+
+-> tabulation of wgain  
+
+{txt}weight gain {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}      1,332        0.82        0.82
+{txt}          1 {c |}{res}        164        0.10        0.93
+{txt}          2 {c |}{res}        277        0.17        1.10
+{txt}          3 {c |}{res}        273        0.17        1.27
+{txt}          4 {c |}{res}        375        0.23        1.50
+{txt}          5 {c |}{res}        591        0.37        1.87
+{txt}          6 {c |}{res}        542        0.34        2.20
+{txt}          7 {c |}{res}        525        0.33        2.53
+{txt}          8 {c |}{res}        672        0.42        2.94
+{txt}          9 {c |}{res}        611        0.38        3.32
+{txt}         10 {c |}{res}      2,164        1.34        4.66
+{txt}         11 {c |}{res}        864        0.54        5.20
+{txt}         12 {c |}{res}      1,398        0.87        6.06
+{txt}         13 {c |}{res}      1,171        0.73        6.79
+{txt}         14 {c |}{res}      1,410        0.87        7.66
+{txt}         15 {c |}{res}      3,285        2.03        9.69
+{txt}         16 {c |}{res}      1,720        1.07       10.76
+{txt}         17 {c |}{res}      1,794        1.11       11.87
+{txt}         18 {c |}{res}      2,555        1.58       13.45
+{txt}         19 {c |}{res}      1,791        1.11       14.56
+{txt}         20 {c |}{res}      9,178        5.68       20.24
+{txt}         21 {c |}{res}      2,707        1.68       21.92
+{txt}         22 {c |}{res}      3,942        2.44       24.36
+{txt}         23 {c |}{res}      3,411        2.11       26.47
+{txt}         24 {c |}{res}      3,704        2.29       28.77
+{txt}         25 {c |}{res}     10,689        6.62       35.39
+{txt}         26 {c |}{res}      4,129        2.56       37.94
+{txt}         27 {c |}{res}      4,004        2.48       40.42
+{txt}         28 {c |}{res}      4,968        3.08       43.50
+{txt}         29 {c |}{res}      2,897        1.79       45.29
+{txt}         30 {c |}{res}     16,204       10.03       55.33
+{txt}         31 {c |}{res}      2,972        1.84       57.17
+{txt}         32 {c |}{res}      4,827        2.99       60.15
+{txt}         33 {c |}{res}      3,317        2.05       62.21
+{txt}         34 {c |}{res}      3,129        1.94       64.15
+{txt}         35 {c |}{res}      8,401        5.20       69.35
+{txt}         36 {c |}{res}      2,881        1.78       71.13
+{txt}         37 {c |}{res}      2,536        1.57       72.70
+{txt}         38 {c |}{res}      2,882        1.78       74.49
+{txt}         39 {c |}{res}      1,613        1.00       75.49
+{txt}         40 {c |}{res}      8,911        5.52       81.00
+{txt}         41 {c |}{res}      1,467        0.91       81.91
+{txt}         42 {c |}{res}      1,960        1.21       83.13
+{txt}         43 {c |}{res}      1,558        0.96       84.09
+{txt}         44 {c |}{res}      1,188        0.74       84.83
+{txt}         45 {c |}{res}      3,332        2.06       86.89
+{txt}         46 {c |}{res}      1,095        0.68       87.57
+{txt}         47 {c |}{res}        918        0.57       88.14
+{txt}         48 {c |}{res}        938        0.58       88.72
+{txt}         49 {c |}{res}        514        0.32       89.04
+{txt}         50 {c |}{res}      3,590        2.22       91.26
+{txt}         51 {c |}{res}        464        0.29       91.55
+{txt}         52 {c |}{res}        615        0.38       91.93
+{txt}         53 {c |}{res}        506        0.31       92.24
+{txt}         54 {c |}{res}        438        0.27       92.51
+{txt}         55 {c |}{res}        891        0.55       93.06
+{txt}         56 {c |}{res}        308        0.19       93.25
+{txt}         57 {c |}{res}        280        0.17       93.43
+{txt}         58 {c |}{res}        276        0.17       93.60
+{txt}         59 {c |}{res}        169        0.10       93.70
+{txt}         60 {c |}{res}      1,160        0.72       94.42
+{txt}         61 {c |}{res}        137        0.08       94.51
+{txt}         62 {c |}{res}        175        0.11       94.61
+{txt}         63 {c |}{res}        155        0.10       94.71
+{txt}         64 {c |}{res}        131        0.08       94.79
+{txt}         65 {c |}{res}        331        0.20       95.00
+{txt}         66 {c |}{res}         97        0.06       95.06
+{txt}         67 {c |}{res}         74        0.05       95.10
+{txt}         68 {c |}{res}         93        0.06       95.16
+{txt}         69 {c |}{res}         46        0.03       95.19
+{txt}         70 {c |}{res}        340        0.21       95.40
+{txt}         71 {c |}{res}         39        0.02       95.42
+{txt}         72 {c |}{res}         49        0.03       95.45
+{txt}         73 {c |}{res}         40        0.02       95.48
+{txt}         74 {c |}{res}         42        0.03       95.50
+{txt}         75 {c |}{res}         99        0.06       95.57
+{txt}         76 {c |}{res}         28        0.02       95.58
+{txt}         77 {c |}{res}         23        0.01       95.60
+{txt}         78 {c |}{res}         24        0.01       95.61
+{txt}         79 {c |}{res}         15        0.01       95.62
+{txt}         80 {c |}{res}        108        0.07       95.69
+{txt}         81 {c |}{res}         14        0.01       95.70
+{txt}         82 {c |}{res}         11        0.01       95.70
+{txt}         83 {c |}{res}          7        0.00       95.71
+{txt}         84 {c |}{res}         11        0.01       95.71
+{txt}         85 {c |}{res}         28        0.02       95.73
+{txt}         87 {c |}{res}          5        0.00       95.73
+{txt}         88 {c |}{res}          8        0.00       95.74
+{txt}         89 {c |}{res}          5        0.00       95.74
+{txt}         90 {c |}{res}         23        0.01       95.76
+{txt}         91 {c |}{res}          2        0.00       95.76
+{txt}         92 {c |}{res}          3        0.00       95.76
+{txt}         93 {c |}{res}          5        0.00       95.76
+{txt}         94 {c |}{res}          2        0.00       95.76
+{txt}         95 {c |}{res}          2        0.00       95.77
+{txt}         96 {c |}{res}          5        0.00       95.77
+{txt}         97 {c |}{res}          1        0.00       95.77
+{txt}         98 {c |}{res}         57        0.04       95.80
+{txt}         .m {c |}{res}      6,775        4.20      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+{txt}
+{com}. 
+.         
+. ** Q1.b Recode indicators ------------------------------------------------------
+. // From code book: indicators with 1 = yes, 2 = no 
+. 
+.         // recode indicators 
+.         ds dmar rectype pldel3 csex anemia - tobacco alcohol
+{txt}{col 1}dmar{col 11}rectype{col 21}pldel3{col 31}csex{col 41}anemia{col 51}cardiac{col 61}lung{col 71}diabetes{col 81}herpes{col 91}chyper{col 101}phyper{col 111}pre4000{col 121}preterm{col 131}tobacco{col 141}alcohol
+
+{com}.         recode `r(varlist)' (2=0)
+{txt}(dmar: 51893 changes made)
+(rectype: 41672 changes made)
+(pldel3: 3208 changes made)
+(csex: 78615 changes made)
+(anemia: 159610 changes made)
+(cardiac: 160224 changes made)
+(lung: 160074 changes made)
+(diabetes: 157263 changes made)
+(herpes: 160372 changes made)
+(chyper: 160102 changes made)
+(phyper: 156481 changes made)
+(pre4000: 159234 changes made)
+(preterm: 158784 changes made)
+(tobacco: 129285 changes made)
+(alcohol: 156129 changes made)
+
+{com}. 
+.         // relabel vague indicators
+.         label var dmar          "Mother: married (yes=1)"
+{txt}
+{com}.         label var rectype       "Resident in state and county of occurance (yes=1)"
+{txt}
+{com}.         label var pldel3        "Born in hospital (yes=1)"
+{txt}
+{com}.         label var csex          "Male (yes=1)"
+{txt}
+{com}. 
+. 
+.         // Recode mrace3 as a set of indicator variables
+.         assert !missing(mrace3) // no missing values
+{txt}
+{com}.         tab mrace3, gen(mrace3_)
+
+    {txt}race of {c |}
+     mother {c |}
+     recode {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}    133,608       82.73       82.73
+{txt}          2 {c |}{res}      3,354        2.08       84.81
+{txt}          3 {c |}{res}     24,531       15.19      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+{txt}
+{com}.         drop mrace3
+{txt}
+{com}.         label var mrace3_1 "Mother race: White (yes=1)"
+{txt}
+{com}.         label var mrace3_2 "Mother race: Other (yes=1)"
+{txt}
+{com}.         label var mrace3_3 "Mother race: Black (yes=1)"
+{txt}
+{com}. 
+. 
+.         // Coarsen ormoth and orfath into indicator variables
+.         tab ormoth 
+
+   {txt}hispanic {c |}
+  origin of {c |}
+     mother {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}    154,987       96.09       96.09
+{txt}          1 {c |}{res}        587        0.36       96.45
+{txt}          2 {c |}{res}      4,098        2.54       98.99
+{txt}          3 {c |}{res}         99        0.06       99.05
+{txt}          4 {c |}{res}        630        0.39       99.44
+{txt}          5 {c |}{res}        898        0.56      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,299      100.00
+{txt}
+{com}.         gen     hisp_moth = ormoth 
+{txt}(194 missing values generated)
+
+{com}.         replace hisp_moth = 1 if ormoth > 0 & !missing(ormoth)
+{txt}(5,725 real changes made)
+
+{com}.         lab var hisp_moth "Mother race: Hispanic (yes=1)"
+{txt}
+{com}. 
+.         tab orfath
+
+   {txt}hispanic {c |}
+  origin of {c |}
+     father {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}    151,361       95.84       95.84
+{txt}          1 {c |}{res}        774        0.49       96.33
+{txt}          2 {c |}{res}      4,092        2.59       98.92
+{txt}          3 {c |}{res}        117        0.07       98.99
+{txt}          4 {c |}{res}        734        0.46       99.46
+{txt}          5 {c |}{res}        854        0.54      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    157,932      100.00
+{txt}
+{com}.         gen     hisp_fath = orfath 
+{txt}(3,561 missing values generated)
+
+{com}.         replace hisp_fath = 1 if orfath > 0 & !missing(orfath)
+{txt}(5,797 real changes made)
+
+{com}.         lab var hisp_fath "Father race: Hispanic (yes=1)"
+{txt}
+{com}. 
+.         drop ormoth orfath
+{txt}
+{com}. 
+.         // For simplicity, drop stresfip, birmon, and weekday.
+.         tab stresfip 
+
+   {txt}state of {c |}
+  residence {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}         28        0.02        0.02
+{txt}          1 {c |}{res}          1        0.00        0.02
+{txt}          4 {c |}{res}          3        0.00        0.02
+{txt}          6 {c |}{res}         23        0.01        0.03
+{txt}          8 {c |}{res}          3        0.00        0.04
+{txt}          9 {c |}{res}          6        0.00        0.04
+{txt}         10 {c |}{res}        289        0.18        0.22
+{txt}         11 {c |}{res}          2        0.00        0.22
+{txt}         12 {c |}{res}         40        0.02        0.24
+{txt}         13 {c |}{res}         11        0.01        0.25
+{txt}         17 {c |}{res}          8        0.00        0.26
+{txt}         19 {c |}{res}          2        0.00        0.26
+{txt}         21 {c |}{res}          7        0.00        0.26
+{txt}         22 {c |}{res}          1        0.00        0.26
+{txt}         23 {c |}{res}          1        0.00        0.26
+{txt}         24 {c |}{res}        358        0.22        0.48
+{txt}         25 {c |}{res}          8        0.00        0.49
+{txt}         26 {c |}{res}          5        0.00        0.49
+{txt}         27 {c |}{res}          2        0.00        0.49
+{txt}         28 {c |}{res}          1        0.00        0.49
+{txt}         29 {c |}{res}          2        0.00        0.50
+{txt}         30 {c |}{res}          1        0.00        0.50
+{txt}         31 {c |}{res}          1        0.00        0.50
+{txt}         32 {c |}{res}          1        0.00        0.50
+{txt}         33 {c |}{res}          1        0.00        0.50
+{txt}         34 {c |}{res}      2,277        1.41        1.91
+{txt}         36 {c |}{res}        739        0.46        2.37
+{txt}         37 {c |}{res}         18        0.01        2.38
+{txt}         38 {c |}{res}          1        0.00        2.38
+{txt}         39 {c |}{res}        417        0.26        2.64
+{txt}         40 {c |}{res}          3        0.00        2.64
+{txt}         41 {c |}{res}          1        0.00        2.64
+{txt}         42 {c |}{res}    157,075       97.26       99.90
+{txt}         44 {c |}{res}          1        0.00       99.90
+{txt}         45 {c |}{res}          7        0.00       99.91
+{txt}         46 {c |}{res}          1        0.00       99.91
+{txt}         47 {c |}{res}          7        0.00       99.91
+{txt}         48 {c |}{res}          6        0.00       99.92
+{txt}         51 {c |}{res}         27        0.02       99.93
+{txt}         53 {c |}{res}          5        0.00       99.94
+{txt}         54 {c |}{res}         99        0.06      100.00
+{txt}         55 {c |}{res}          4        0.00      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+{txt}
+{com}.         tab birmon 
+
+   {txt}month of {c |}
+      birth {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}     13,417        8.31        8.31
+{txt}          2 {c |}{res}     12,422        7.69       16.00
+{txt}          3 {c |}{res}     13,981        8.66       24.66
+{txt}          4 {c |}{res}     13,589        8.41       33.07
+{txt}          5 {c |}{res}     13,928        8.62       41.70
+{txt}          6 {c |}{res}     13,314        8.24       49.94
+{txt}          7 {c |}{res}     14,191        8.79       58.73
+{txt}          8 {c |}{res}     14,083        8.72       67.45
+{txt}          9 {c |}{res}     13,968        8.65       76.10
+{txt}         10 {c |}{res}     13,308        8.24       84.34
+{txt}         11 {c |}{res}     12,411        7.69       92.02
+{txt}         12 {c |}{res}     12,881        7.98      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+{txt}
+{com}.         tab weekday
+
+{txt}day of week {c |}
+ child born {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}     17,737       10.98       10.98
+{txt}          2 {c |}{res}     23,163       14.34       25.33
+{txt}          3 {c |}{res}     25,511       15.80       41.12
+{txt}          4 {c |}{res}     25,370       15.71       56.83
+{txt}          5 {c |}{res}     25,136       15.56       72.40
+{txt}          6 {c |}{res}     25,518       15.80       88.20
+{txt}          7 {c |}{res}     19,058       11.80      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,493      100.00
+{txt}
+{com}.         
+.         drop stresfip birmon weekday
+{txt}
+{com}. 
+. 
+. * recode potential controls 
+.         gen     dmeduc_0 = (dmeduc==0)
+{txt}
+{com}.         lab var dmeduc_0 "Education: No formal education (yes=1)"
+{txt}
+{com}.         gen     dmeduc_1 = (dmeduc>=1 & dmeduc<=8) 
+{txt}
+{com}.         lab var dmeduc_1 "Highest education: Elementary school (yes=1)"
+{txt}
+{com}.         gen     dmeduc_2 = (dmeduc>=9 & dmeduc<=12) 
+{txt}
+{com}.         lab var dmeduc_2 "Highest education: High school (yes=1)"
+{txt}
+{com}.         gen     dmeduc_3 = (dmeduc>=13 & dmeduc<=17) 
+{txt}
+{com}.         lab var dmeduc_3 "Highest education: College or more (yes=1)" 
+{txt}
+{com}.         foreach var of varlist dmeduc_* {c -(}
+{txt}  2{com}.                 replace `var'=. if mi(dmeduc)
+{txt}  3{com}.         {c )-}
+{txt}(2,923 real changes made, 2,923 to missing)
+(2,923 real changes made, 2,923 to missing)
+(2,923 real changes made, 2,923 to missing)
+(2,923 real changes made, 2,923 to missing)
+
+{com}.         
+.         tab adequacy, gen(adequacy_)
+
+{txt}adequacy of {c |}
+care recode {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}    111,560       70.89       70.89
+{txt}          2 {c |}{res}     34,658       22.02       92.91
+{txt}          3 {c |}{res}     11,160        7.09      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    157,378      100.00
+{txt}
+{com}.         lab var adequacy_1 "Adequacy of care: Adequate (yes=1)" 
+{txt}
+{com}.         lab var adequacy_2 "Adequacy of care: Intermediate (yes=1)" 
+{txt}
+{com}.         lab var adequacy_3 "Adequacy of care: Inadequate (yes=1)" 
+{txt}
+{com}.         
+.         tab cntocpop, gen(cntocpop_)
+
+  {txt}county of {c |}
+  occurence {c |}
+ population {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}     50,052       34.75       34.75
+{txt}          1 {c |}{res}     20,666       14.35       49.10
+{txt}          2 {c |}{res}     43,136       29.95       79.04
+{txt}          3 {c |}{res}     30,187       20.96      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    144,041      100.00
+{txt}
+{com}.         lab var cntocpop_1 "Population of county of origin: 1000k or more (yes=1)"
+{txt}
+{com}.         lab var cntocpop_2 "Population of county of origin: 500k to 1000k (yes=1)"
+{txt}
+{com}.         lab var cntocpop_3 "Population of county of origin: 250k to 500k (yes=1)"
+{txt}
+{com}.         lab var cntocpop_4 "Population of county of origin: 100k to 250k (yes=1)"
+{txt}
+{com}.         
+.         tab isllb10, gen(isllb10_)
+
+   {txt}interval {c |}
+ since last {c |}
+ live birth {c |}
+     recode {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}     64,196       41.69       41.69
+{txt}          1 {c |}{res}      1,363        0.89       42.57
+{txt}          2 {c |}{res}      1,447        0.94       43.51
+{txt}          3 {c |}{res}      9,521        6.18       49.70
+{txt}          4 {c |}{res}     12,639        8.21       57.90
+{txt}          5 {c |}{res}     22,363       14.52       72.43
+{txt}          6 {c |}{res}     14,940        9.70       82.13
+{txt}          7 {c |}{res}      8,765        5.69       87.82
+{txt}          8 {c |}{res}      5,465        3.55       91.37
+{txt}          9 {c |}{res}     13,291        8.63      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    153,990      100.00
+{txt}
+{com}.         lab var isllb10_1 "Interval since last birth: No previous live birth (yes=1)"
+{txt}
+{com}.         lab var isllb10_2 "Interval since last birth: 0 months (yes=1)"
+{txt}
+{com}.         lab var isllb10_3 "Interval since last birth: 1-11 months (yes=1)"
+{txt}
+{com}.         lab var isllb10_4 "Interval since last birth: 12-17 months (yes=1)" 
+{txt}
+{com}.         lab var isllb10_5 "Interval since last birth: 18-23 months (yes=1)"
+{txt}
+{com}.         lab var isllb10_6 "Interval since last birth: 24-35 months (yes=1)"
+{txt}
+{com}.         lab var isllb10_7 "Interval since last birth: 36-47 months (yes=1)"
+{txt}
+{com}.         lab var isllb10_8 "Interval since last birth: 48-59 months (yes=1)"
+{txt}
+{com}.         lab var isllb10_9 "Interval since last birth: 60-71 months (yes=1)"
+{txt}
+{com}.         lab var isllb10_10 "Interval since last birth: 72 months or over (yes=1)" 
+{txt}
+{com}.         
+.         tab totord9, gen(totord9_)
+
+{txt}total birth {c |}
+      order {c |}
+     recode {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}     49,137       30.44       30.44
+{txt}          2 {c |}{res}     47,868       29.66       60.10
+{txt}          3 {c |}{res}     31,074       19.25       79.35
+{txt}          4 {c |}{res}     16,391       10.15       89.51
+{txt}          5 {c |}{res}      8,234        5.10       94.61
+{txt}          6 {c |}{res}      4,247        2.63       97.24
+{txt}          7 {c |}{res}      2,014        1.25       98.49
+{txt}          8 {c |}{res}      2,444        1.51      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}    161,409      100.00
+{txt}
+{com}.         lab var totord9_1 "Total birth order: First child (yes=1)" 
+{txt}
+{com}.         lab var totord9_2 "Total birth order: Second child (yes=1)" 
+{txt}
+{com}.         lab var totord9_3 "Total birth order: Third child (yes=1)" 
+{txt}
+{com}.         lab var totord9_4 "Total birth order: Fourth child (yes=1)" 
+{txt}
+{com}.         lab var totord9_5 "Total birth order: Fifth child (yes=1)" 
+{txt}
+{com}.         lab var totord9_6 "Total birth order: Sixth child (yes=1)" 
+{txt}
+{com}.         lab var totord9_7 "Total birth order: Seventh child (yes=1)" 
+{txt}
+{com}.         lab var totord9_8 "Total birth order: Eight child or more (yes=1)" 
+{txt}
+{com}.         
+.         gen     dplural_1 = (dplural==1 )
+{txt}
+{com}.         replace dplural_1 = . if mi(dplural_1) 
+{txt}(0 real changes made)
+
+{com}.         lab var dplural_1 "Single child birth (yes=1)" 
+{txt}
+{com}. 
+.         
+.         
+. * Label variables 
+.         lab var dbrwt    "Birthweight (grams)" 
+{txt}
+{com}.         lab var tobacco  "Tobacco use during pregnancy (yes=1)"
+{txt}
+{com}.         lab var dmage    "Age of mother (years)"
+{txt}
+{com}.         lab var alcohol  "Alcohol use during pregnancy (yes=1)"
+{txt}
+{com}.         lab var phyper   "Pregnancy-related hypertension (yes=1)"
+{txt}
+{com}.         lab var diabetes "Mother has diabetes (yes=1)"
+{txt}
+{com}.         lab var anemia   "Mother has anemia (yes=1)"
+{txt}
+{com}.         lab var dgestat  "Gestation (weeks)"
+{txt}
+{com}.         lab var dlivord  "Number of live births, now dead"
+{txt}
+{com}.         lab var pre4000  "Previous infant 4000+ grams (yes=1)"
+{txt}
+{com}.         lab var lung     "Mother has acute or chronic lung disease (yes=1)"
+{txt}
+{com}. 
+. 
+.         qui ds
+{txt}
+{com}.         local all_vars `r(varlist)'
+{txt}
+{com}.         egen miss_ct = rowmiss(`all_vars')
+{txt}
+{com}.         gen  miss_any = (miss_ct > 0)
+{txt}
+{com}.         label define miss_any_lab 0 "No missings variables" 1 "Any missing variables"
+{txt}
+{com}.         label values miss_any miss_any_lab
+{txt}
+{com}. 
+.         
+. save "$dta_loc/data/pset1_clean_miss.dta", replace
+{txt}file //Client/C$/Users/yfkas/CEGA Dropbox/Yazen Kashlan/ARE213/Pset1/data/pset1_clean_miss.dta saved
+
+{com}. 
+.         // drop missings to achieve final obs count of 114,610.
+.         drop if miss_any == 1
+{txt}(46,883 observations deleted)
+
+{com}.         drop miss*
+{txt}
+{com}.         assert _N == 114610 // as required in prompt
+{txt}
+{com}. 
+. 
+. save "$dta_loc/data/pset1_clean.dta", replace
+{txt}file //Client/C$/Users/yfkas/CEGA Dropbox/Yazen Kashlan/ARE213/Pset1/data/pset1_clean.dta saved
+
+{com}. 
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}. 
+. // analyze
+. // do "$do_loc/code/03_analysis.do"
+. 
+. log close
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}//Client/C$/Users/yfkas/OneDrive/Documents/GitHub/ARE213_Fall2023/pset1_logfile.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res} 2 Oct 2023, 10:15:59
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}
