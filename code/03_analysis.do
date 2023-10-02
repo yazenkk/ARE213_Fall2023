@@ -294,7 +294,6 @@ global oaxaca_covar_list alcohol mrace3_2 mrace3_3 hisp_moth ///
 	gen oaxaca_att = mean_tob1h_1 - mean_tob0h_1
 	di oaxaca_att 
 	
-	e
 
 
 
@@ -397,21 +396,6 @@ iebaltab `covar_list', ///
 	tblnonote 	stdev normdiff							/// 
 	texnotewidth(1) 		///	
 	replace  
-e	
-/*
-preserve
-	// adjust footnote width
-	import delimited "$do_loc/tables/table4_balance_pbins.tex", clear
-	fix_import
-	count if strpos(text, "\multicolumn{6}") > 0 // confirm there's that line to fix
-	assert `r(N)' == 1
-	replace text = subinstr(text, "\multicolumn{6}", "\multicolumn{7}", .) if ///
-		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table4_balance_pbins.tex", ///
-		noquote wide replace
-
-restore
-*/
 
 
 * ----------------------------------------------------------------------------- * 
@@ -533,7 +517,7 @@ local att_ipw = round(`r(mean)', 0.01)
 		file write fh "\end{center}" _n	
 	
 	file close fh 
-
+e
 stop
 
 
