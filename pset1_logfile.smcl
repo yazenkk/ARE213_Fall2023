@@ -3,7 +3,7 @@
       name:  {res}<unnamed>
        {txt}log:  {res}/Users/rajdevb/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023/pset1_logfile.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res} 2 Oct 2023, 11:06:19
+ {txt}opened on:  {res} 2 Oct 2023, 11:42:23
 {txt}
 {com}. 
 . 
@@ -2070,6 +2070,7 @@ Iteration 5:{space 3}log likelihood = {res:-43189.827}
 >        legend(label(1 "Observed non-smokers") label(2 "Observed smokers")) ///
 >            xtitle("Pr(tobacco{c -(}sub:i{c )-}=1|X{c -(}sub:i{c )-})") ///
 >            saving("phatx_overlap", replace)
+{res}{txt}(note: file phatx_overlap.gph not found)
 {res}{txt}(file phatx_overlap.gph saved)
 
 {com}. 
@@ -2695,8 +2696,6 @@ Lasso linear {txt}model{txt}{col 45}No. of obs{col 63}={res}      5,715
 {txt}{hline 9}{c BT}{hline 17}{hline 11}{hline 10}{hline 13}{hline 13}
 * lambda selected by cross-validation.
 
-{com}.         eststo lasso_logit_y
-{res}{txt}
 {com}.         global selectedvars_y `e(allvars_sel)'
 {txt}
 {com}.         dis "Selected vars: `e(allvars_sel)'"
@@ -2738,8 +2737,6 @@ Lasso logit {txt}model{txt}{col 45}No. of obs{col 63}={res}      5,715
 {txt}{hline 9}{c BT}{hline 17}{hline 11}{hline 10}{hline 13}{hline 13}
 * lambda selected by cross-validation.
 
-{com}.         eststo lasso_logit_d
-{res}{txt}
 {com}.         global selectedvars_d `e(allvars_sel)'
 {txt}
 {com}.         dis "Selected vars: `e(allvars_sel)'"
@@ -2904,7 +2901,7 @@ csex_isllb10_9
 {txt}{space 6}csex_isllb10_9 {c |}{col 22}{res}{space 2} -4.64127{col 34}{space 2} 14.82798{col 45}{space 1}   -0.31{col 54}{space 3}0.754{col 62}{space 4}-33.70388{col 75}{space 3} 24.42134
 {txt}{space 15}_cons {c |}{col 22}{res}{space 2}-1715.371{col 34}{space 2} 30.72884{col 45}{space 1}  -55.82{col 54}{space 3}0.000{col 62}{space 4}-1775.599{col 75}{space 3}-1655.143
 {txt}{hline 21}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
-{res}{txt}({res}est4{txt} stored)
+{res}{txt}({res}est2{txt} stored)
 
 {com}. 
 . // plot q5ab
@@ -2939,7 +2936,7 @@ csex_isllb10_9
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}/Users/rajdevb/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023/pset1_logfile.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res} 2 Oct 2023, 11:10:56
+ {txt}closed on:  {res} 2 Oct 2023, 11:46:30
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}

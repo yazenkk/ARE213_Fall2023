@@ -595,13 +595,11 @@ preserve
 	
 	// regress Y on X and collect selected covariates
 	lasso linear dbrwt $covars_lasso, rseed("$seed_q5b") grid(10) // linear model
-	eststo lasso_logit_y
 	global selectedvars_y `e(allvars_sel)'
 	dis "Selected vars: `e(allvars_sel)'"
 
 	// regress D on X and collect selected covariates
 	lasso logit tobacco $covars_lasso, rseed("$seed_q5b") grid(10) // logit model (40 mins)
-	eststo lasso_logit_d
 	global selectedvars_d `e(allvars_sel)'
 	dis "Selected vars: `e(allvars_sel)'"
 restore
