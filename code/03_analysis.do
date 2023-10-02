@@ -46,7 +46,7 @@ local balance_list dbrwt ///
 					
 	
 * PENDING YK to check
-iebaltab `balance_list', ///
+iebaltab `balance_list', stdev ///
 	grpvar(miss_any) ///
 	rowvarlabels normdiff starsno /// 
 	savetex("$do_loc/tables/table0_balance_miss.tex") ///
@@ -94,19 +94,19 @@ local covar_list 	dbrwt ///
 					dplural_1
 
 		
-/* YK to fix 
+
 // generate balance table
 iebaltab `covar_list', ///
 	grpvar(tobacco) ///
 	savetex("$do_loc/tables/table1_balance.tex") ///
 	rowvarlabels ///
-	total ///
+	total stdev ///
 	starsno ///
 	tblnote("Notes: Insert footnote") 	///
 	tblnonote 	 						/// 
 	replace normdiff  onerow
 	
-	
+/*	
 // adjust footnote width of latex output
 preserve
 	import delimited "$do_loc/tables/table1_balance.tex", clear
@@ -118,7 +118,7 @@ preserve
 	outfile using "$do_loc/tables/table1_balance.tex", ///
 		noquote wide replace
 restore
-*/ 
+ */ 
 
 
 	
@@ -407,9 +407,10 @@ iebaltab $covar_list, ///
 	starsno  ///
 	savetex("$do_loc/tables/table4_balance_pbins.tex") ///
 	tblnote("Notes: Insert footnote") 				///
-	tblnonote 								/// 
+	tblnonote 	stdev normdiff							/// 
 	texnotewidth(1) 		///	
 	replace  
+	
 /*
 preserve
 	// adjust footnote width
