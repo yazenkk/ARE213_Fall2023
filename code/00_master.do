@@ -14,19 +14,18 @@ Date created: 9/24/2024
 * Set initial configurations and globals
 * ============================================================================= *
 
-log using "$do_loc/pset1_logfile.smcl", replace smcl
-
 
 clear all
 version 15
 clear matrix
+cap log close 
+
+log using "$do_loc/pset1_logfile.smcl", replace smcl
+
 
 set more off
 set varabbrev off
-set linesize 100
-
-cap log close
-set linesize 225
+set linesize 255
 
 // See used in lasso step Q5b. 
 global seed_q5b 1234
@@ -61,6 +60,6 @@ do "$do_loc/code/02_clean.do"
 do "$do_loc/code/03_analysis.do"
 
 log close
-translate "$do_loc/pset1_logfile.smcl" "$do_loc/pset1_logfile.pdf"
+translate "$do_loc/pset1_logfile.smcl" "$do_loc/pset1_logfile.pdf", replace
 
 
