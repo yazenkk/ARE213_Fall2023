@@ -13,9 +13,9 @@ foreach program in `net_program_list' {
 
 
 
-ssc install heatplot
-ssc install palettes, replace
-ssc install colrspace, replace
+// ssc install heatplot
+// ssc install palettes, replace
+// ssc install colrspace, replace
 ssc install dmout
 ssc install oaxaca
 
