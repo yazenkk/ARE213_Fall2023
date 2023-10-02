@@ -44,8 +44,7 @@ local balance_list dbrwt ///
 					dlivord ///
 					dplural_1 
 					
-	
-* PENDING YK to check
+
 iebaltab `balance_list', stdev ///
 	grpvar(miss_any) ///
 	rowvarlabels normdiff starsno /// 
@@ -54,20 +53,6 @@ iebaltab `balance_list', stdev ///
 	tblnonote 				/// 
 	texnotewidth(1) replace  		
 	
-/*	
-preserve
-	// adjust footnote width
-	import delimited "$do_loc/tables/table0_balance_miss.tex", clear
-	fix_import
-	count if strpos(text, "\multicolumn{6}") > 0 // confirm there's that line to fix
-	assert `r(N)' == 1
-	replace text = subinstr(text, "\multicolumn{6}", "\multicolumn{7}", .) if ///
-		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table0_balance_miss.tex", ///
-		noquote wide replace
-restore
-  */
-
 
 
 * ----------------------------------------------------------------------------- * 
@@ -106,19 +91,6 @@ iebaltab `covar_list', ///
 	tblnonote 	 						/// 
 	replace normdiff  onerow
 	
-/*	
-// adjust footnote width of latex output
-preserve
-	import delimited "$do_loc/tables/table1_balance.tex", clear
-	fix_import
-	count if strpos(text, "\multicolumn{8}") > 0 // confirm there's that line to fix
-	assert `r(N)' == 1
-	replace text = subinstr(text, "\multicolumn{8}", "\multicolumn{9}", .) if ///
-		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table1_balance.tex", ///
-		noquote wide replace
-restore
- */ 
 
 
 	
@@ -322,9 +294,7 @@ global oaxaca_covar_list alcohol mrace3_2 mrace3_3 hisp_moth ///
 	gen oaxaca_att = mean_tob1h_1 - mean_tob0h_1
 	di oaxaca_att 
 	
-	
-
-* PENDING : add to latex 
+	e
 
 
 
