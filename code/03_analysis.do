@@ -45,7 +45,7 @@ local balance_list dbrwt ///
 					dplural_1 
 					
 	
-/* PENDING YK to check
+* PENDING YK to check
 iebaltab `balance_list', ///
 	grpvar(miss_any) ///
 	rowvarlabels normdiff starsno /// 
@@ -54,7 +54,7 @@ iebaltab `balance_list', ///
 	tblnonote 				/// 
 	texnotewidth(1) replace  		
 	
-	
+/*	
 preserve
 	// adjust footnote width
 	import delimited "$do_loc/tables/table0_balance_miss.tex", clear
@@ -399,7 +399,7 @@ forval i = 1/10 {
 	
 // Within bins of p(X) compare X among treated and controls
 // run regs controlling for bins so that D is within bin
-/* YK to fix
+
 iebaltab $covar_list, ///
 	grpvar(tobacco) ///
 	fixedeffect(phatx_bins) ///
@@ -410,7 +410,7 @@ iebaltab $covar_list, ///
 	tblnonote 								/// 
 	texnotewidth(1) 		///	
 	replace  
-	
+/*
 preserve
 	// adjust footnote width
 	import delimited "$do_loc/tables/table4_balance_pbins.tex", clear
