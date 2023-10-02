@@ -44,9 +44,8 @@ local balance_list dbrwt ///
 					dlivord ///
 					dplural_1 
 					
-	
-/* PENDING YK to check
-iebaltab `balance_list', ///
+
+iebaltab `balance_list', stdev ///
 	grpvar(miss_any) ///
 	rowvarlabels normdiff starsno /// 
 	savetex("$do_loc/tables/table0_balance_miss.tex") ///
@@ -54,20 +53,6 @@ iebaltab `balance_list', ///
 	tblnonote 				/// 
 	texnotewidth(1) replace  		
 	
-	
-preserve
-	// adjust footnote width
-	import delimited "$do_loc/tables/table0_balance_miss.tex", clear
-	fix_import
-	count if strpos(text, "\multicolumn{6}") > 0 // confirm there's that line to fix
-	assert `r(N)' == 1
-	replace text = subinstr(text, "\multicolumn{6}", "\multicolumn{7}", .) if ///
-		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table0_balance_miss.tex", ///
-		noquote wide replace
-restore
-  */
-
 
 
 * ----------------------------------------------------------------------------- * 
@@ -94,31 +79,18 @@ local covar_list 	dbrwt ///
 					dplural_1
 
 		
-/* YK to fix 
+
 // generate balance table
 iebaltab `covar_list', ///
 	grpvar(tobacco) ///
 	savetex("$do_loc/tables/table1_balance.tex") ///
 	rowvarlabels ///
-	total ///
+	total stdev ///
 	starsno ///
 	tblnote("Notes: Insert footnote") 	///
 	tblnonote 	 						/// 
 	replace normdiff  onerow
 	
-	
-// adjust footnote width of latex output
-preserve
-	import delimited "$do_loc/tables/table1_balance.tex", clear
-	fix_import
-	count if strpos(text, "\multicolumn{8}") > 0 // confirm there's that line to fix
-	assert `r(N)' == 1
-	replace text = subinstr(text, "\multicolumn{8}", "\multicolumn{9}", .) if ///
-		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table1_balance.tex", ///
-		noquote wide replace
-restore
-*/ 
 
 
 	
@@ -325,9 +297,6 @@ global oaxaca_covar_list alcohol mrace3_2 mrace3_3 hisp_moth ///
 	gen oaxaca_att = mean_tob1h_1 - mean_tob0h_1
 	di oaxaca_att 
 	
-	
-
-* PENDING : add to latex 
 
 
 
@@ -404,31 +373,34 @@ forval i = 1/10 {
 	
 // Within bins of p(X) compare X among treated and controls
 // run regs controlling for bins so that D is within bin
-/* YK to fix
-iebaltab $covar_list, ///
+
+local covar_list 	dbrwt ///
+					mrace3_3 ///
+					hisp_moth ///
+					dmeduc_1 dmeduc_2 dmeduc_3  ///
+					dmage ///
+					dmar ///
+					csex /// 
+					alcohol ///
+					phyper ///
+					diabetes ///
+					lung ///
+					anemia ///
+					pre4000 /// 
+					dgestat ///
+					dlivord ///
+					dplural_1
+
+iebaltab `covar_list', ///
 	grpvar(tobacco) ///
 	fixedeffect(phatx_bins) ///
 	rowvarlabels ///
 	starsno  ///
 	savetex("$do_loc/tables/table4_balance_pbins.tex") ///
 	tblnote("Notes: Insert footnote") 				///
-	tblnonote 								/// 
+	tblnonote 	stdev normdiff							/// 
 	texnotewidth(1) 		///	
 	replace  
-	
-preserve
-	// adjust footnote width
-	import delimited "$do_loc/tables/table4_balance_pbins.tex", clear
-	fix_import
-	count if strpos(text, "\multicolumn{6}") > 0 // confirm there's that line to fix
-	assert `r(N)' == 1
-	replace text = subinstr(text, "\multicolumn{6}", "\multicolumn{7}", .) if ///
-		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table4_balance_pbins.tex", ///
-		noquote wide replace
-
-restore
-*/
 
 
 * ----------------------------------------------------------------------------- * 
