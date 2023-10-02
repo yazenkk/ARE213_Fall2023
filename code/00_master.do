@@ -47,7 +47,7 @@ if "`c(username)'" == "rajdevb" {
 	global dta_loc	"`mainfolder'/Dropbox/ARE213/Pset1"
 }
 
-
+e
 
 // install programs
 do "$do_loc/code/01_programs.do"

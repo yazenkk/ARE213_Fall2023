@@ -400,7 +400,24 @@ forval i = 1/10 {
 // Within bins of p(X) compare X among treated and controls
 // run regs controlling for bins so that D is within bin
 
-iebaltab $covar_list, ///
+local covar_list 	dbrwt ///
+					mrace3_3 ///
+					hisp_moth ///
+					dmeduc_1 dmeduc_2 dmeduc_3  ///
+					dmage ///
+					dmar ///
+					csex /// 
+					alcohol ///
+					phyper ///
+					diabetes ///
+					lung ///
+					anemia ///
+					pre4000 /// 
+					dgestat ///
+					dlivord ///
+					dplural_1
+
+iebaltab `covar_list', ///
 	grpvar(tobacco) ///
 	fixedeffect(phatx_bins) ///
 	rowvarlabels ///
@@ -410,7 +427,7 @@ iebaltab $covar_list, ///
 	tblnonote 	stdev normdiff							/// 
 	texnotewidth(1) 		///	
 	replace  
-	
+e	
 /*
 preserve
 	// adjust footnote width
