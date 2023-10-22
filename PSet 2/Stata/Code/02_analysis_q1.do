@@ -114,11 +114,11 @@ log and normalizing by population are good ideas for your later analysis?
 
 
 * fatal_per_cap_1000
-	gen 	fatal_per_cap_1000=log(fatalities/population)
-	lab var fatal_per_cap_1000 "Fatalities per population (pop in 1000s)"
+	gen 	fatal_per_cap_1000=(fatalities/population)
+	lab var fatal_per_cap_1000 "Fatalities per capita (pop in 1000s)"
 	
 	* histogram
-	histogram log_fatal_per_cap, percent ytitle(Percent) xtitle("Fatalities per population (pop in 1000s)") title(Fatalities per population) scheme(white_brbg) name(histogram_1b_2, replace )
+	histogram fatal_per_cap_1000, percent ytitle(Percent) xtitle("Fatalities per capita (pop in 1000s)") title(Fatalities per population) scheme(white_brbg) name(histogram_1b_2, replace )
 	graph export "$oput_loc/histogram_1b_2.png" , replace 
 
 
@@ -137,7 +137,7 @@ log and normalizing by population are good ideas for your later analysis?
 graph combine histogram_1b_1 histogram_1b_2 histogram_1b_3 histogram_1b_4
 	graph export "$oput_loc/histogram_1b_combined.png" , replace 
 
-
+e
 * ============================================================================= *
 * Question 1c
 /*
