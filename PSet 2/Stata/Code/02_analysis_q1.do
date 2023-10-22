@@ -48,12 +48,16 @@ restore
 
 
 // Q1a.2 ----------------------
-// twoway (line primary year if state == 1) ///
-// 	   (line primary year if state == 4)
+ twoway (line primary year if state == 1) ///
+ 	    (line primary year if state == 4)
 
-// I can't run this on my computer for some reason :(
-*panelview primary, i(state) t(year) type(treat)
+panelview primary, i(state) t(year) type(treat) xtitle("Year") ytitle("State") title("Timing of primary belt laws", size(medium)) 
+graph export "$oput_loc/q1a_timing.png", replace
 
+
+
+panelview primary, i(state) t(year) type(treat) xtitle("Year") ytitle("State") title("Timing of primary belt laws", size(medium)) bytiming 
+graph export "$oput_loc/q1a_timing_bytiming.png" , replace 
 
 // Q1a.3 ----------------------
 preserve 
@@ -90,6 +94,4 @@ preserve
 restore
 // ANS: Primary and secondary laws never overlapped. 
 // Primary laws were adopted (if at all) one year after secondary laws were phased out.
-
 // correlate adopting prim and sec within state
-

@@ -33,6 +33,7 @@ if "`c(username)'" == "yfkashlan" {
 	
 	global do_loc  "//Client/C$/Users/yfkas/OneDrive/Documents/GitHub/ARE213_Fall2023/PSet 2/Stata/Code"
 	global dta_loc "//Client/C$/Users/yfkas/Dropbox (Personal)/ARE213/Pset2/data"
+	global oput_loc "//Client/C$/Users/yfkas/Dropbox (Personal)/ARE213/Pset2/intermediate_output"	
 	
 	// programs
 	net set ado "//Client/C$\Users/yfkas/Documents/stata_packages"
@@ -45,10 +46,11 @@ if "`c(username)'" == "rajdevb" {
 	local mainfolder "/Users/rajdevb"
 	
 	global do_loc	"`mainfolder'/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023"
-	global dta_loc	"`mainfolder'/Dropbox/ARE213/Pset1"
+	global dta_loc	"`mainfolder'/Dropbox/ARE213/Pset2/data"
+	global oput_loc "`mainfolder'/Dropbox/ARE213/Pset2/intermediate_output"
 }
 
-
+e
 // install programs
 do "$do_loc/01_programs.do"
 
