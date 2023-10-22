@@ -50,10 +50,11 @@ if "`c(username)'" == "rajdevb" {
 
 
 // install programs
-do "$do_loc/01_programs.do"
+// do "$do_loc/01_programs.do"
 
 // analyze
-do "$do_loc/02_analysis_q1.do"
+// do "$do_loc/02_analysis_q1.do"
+// do "$do_loc/02_analysis_q2.do"
 
 
 

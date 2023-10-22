@@ -9,6 +9,8 @@ Q1a
 	4. Are there never-treated states? 
 	5. How does the timing of primary and secondary belt laws relate to each other?
 
+Q1b Compare log fatilities per capita with fatality count
+Q1c Plot outcome in an informative way. Interpret.
 
 */
 
@@ -75,15 +77,15 @@ restore
 
 
 // Q1a.5 ----------------------
-keep state year primary secondary
-count if primary == 1 & secondary == 1 // no state applies both laws at once
-foreach law in primary secondary {
-    gen year_`law' = year if `law' == 1
-}
-byso state secondary (year) : egen yr_sec_end = max(year_secondary)
-byso state primary (year) : egen yr_prim_start = min(year_primary)
-sort state year primary secondary
 preserve
+	keep state year primary secondary
+	count if primary == 1 & secondary == 1 // no state applies both laws at once
+	foreach law in primary secondary {
+		gen year_`law' = year if `law' == 1
+	}
+	byso state secondary (year) : egen yr_sec_end = max(year_secondary)
+	byso state primary (year) : egen yr_prim_start = min(year_primary)
+	sort state year primary secondary
 	collapse (mean) yr_sec_end yr_prim_start , by(state)
 	assert yr_sec_end < yr_prim_start if !missing(yr_prim_start) & !missing(yr_sec_end)
 	assert yr_sec_end + 1 == yr_prim_start if !missing(yr_prim_start) & !missing(yr_sec_end)
@@ -92,4 +94,103 @@ restore
 // Primary laws were adopted (if at all) one year after secondary laws were phased out.
 
 // correlate adopting prim and sec within state
+preserve
+	collapse (max) primary secondary , by(state)
+	corr primary secondary 
+	tab primary secondary 
+	// not immediately useful
+restore
+
+
+// Q1b ----------------------
+gen fat_pc = fatalities/population
+gen ln_fat_pc = ln(fatalities/population)
+label var ln_fat_pc "Log fatalities per capita"
+// hist ln_fat_pc
+// ANS: taking the log of the fraction of fatalities per capita (the outcome) 
+// is a good idea because it normalizes its distribution.
+
+
+// Q1c ----------------------
+
+/*
+// First try
+collapse (mean) fatalities ln_fat_pc fat_pc, by(prim_ever year)
+// States that adopt the law have lower log fatalities/cap every year
+twoway (scatter ln_fat_pc year if prim_ever == 0) ///
+	   (scatter ln_fat_pc year if prim_ever == 1), ///
+		legend(label(1 "Never treated") label(2 "Treated"))
+
+// States that adopt the law have higher total fatalities every year
+twoway (scatter fatalities year if prim_ever == 0) ///
+	   (scatter fatalities year if prim_ever == 1), ///
+		legend(label(1 "Never treated") label(2 "Treated"))
+
+// States that adopt the law have lower fatalities/cap every year
+twoway (scatter fat_pc year if prim_ever == 0) ///
+	   (scatter fat_pc year if prim_ever == 1), ///
+		legend(label(1 "Never treated") label(2 "Treated"))
+
+// Can also do relative to event time
+gen year_primary = year if primary == 1
+byso state primary (year) : egen yr_prim_start = min(year_primary)
+byso state (yr_prim_start): replace yr_prim_start = yr_prim_start[1]
+gen yr_relative = year - yr_prim_start if yr_prim_start != .
+sort state year
+tab yr_relative
+// hard to choose cutoff
+*/
+
+
+// Plot raw data as in his "favorite event plot" by Fadlon and Nielsen (2015)
+// plot a few states that do and do not adopt with vertical lines for E_i
+gen year_primary = year if primary == 1
+byso state primary (year) : egen cohort = min(year_primary)
+byso state (cohort): replace cohort = cohort[1]
+replace cohort = 999 if cohort == .
+
+sort state year // clean up
+drop year_primary
+
+label define cohort 999 "No shock" ///
+			 1984 "1984" ///
+			 1986 "1986" ///
+			 1987 "1987" ///
+			 1991 "1991" ///
+			 1993 "1993" ///
+			 1996 "1996" ///
+			 1998 "1998" ///
+			 2000 "2000" ///
+			 2002 "2002" ///
+			 2003 "2003"
+label values cohort cohort
+
+preserve
+	collapse (mean) fatalities ln_fat_pc fat_pc, by(cohort year)
+
+	// plot raw data by cohort with vertical E_i
+	twoway (line ln_fat_pc year if cohort == 999, lcolor(black) ) ///
+		   (line ln_fat_pc year if cohort == 1984, lcolor(ebblue) ) ///
+		   (line ln_fat_pc year if cohort == 1987, lcolor(gs10) ) ///
+		   (line ln_fat_pc year if cohort == 1993, lcolor(midgreen) ) ///
+		   (line ln_fat_pc year if cohort == 2002, lcolor(dkorange) ), ///
+			legend(label(1 "No shock") ///
+				   label(2 "1984") /// 
+				   label(3 "1987") /// 
+				   label(4 "1993") /// 
+				   label(5 "2002")) ///
+			   xline(1984, lcolor(ebblue) lpatter(dash)) ///
+			   xline(1987, lcolor(gs10) lpatter(dash)) ///
+			   xline(1993, lcolor(midgreen) lpatter(dash)) ///
+			   xline(2000, lcolor(dkorange) lpatter(dash))
+restore
+
+
+// save new dta with additional vars
+compress
+save "$dta_loc/pset2_q1", replace
+
+
+
+
 
