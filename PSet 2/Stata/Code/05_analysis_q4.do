@@ -35,7 +35,24 @@ use "$dta_loc/pset2", clear
 
 * predictors are pre-treatment log fatalities and other covars 
 	synth log_fatal_per_cap  beer(1981(1)1993) precip(1981(1)1993) college(1981(1)1993) rural_speed(1981(1)1993) population(1981(1)1993) snow32(1981(1)1993) unemploy(1981(1)1993) totalvmt(1981(1)1993) log_fatal_per_cap(1981(1)1993) , trunit(4) trperiod(1993)   fig  resultsperiod(1981(1)2003)  keep(synth_results, replace)
-graph export "$oput_loc/q4a_synthCA.png", replace 
+	graph export "$oput_loc/q4a_synthCA.png", replace 
+
+* graph california with rest of US that did not implement these laws 
+	bys year: egen avg_log_fatal_per_cap = mean(log_fatal_per_cap) if state!=4
+	lab var avg_log_fatal_per_cap "Average log fatalities per capita"
+	
+	twoway (tsline log_fatal_per_cap if state==4)  ///
+	(tsline avg_log_fatal_per_cap, lcolor(black)), /// 
+	xline(1993) ///
+	ytitle(Log fatalities per capita) ttitle(Year) ///
+	title(California vs. donor states) ///
+	caption(Donor states are those who never adopted primary law) ///
+	legend(on rows(1) size(medsmall) position(6)) ///
+	legend(label(1 "California") label(2 "Aveage of donor states"))  ///
+	scheme(swift_red)
+	graph export "$oput_loc/q4a_CAvsUS.png", replace 
+	
+	use "synth_results.dta", clear 
 	   
 
 * ============================================================================= *
