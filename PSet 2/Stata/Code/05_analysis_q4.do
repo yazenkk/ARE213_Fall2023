@@ -34,8 +34,8 @@ use "$dta_loc/pset2", clear
 	synth log_fatal_per_cap log_fatal_per_cap(1981(1)1993), trunit(4) trperiod(1993)   fig  resultsperiod(1981(1)2003)
 
 * predictors are pre-treatment log fatalities and other covars 
-	synth log_fatal_per_cap  beer(1981(1)1993) precip(1981(1)1993) college(1981(1)1993) rural_speed(1981(1)1993) population(1981(1)1993) snow32(1981(1)1993) unemploy(1981(1)1993) totalvmt(1981(1)1993) log_fatal_per_cap(1981(1)1993) , trunit(4) trperiod(1993)   fig  resultsperiod(1981(1)2003)  keep(synth_results)
-
+	synth log_fatal_per_cap  beer(1981(1)1993) precip(1981(1)1993) college(1981(1)1993) rural_speed(1981(1)1993) population(1981(1)1993) snow32(1981(1)1993) unemploy(1981(1)1993) totalvmt(1981(1)1993) log_fatal_per_cap(1981(1)1993) , trunit(4) trperiod(1993)   fig  resultsperiod(1981(1)2003)  keep(synth_results, replace)
+graph export "$oput_loc/q4a_synthCA.png", replace 
 	   
 
 * ============================================================================= *
