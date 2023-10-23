@@ -18,6 +18,7 @@ Q1a
 
 use "$dta_loc/pset2", clear
 isid state year
+	tsset state year  // declare dataset as panel
 
 sort state year primary secondary
 
@@ -163,28 +164,11 @@ Plot raw outcome data in a way that may be helpful for later DiD analysis
 
 	twoway (scatter log_fatal_per_cap diff_firstyr_primary if primary==0 & secondary==0, mcolor(blue%70) msize(3-pt) msymbol(circle)) (scatter log_fatal_per_cap diff_firstyr_primary if primary==1 & secondary==0, mcolor(red%70) msize(3-pt) msymbol(diamond)), xtitle(Year) title(Log of fatalities per capita relative to year of introduction of primary law, size(medsmall))  scheme(swift_red) legend(size(small) position(6) label(1 "No law") label(2 "Primary law")  )
 graph export "$oput_loc/q1c_scatterraw_relativeyr.png", replace 
-e
-
+/*
 	bys diff_firstyr_primary: egen mean_y0 = mean(log_fatal_per_cap) if primary==0 
 	bys diff_firstyr_primary: egen mean_y1 = mean(log_fatal_per_cap) if primary!=0
 	
 	keep mean_y0 mean_y1 primary prim_ever diff_firstyr_primary log_fatal_per_cap
+*/
 	
 	
-	
-
-
-We want to plot E[Y ] by year for each treated group as the first step
-Several ways to do this: first, the longish, “manual” way
-Pay attention to the prefix “by year:” (could be “bysort year”)
-Check the label option “angle”
-* By year, calculate means
-sort year
-by year: egen mean_y1 = mean(y) if treated==1
-by year: egen mean_y0 = mean(y) if treated==0
-* Plot
-scatter mean_y1 year, connect(l) sort || scatter mean_y0 year, sort connect(l) ///
-xline(2004) xlabel(1995(1)2011, angle(vertical))
-graph export trends1.png, replace
-
-
