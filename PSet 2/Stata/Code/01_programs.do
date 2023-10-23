@@ -18,4 +18,5 @@ ssc install labutil
 ssc install colrspace, replace
 ssc install heatplot
 ssc install palettes, replace
+ssc install synth
 

@@ -145,7 +145,21 @@ Plot raw outcome data in a way that may be helpful for later DiD analysis
 */ 
  
 * ============================================================================= *
-use "$dta_loc/pset2", clear
+* plot x (year) and y (log fatalities per capita) 
+
+twoway (scatter log_fatal_per_cap year if primary==1, mcolor(blue%30) msize(3-pt)) (scatter log_fatal_per_cap year if primary==0 & secondary==0, mcolor(green%30) msize(3-pt)) (scatter log_fatal_per_cap year if secondary==1, mcolor(cranberry%30) msize(3-pt)), xtitle(Year) title(Log of fatalities per capita by year (raw data)) legend(position(6)) scheme(swift_red) legend(label(1 "Neither primary nor secondary") label(2 "Primary") label(3 "Secondary"))
+graph export "$oput_loc/1c_scatterraw.png", replace 
+
+
+
+
+
+
+
+
+
+
+
 isid state year
 sort state year primary secondary
 gen ln_fat_pc = ln(fatalities/population)
