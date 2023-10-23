@@ -146,57 +146,45 @@ Plot raw outcome data in a way that may be helpful for later DiD analysis
  
 * ============================================================================= *
 * plot x (year) and y (log fatalities per capita) 
-
-twoway (scatter log_fatal_per_cap year if primary==1, mcolor(blue%30) msize(3-pt)) (scatter log_fatal_per_cap year if primary==0 & secondary==0, mcolor(green%30) msize(3-pt)) (scatter log_fatal_per_cap year if secondary==1, mcolor(cranberry%30) msize(3-pt)), xtitle(Year) title(Log of fatalities per capita by year (raw data)) legend(position(6)) scheme(swift_red) legend(label(1 "Neither primary nor secondary") label(2 "Primary") label(3 "Secondary"))
-graph export "$oput_loc/1c_scatterraw.png", replace 
-
-
+	* control vs primary  
+	twoway (scatter log_fatal_per_cap year if primary==0 & secondary==0, mcolor(blue%70) msize(3-pt) msymbol(circle)) (scatter log_fatal_per_cap year if primary==1 & secondary==0, mcolor(red%70) msize(3-pt) msymbol(diamond)), xtitle(Year) title("Log of fatalities per capita by year (raw data)", size(medlarge)) legend(size(small) position(6)) scheme(swift_red) legend(label(1 "No law") label(2 "Primary law") )
+	graph export "$oput_loc/q1c_scatterraw.png", replace 
 
 
+* now do this relative to year of exposure to treatment
+	bys state (year): gen sum=sum(primary)
+	gen first_yr_primary=year if sum==1
+	bys state (year): egen firstyr_primary=max(first_yr_primary)
+	lab var firstyr_primary  "First year of having primary law"
+	drop sum first_yr_primary
+	
+	gen diff_firstyr_primary = year-firstyr_primary
+	lab var diff_firstyr_primary "Years since introduction of primary law"
+
+	twoway (scatter log_fatal_per_cap diff_firstyr_primary if primary==0 & secondary==0, mcolor(blue%70) msize(3-pt) msymbol(circle)) (scatter log_fatal_per_cap diff_firstyr_primary if primary==1 & secondary==0, mcolor(red%70) msize(3-pt) msymbol(diamond)), xtitle(Year) title(Log of fatalities per capita relative to year of introduction of primary law, size(medsmall))  scheme(swift_red) legend(size(small) position(6) label(1 "No law") label(2 "Primary law")  )
+graph export "$oput_loc/q1c_scatterraw_relativeyr.png", replace 
+e
+
+	bys diff_firstyr_primary: egen mean_y0 = mean(log_fatal_per_cap) if primary==0 
+	bys diff_firstyr_primary: egen mean_y1 = mean(log_fatal_per_cap) if primary!=0
+	
+	keep mean_y0 mean_y1 primary prim_ever diff_firstyr_primary log_fatal_per_cap
+	
+	
+	
 
 
+We want to plot E[Y ] by year for each treated group as the first step
+Several ways to do this: first, the longish, “manual” way
+Pay attention to the prefix “by year:” (could be “bysort year”)
+Check the label option “angle”
+* By year, calculate means
+sort year
+by year: egen mean_y1 = mean(y) if treated==1
+by year: egen mean_y0 = mean(y) if treated==0
+* Plot
+scatter mean_y1 year, connect(l) sort || scatter mean_y0 year, sort connect(l) ///
+xline(2004) xlabel(1995(1)2011, angle(vertical))
+graph export trends1.png, replace
 
-
-
-
-
-isid state year
-sort state year primary secondary
-gen ln_fat_pc = ln(fatalities/population)
-gen year_primary = year if primary == 1
-byso state primary (year) : egen cohort = min(year_primary)
-byso state (cohort): replace cohort = cohort[1]
-replace cohort = 999 if cohort == .
-sort state year // clean up
-drop year_primary
-label define cohort 999 "No shock" ///
-			 1984 "1984" ///
-			 1986 "1986" ///
-			 1987 "1987" ///
-			 1991 "1991" ///
-			 1993 "1993" ///
-			 1996 "1996" ///
-			 1998 "1998" ///
-			 2000 "2000" ///
-			 2002 "2002" ///
-			 2003 "2003"
-label values cohort cohort
-preserve
-	collapse (mean) fatalities ln_fat_pc fat_pc, by(cohort year)
-	// plot raw data by cohort with vertical E_i
-	twoway (line ln_fat_pc year if cohort == 999, lcolor(black) ) ///
-		   (line ln_fat_pc year if cohort == 1984, lcolor(ebblue) ) ///
-		   (line ln_fat_pc year if cohort == 1987, lcolor(gs10) ) ///
-		   (line ln_fat_pc year if cohort == 1993, lcolor(midgreen) ) ///
-		   (line ln_fat_pc year if cohort == 2002, lcolor(dkorange) ), ///
-			legend(label(1 "No shock") ///
-				   label(2 "1984") /// 
-				   label(3 "1987") /// 
-				   label(4 "1993") /// 
-				   label(5 "2002")) ///
-			   xline(1984, lcolor(ebblue) lpatter(dash)) ///
-			   xline(1987, lcolor(gs10) lpatter(dash)) ///
-			   xline(1993, lcolor(midgreen) lpatter(dash)) ///
-			   xline(2000, lcolor(dkorange) lpatter(dash))
-restore
 
