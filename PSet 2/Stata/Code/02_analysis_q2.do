@@ -127,6 +127,9 @@ restore
 // cohort is interesting in that both sets of laws seem to be associated with 
 // declines in fatalities.
 
+// Meeting todos: Run Max's test and discuss theoretically
+// States with out any laws will have seen states take up secondary before primary
+
 ** Q2c -----------------
 /*
 Repeat the tests from part 2(a) (and, if any, 2(b)) using fatalities per capita as

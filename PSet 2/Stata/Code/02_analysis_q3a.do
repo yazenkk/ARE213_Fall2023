@@ -244,3 +244,11 @@ merge 1:1 h using `tau_SnA'
 twoway (kdensity ATT_h_dCDH) (kdensity ATT_h_SnA)
 sum ATT_h_dCDH ATT_h_SnA
 
+
+// Meeting notes: compare weights with Cass's
+
+
+
+
+
+
