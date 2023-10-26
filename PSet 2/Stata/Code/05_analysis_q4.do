@@ -153,7 +153,9 @@ use "$dta_loc/pset2", clear
 	legend(label(1 "California") label(2 "Aveage of donor states"))  ///
 	scheme(swift_red)
 	graph export "$oput_loc/q4a_CAvsUS.png", replace 
-	
+
+	* outsheet synthetic CA composition 
+preserve
 	use "synth_results.dta", clear 
 	keep _Co_Number _W_Weight
 	rename _Co_Number State
@@ -163,21 +165,42 @@ use "$dta_loc/pset2", clear
 	lab var State "State"
 	lab var Weight "Weight"
 	
-	eststo clear 
-	
 	listtex State Weight using "$oput_loc/q4a_synthCA_tab.tex", replace  
-	
-	
-	tabout State Weight using  "$oput_loc/q4a_synthCA_tab.tex",replace
-	   e
+restore
 
 * ============================================================================= *
 * Question 4b 
 * ============================================================================= *
 * (b) Estimate the effects for California using synthetic DiD. Report and discuss the weights the estimator places on untreated units and on various pre-treatment periods.
 
+* ssc install sdid, replace
+
+/*sdid Y S T D [if] [in], vce(method) seed(#) reps(#) covariates(varlist [, method])
+                        zeta_lambda(real) zeta_omega(real) min_dec(real) max_iter(real)
+                        method(methodtype) unstandardized graph_export([stub] , type) mattitles
+                        graph g1on g1_opt(string) g2_opt(string) msize() 
+*/ 
+eststo clear 
+
+	local Y_sdid log_fatal_per_cap // outcome variable
+	local S_sdid state // unit variable
+	local T_sdid year // time variable 	
+	local D_sdid primary // dummy of treatement 
 
 
+	eststo sdid_1: sdid `Y_sdid' `S_sdid' `T_sdid' `D_sdid',  /// 
+			vce(placebo) ///   
+			method(sdid) ///
+			reps(100)  /// 
+			covariates(beer precip college rural_speed population snow32 unemploy totalvmt) ///
+			graph g1on g1_opt(xtitle("")  scheme(white_tableau)) g2_opt(scheme(white_tableau)) ///
+			graph_export($oput_loc/q4b_, .png)
+	//  vce(placebo), not bootstrap or jackknife because few treated units  
+	// repititions for bootstrap and placebo SE 
+
+	esttab sdid_1 using "$oput_loc/q4b_sdid.tex", nostar label  tex  replace  se
+
+						
 * ============================================================================= *
 * Question 4c
 * ============================================================================= *
