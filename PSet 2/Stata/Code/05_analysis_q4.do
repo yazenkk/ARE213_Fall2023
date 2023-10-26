@@ -3,7 +3,36 @@ Title: 		05_analysis_q4.do
 Outline:	Question 4, PSet 2 
 */
 
-			
+* ============================================================================= *
+use "$dta_loc/pset2", clear
+
+	gen 	log_fatal_per_cap=log(fatalities/(population*1000))
+	lab var log_fatal_per_cap "Log of fatalities per capita"
+
+* QUESTION 3A 
+/* de Chaisemartin and D'Haultfoeuille (AER 2020) look at h=0; ie. what happens right after treatment.
+ */ 
+ 
+ * ssc install did_multiplegt
+ 
+ 
+ 
+* QUESTION 3B  
+/* Borusyak et al. 
+*/
+
+* ssc install did_imputation
+* ssc install reghdfe // did_imputation requires a recent version of reghdfe 
+
+*  did_imputation Y i t Ei [if] [in] [estimation weights] [, options]
+* Y = outcome variable = log fatalities per capita = log_fatal_per_cap
+* i = variable for unique unit id 
+* t = variable for calendar year 
+* Ei = variable for unit-specific date of treatment (missing= never treated) 
+
+did_imputation log_fatal_per_cap 
+
+	
 * ============================================================================= *
 * Question 4a
 /*

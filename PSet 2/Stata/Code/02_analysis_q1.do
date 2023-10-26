@@ -108,31 +108,30 @@ log and normalizing by population are good ideas for your later analysis?
 * gen outcome variable = log (fatalities/pop*1000) 
 	gen 	log_fatal_per_cap=log(fatalities/(population*1000))
 	lab var log_fatal_per_cap "Log of fatalities per capita"
-	
-	* histogram
-	histogram log_fatal_per_cap, percent ytitle(Percent) xtitle(Log of fatalities per capita) title(Log of fatalities per capita) scheme(white_brbg) name(histogram_1b_1, replace) 
-	graph export "$oput_loc/histogram_1b_1.png" , replace 
 
-
-* fatal_per_cap_1000
+	* fatal_per_cap_1000
 	gen 	fatal_per_cap_1000=(fatalities/population)
 	lab var fatal_per_cap_1000 "Fatalities per capita (pop in 1000s)"
 	
+	* log fatalities 
+	gen 	log_fatalities=log(fatalities)
+	lab var	log_fatalities "Log of fatalities"
+	
 	* histogram
-	histogram fatal_per_cap_1000, percent ytitle(Percent) xtitle("Fatalities per capita (pop in 1000s)") title(Fatalities per population) scheme(white_brbg) name(histogram_1b_2, replace )
+	histogram log_fatal_per_cap, percent ytitle(Percent) xtitle("Log of fatalities per capita") title(Log of fatalities per capita) scheme(white_tableau) name(histogram_1b_1, replace) 
+	graph export "$oput_loc/histogram_1b_1.png" , replace 
+
+	* histogram
+	histogram fatal_per_cap_1000, percent ytitle(Percent) xtitle("Fatalities per capita") title(Fatalities per capita) scheme(white_tableau) name(histogram_1b_2, replace )
 	graph export "$oput_loc/histogram_1b_2.png" , replace 
 
 
 * fatalties  (raw) 
 	* histogram
-	histogram fatalities, percent ytitle(Percent) xtitle("Fatalities") title(Fatalities) scheme(white_brbg) name(histogram_1b_3, replace)
+	histogram fatalities, percent ytitle(Percent) xtitle("Fatalities") title(Fatalities) scheme(white_tableau) name(histogram_1b_3, replace)
 	graph export "$oput_loc/histogram_1b_3.png" , replace 
 		
-* log fatalities 
-	gen 	log_fatalities=log(fatalities)
-	lab var	log_fatalities "Log of fatalities"
-	
-	histogram log_fatalities, percent ytitle(Percent) xtitle("Log fatalities") title(Log fatalities) scheme(white_brbg) name(histogram_1b_4, replace)
+	histogram log_fatalities, percent ytitle(Percent) xtitle("Log fatalities") title(Log fatalities) scheme(white_tableau) name(histogram_1b_4, replace)
 	graph export "$oput_loc/histogram_1b_4.png" , replace 
 		
 graph combine histogram_1b_1 histogram_1b_2 histogram_1b_3 histogram_1b_4
