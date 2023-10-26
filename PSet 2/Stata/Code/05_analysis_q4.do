@@ -155,6 +155,20 @@ use "$dta_loc/pset2", clear
 	graph export "$oput_loc/q4a_CAvsUS.png", replace 
 	
 	use "synth_results.dta", clear 
+	keep _Co_Number _W_Weight
+	rename _Co_Number State
+	rename _W_Weight Weight 
+	keep if Weight!=0
+	sort Weight
+	lab var State "State"
+	lab var Weight "Weight"
+	
+	eststo clear 
+	
+	listtex State Weight using "$oput_loc/q4a_synthCA_tab.tex", replace  
+	
+	
+	tabout State Weight using  "$oput_loc/q4a_synthCA_tab.tex",replace
 	   e
 
 * ============================================================================= *
