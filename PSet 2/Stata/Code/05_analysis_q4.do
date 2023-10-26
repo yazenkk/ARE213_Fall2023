@@ -4,10 +4,6 @@ Outline:	Question 4, PSet 2
 */
 
 * ============================================================================= *
-use "$dta_loc/pset2", clear
-
-	gen 	log_fatal_per_cap=log(fatalities/(population*1000))
-	lab var log_fatal_per_cap "Log of fatalities per capita"
 
 /* QUESTION 3A: Report the de Chaisemartin and D’Haultfouille’s manual averaging estimates of the dynamic ATTs for the horizons where a reasonable sample is available.
 
@@ -15,6 +11,30 @@ de Chaisemartin and D'Haultfoeuille (AER 2020) look at h=0; ie. what happens rig
 */ 
  
 * ssc install did_multiplegt_dyn
+
+* generate cohort size var 
+
+	use "$dta_loc/pset2_q1", clear
+	rename ln_fat_pc log_fatal_per_cap 
+	byso cohort: egen w_g = count(cohort)
+	replace w_g = w_g/23 // 23 is number of periods (works due to balance)
+
+preserve
+	keep cohort w_g
+	duplicates drop
+	egen tot_w_g = total(w_g)
+	assert tot_w_g == 48 // states
+	replace w_g = w_g/tot_w_g // get relative weights
+	drop tot_w_g
+	lab var w_g "Cohort weight"
+	
+	tempfile est_w_g
+	save 	`est_w_g'
+restore
+
+	merge m:1 cohort using `est_w_g' 
+	assert _merge==3
+	drop _merge 
 
 * did_multiplegt Y G T D, options
 * Y= outcome variable
@@ -28,13 +48,16 @@ de Chaisemartin and D'Haultfoeuille (AER 2020) look at h=0; ie. what happens rig
 * breps(50)- default (without specifying) is command executes 50 bootstrap replications 
 * robust_dynamic option- computes the DID_l estimators introduced in CDH  (2020)
 * weight(varlist) gives the name of a variable to be used to weight the data 
-	* weight(population)
 
-did_multiplegt_dyn log_fatal_per_cap  state year primary,  graph_off save_results($oput_loc/q3a_cdh_results)    weight(population)
+did_multiplegt_dyn log_fatal_per_cap  state year primary,  graph_off save_results($oput_loc/q3a_cdh_results)  effects(19) // weight(w_g)
+e
 * my average = -0.032
 * yazen's average = -0.016 // yazen used weights for cohort size 
+* cass's = -0.012
 
- 
+
+
+
 /*
 h	ATT_h_dCDH	ATT_h_SnA
 0	-.0112402	-.0112328
@@ -106,6 +129,11 @@ h	ATT_h_Liu
 */ 
 	
 * check out ssc install event_plot 
+
+
+* Question 3c
+* did_multiplegt_dyn log_fatal_per_cap  state year primary,  graph_off save_results($oput_loc/q3c_cdh_results)    weight(population)
+
 * ============================================================================= *
 * Question 4a
 /*
