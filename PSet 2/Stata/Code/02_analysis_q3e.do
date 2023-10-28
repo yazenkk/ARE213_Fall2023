@@ -1,22 +1,29 @@
 /*
-Title: 		02_analysis_q3b.do
+Title: 		02_analysis_q3e.do
 Outline:	Question 3, PSet 2 
 
 Q3 DinD estimation
 
 3. Now proceed with the DiD estimation. 
 
-(b) Report the Borusyak, Jaravel, and Spiess’s imputation estimates for the same
-estimands. Use the most appropriate standard errors. Do the results mostly
-agree with part 3(a)?
+(e) The dataset includes several covariates measuring, e.g., weather, percent of college
+graduates, and vehicle miles traveled. Illustrate some ways how covariates can be
+correctly incorporated in your analysis. Describe the procedures you follow and
+argue why they are potentially useful.
 
-Approach: following Theorem 2 in BJS (2023):
-1) Get predictions for alpha_i and beta_t by OLS in the omega_0 
-(untreated or not yet treated) population only.
-2) Get \hat{tau}
-	2a. Compute \hat{y(0)} = in omega_1 population and 
-	2b. compute \hat{tau} = y-\hat{y(0)}
-3) Estimate tau_w by a weighted sum over omega_q
+*/
+
+
+/*
+Title: 		02_analysis_q3d.do
+Outline:	Question 3, PSet 2 
+
+Q3 DinD estimation
+
+3. Now proceed with the DiD estimation. 
+
+(d) How sensitive are the estimates to including state-specific linear trends into your
+model of untreated potential outcomes?
 
 */
 
@@ -24,10 +31,12 @@ use "$dta_loc/pset2_q1", clear
 isid state year
 
 sort state year primary secondary
-drop college beer unemploy totalvmt precip snow32 rural_speed urban_speed
+drop unemploy precip rural_speed urban_speed
 
 // 1) Get predictions for alpha_i and beta_t by OLS in omega_0 
-reg ln_fat_pc i.state i.year if primary == 0
+// using state specific time trends atop state and time trends
+reg ln_fat_pc i.state i.year if primary == 0 
+reg ln_fat_pc i.state i.year beer if primary == 0 
 
 
 // 2) Get \hat{tau}
@@ -57,7 +66,7 @@ preserve
 	
 	// save
 	compress
-	save "$dta_loc\q3b_ATTs", replace
+	save "$dta_loc\q3e_ATTs", replace
 restore
 
 
@@ -76,5 +85,23 @@ egen SE_Liu = mean(eps_it) // BS come back to this.
 
 
 // how to get weights?
+
+
+sum ATT_Liu
+/*
+Results are sensitive to including covariates that adjust the 
+predicted outcome for observations in omega_0. If these covariates
+capture variance in y that is not captured by the TWFE model, then
+the tau hats will be smaller once X is included as we see here. R^2 is 90%
+without the beer variable and 93% with it hence beer does capture some 
+additional variation in the outcome, thereby lowering tau_hat. If the researcher 
+controls for such covariates, then the ATT will be more conservative.
+
+What about SE?
+*/
+
+
+
+
 
 

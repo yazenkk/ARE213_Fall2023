@@ -5,8 +5,6 @@ Outline:	Question 3a, PSet 2
 Q3 DinD estimation
 
 3. Now proceed with the DiD estimation. 
-(Note: These methods are quite simple. If the commands are not available 
-in some of the languages, just code them up.)
 
 (a) Report the de Chaisemartin and D’Haultfouille’s manual averaging estimates of
 the dynamic ATTs for the horizons where a reasonable sample is available.
@@ -243,9 +241,19 @@ merge 1:1 h using `tau_SnA'
 // visualize: S&A estimates are larger in absolute terms
 twoway (kdensity ATT_h_dCDH) (kdensity ATT_h_SnA)
 sum ATT_h_dCDH ATT_h_SnA
+drop _merge
 
+label var h "Horizon"
+label var ATT_h_dCDH "ATT dCDH (C = not-yet-treated)"
+label var ATT_h_SnA  "ATT Sun and Abraham (C = never-treated)"
 
 // Meeting notes: compare weights with Cass's
+
+
+// save
+compress
+save "$dta_loc\q3a_ATTs", replace
+
 
 
 
