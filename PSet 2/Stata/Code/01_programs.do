@@ -19,4 +19,5 @@ ssc install colrspace, replace
 ssc install heatplot
 ssc install palettes, replace
 ssc install synth
-
+cap ado uninstall synth_runner //in-case already installed
+net install synth_runner, from(https://raw.github.com/bquistorff/synth_runner/master/) replace

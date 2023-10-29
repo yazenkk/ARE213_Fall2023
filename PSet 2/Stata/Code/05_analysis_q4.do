@@ -144,6 +144,8 @@ Report which states comprise this synthetic control and how well it matches pred
 * ============================================================================= *
 * Estimating effects for California only
 * never-treated groups= donors
+* ssc install outreg2 
+
 use "$dta_loc/pset2", clear
 
 	gen 	log_fatal_per_cap=log(fatalities/(population*1000))
@@ -157,16 +159,11 @@ use "$dta_loc/pset2", clear
 	drop if prim_ever==1 & state!=4 // drop states that were treated other than CA
 	unique state 
 	
-* predictors are only pre-treatment log fatalities 
-	* synth independent_var: log_fatal_per_cap  
-	* predictors log_fatal_per_cap  between 1981 and 1993  
-	* trunit(4) trperiod(1993) - because unit affected by intervention is unit 4
-	synth log_fatal_per_cap log_fatal_per_cap(1981(1)1993), trunit(4) trperiod(1993)   fig  resultsperiod(1981(1)2003)
-
 * predictors are pre-treatment log fatalities and other covars 
-	synth log_fatal_per_cap  beer(1981(1)1993) precip(1981(1)1993) college(1981(1)1993) rural_speed(1981(1)1993) population(1981(1)1993) snow32(1981(1)1993) unemploy(1981(1)1993) totalvmt(1981(1)1993) log_fatal_per_cap(1981(1)1993) , trunit(4) trperiod(1993)   fig  resultsperiod(1981(1)2003)  keep(synth_results, replace)
-	graph export "$oput_loc/q4a_synthCA.png", replace 
+	synth log_fatal_per_cap  beer(1981(1)1993) precip(1981(1)1993) college(1981(1)1993) rural_speed(1981(1)1993) population(1981(1)1993) unemploy(1981(1)1993) totalvmt(1981(1)1993) snow32(1981(1)1993)  log_fatal_per_cap(1981(1)1993) , trunit(4) trperiod(1993)   fig  resultsperiod(1981(1)2003)  keep(synth_results, replace)
 
+	graph export "$oput_loc/q4a_synthCA.png", replace 
+	
 * graph california with rest of US that did not implement these laws 
 	bys year: egen avg_log_fatal_per_cap = mean(log_fatal_per_cap) if state!=4
 	lab var avg_log_fatal_per_cap "Average log fatalities per capita"
@@ -178,7 +175,7 @@ use "$dta_loc/pset2", clear
 	title(California vs. donor states) ///
 	caption(Donor states are those who never adopted primary law) ///
 	legend(on rows(1) size(medsmall) position(6)) ///
-	legend(label(1 "California") label(2 "Aveage of donor states"))  ///
+	legend(label(1 "California") label(2 "Average of donor states"))  ///
 	scheme(swift_red)
 	graph export "$oput_loc/q4a_CAvsUS.png", replace 
 
@@ -195,6 +192,43 @@ preserve
 	
 	listtex State Weight using "$oput_loc/q4a_synthCA_tab.tex", replace  
 restore
+
+preserve
+	* gap: synthetic and real califonria
+	use "synth_results.dta", clear 
+	gen gap=_Y_treated-_Y_synthetic
+	twoway (line gap  _time ), xline(1993) yline(0) scheme(swift_red) ytitle(Gap in log fatalities per capita, size(medsmall)) ttitle(Year, size(medsmall)) ///
+	title(Gap in log fatalities per capita between California and synthetic California, size(med)) 
+	graph export "$oput_loc/q4a_gapsynth.png", replace 
+restore 
+
+	* difference in variables between synthetic CA and CA 
+	matrix synthbal=e(X_balance)
+	matrix rownames synthbal = "Beer consumption per cap (gals)" "Precipitation (inches)" "Percent college grads" "Rural interstate speed limit" "Population (thousands)" "Unemployment rate" "Vehicle miles traveled (VMT)" "Snow (inches)There" "Log fatalities per capita"
+	esttab matrix(synthbal) using "$oput_loc/q4a_diff_synth.tex", replace  ///
+	collabels("California" "Synthetic California") 
+	
+	* estimation 
+	synth_runner log_fatal_per_cap  beer(1981(1)1993) precip(1981(1)1993) college(1981(1)1993) rural_speed(1981(1)1993) population(1981(1)1993) unemploy(1981(1)1993) totalvmt(1981(1)1993) snow32(1981(1)1993)  log_fatal_per_cap(1981(1)1993) , trunit(4) trperiod(1993)  gen_vars  
+	
+	* figure: log fatalities per capita in California vs. placebo gaps in control states 
+	single_treatment_graphs, trlinediff(-1) raw_gname(primary_raw) ///
+	effects_gname(primary_effects)  
+	graph export "$oput_loc/q4a_synth_estimation.png", replace
+	
+	
+	
+
+effects_ylabels(-30(10)30) effects_ymax(35) effects_ymin(-35) 
+sysuse synth_smoking, clear
+tsset state year
+synth_runner cigsale beer(1984(1)1988) lnincome(1972(1)1988) retprice age15to24 cigsale(1988) cigsale(1980) cigsale(1975), ///
+	trunit(3) trperiod(1989) gen_vars
+	
+
+effect_graphs , trlinediff(-1) effect_gname(cigsale1_effect) tc_gname(cigsale1_tc)
+	
+pval_graphs , pvals_gname(cigsale1_pval) pvals_std_gname(cigsale1_pval_t)
 
 * ============================================================================= *
 * Question 4b 
