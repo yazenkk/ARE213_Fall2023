@@ -19,6 +19,7 @@ Approach: following Theorem 2 in BJS (2023):
 3) Estimate tau_w by a weighted sum over omega_q
 
 */
+// set graphics off
 
 use "$dta_loc/pset2_q1", clear
 isid state year
@@ -44,10 +45,10 @@ byso h (cohort) : egen ATT_h_Liu = mean(tau_hat_it) // get horizon specific ATT
 // why are these ATTs much larger than ATT dCDH? 
 // Are my tau_hats right? What about my weights/averaging method?
 label var h "Horizon"
-label var ATT_h_Liu "ATT_h Liu et al (Imputation ATTs by horizon weighted regularly)"
+label var ATT_h_Liu "ATT_h (Imputation ATTs by horizon, weighted regularly)"
 
-egen ATT_Liu = mean(ATT_h_Liu) // tau_w (tau given weights)
-label var ATT_Liu "ATT Liu et al (Imputation ATT weighted regularly)"
+egen ATT_Liu = mean(tau_hat_it) // tau_w (tau given weights)
+label var ATT_Liu "ATT Liu et al (Imputation ATT, weighted regularly)"
 
 
 preserve
@@ -58,6 +59,21 @@ preserve
 	// save
 	compress
 	save "$dta_loc\q3b_ATTs", replace
+	
+	// get overall mean
+	qui sum ATT_h_Liu
+	local att_mean `r(mean)'
+
+	// plot
+	line ATT_h_Liu h, ///
+		yline(`att_mean') ///
+		note("Note: Displayed are horizon-specific ATT estimates along with the general average in red.") ///
+		saving("$do_loc/Graphs/ATT_BJS", replace)
+
+	graph export "$do_loc/Graphs/ATT_BJS.png", ///
+		width(1200) height(900) ///
+		replace	
+	
 restore
 
 
@@ -69,12 +85,23 @@ replace cohort_coarse = 1980 if inrange(cohort, 1980, 1989)
 replace cohort_coarse = 1990 if inrange(cohort, 1990, 1999)
 replace cohort_coarse = 2000 if inrange(cohort, 2000, 2009)
 
-// get tau_hat_{it} - tau_hat_{Et}
+// get eps_it = tau_hat_{it} - tau_hat_{Et}
 byso cohort_coarse (h) : egen tau_hat_coarset = mean(tau_hat_it) 
+replace tau_hat_coarset = . if primary != 1
 gen eps_it = tau_hat_it - tau_hat_coarset
-egen SE_Liu = mean(eps_it) // BS come back to this.
+sum eps_it
 
+// let v_it = w_it = size of omega_1
+count if primary == 1
+gen v_it = 1/`r(N)'
+gen v_e_it = v_it * eps_it
 
-// how to get weights?
+// var(tau_it) = sum_i (sum_t v_it eps_it)^2
+byso state : egen sumt_v_e = total(v_e_it) // sum over time within state, i
+gen sumt_v_e_sq = sumt_v_e^2
+keep state sumt_v_e_sq
+duplicates drop
+egen sumi_sumt_v_e_sq = total(sumt_v_e_sq)
+gen se = sqrt(sumi_sumt_v_e_sq)
 
 
