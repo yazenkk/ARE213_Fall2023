@@ -3,17 +3,9 @@ Title: 		05_analysis_q4.do
 Outline:	Question 4, PSet 2 
 */
 
+
 * ============================================================================= *
-
-/* QUESTION 3A: Report the de Chaisemartin and D’Haultfouille’s manual averaging estimates of the dynamic ATTs for the horizons where a reasonable sample is available.
-
-de Chaisemartin and D'Haultfoeuille (AER 2020) look at h=0; ie. what happens right after treatment.
-*/ 
- 
-* ssc install did_multiplegt_dyn
-
-* generate cohort size var 
-
+* 2c 
 	use "$dta_loc/pset2_q1", clear
 	rename ln_fat_pc log_fatal_per_cap 
 	byso cohort: egen w_g = count(cohort)
@@ -36,104 +28,30 @@ restore
 	assert _merge==3
 	drop _merge 
 
-* did_multiplegt Y G T D, options
-* Y= outcome variable
-* G= group variable
-* T= time period variable (assumes time period is evenly spaced)
-* D= treatment variable 
-* options: 
-	* effects(#) gives the number of event-study effects to be estimated 
-	* placebo(#) gives the number of placebo estimators to be computed 
+	* make kdensities for 1986 as an example
+		* make variable for change in pdf across periods 
+		gen control_logfatal=log_fatal_per_cap if prim_ever==0
+		gen treat1986_logfatal=log_fatal_per_cap if cohort==1986
+		
+		gen diff1986_logfatal = control_logfatal - treat1986_logfatal 
 
-* breps(50)- default (without specifying) is command executes 50 bootstrap replications 
-* robust_dynamic option- computes the DID_l estimators introduced in CDH  (2020)
-* weight(varlist) gives the name of a variable to be used to weight the data 
+		twoway (kdensity log_fatal_per_cap if prim_ever==1 & primary==0 & cohort==1986) (kdensity log_fatal_per_cap if prim_ever==0 & primary==0 & year<1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Log fatalities per capita") title("PDF in pre-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity1, replace)
+		twoway (kdensity log_fatal_per_cap if prim_ever==1 & primary==1 & cohort==1986) (kdensity log_fatal_per_cap if prim_ever==0 & primary==0 & year>=1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Log fatalities per capita") title("PDF in post-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity2, replace)
+		
+		graph combine kdensity1 kdensity2 
+		
+		kdensity log_fatal_per_cap if prim_ever==1 & primary==0 & cohort==1986, nograph generate(a1 b1)  
+		kdensity log_fatal_per_cap if prim_ever==1 & primary==0 & year<1986, nograph generate(a2 b2)  
+		kdensity log_fatal_per_cap if prim_ever==1 & primary==1 & cohort==1986, nograph generate(a3 b3)
+		kdensity log_fatal_per_cap if prim_ever==0 & primary==0 & year>=1986, nograph generate(a4 b4)
+		gen diff_control = a1-a3
 
-did_multiplegt_dyn log_fatal_per_cap  state year primary,  graph_off save_results($oput_loc/q3a_cdh_results)  effects(19) // weight(w_g)
-e
-* my average = -0.032
-* yazen's average = -0.016 // yazen used weights for cohort size 
-* cass's = -0.012
-
-
-
-
-/*
-h	ATT_h_dCDH	ATT_h_SnA
-0	-.0112402	-.0112328
-1	-.0160019	-.0159756
-2	-.0177748	-.0182887
-3	-.0164864	-.0172799
-4	-.0193444	-.0209481
-5	-.0223849	-.0250976
-6	-.0196936	-.0216656
-7	-.0145641	-.0170061
-8	-.0208143	-.0224303
-9	-.0174865	-.0192162
-10	-.0172894	-.0185355
-11	-.0183952	-.0204713
-12	-.0203281	-.0235469
-13	-.015268	-.0192468
-14	-.0141425	-.0178426
-15	-.0145673	-.0180682
-16	-.0207922	-.0256901
-17	-.0176296	-.0210095
-18	-.0041717	-.0052039
-19	-.0043965	-.0053057
-*/ 
-
-* QUESTION 3B  
-/* Report the Borusyak, Jaravel, and Spiess’s imputation estimates for the same
-estimands.
-
-*/
-
-* ssc install did_imputation
-* ssc install reghdfe // did_imputation requires a recent version of reghdfe 
-
-*  did_imputation Y i t Ei [if] [in] [estimation weights] [, options]
-* did_imputation Y id t Ei, fe(id t) horizons(#) pretrends(#)
-* Y = outcome variable = log fatalities per capita = log_fatal_per_cap
-* i = variable for unique unit id 
-* t = variable for calendar year 
-* Ei = variable for unit-specific date of treatment (missing= never treated) 
-gen year_treat=primary
-replace year_treat=year if primary==1
-replace year_treat=. if primary==0
-
-did_imputation log_fatal_per_cap state year year_treat, fe(state year)
-* very close to Yazen's avg of -0.138, mine is -0.107
-/*
-h	ATT_h_Liu
-0	-.0535273
-1	-.0650679
-2	-.0675896
-3	-.0637709
-4	-.0852289
-5	-.096785
-6	-.1155177
-7	-.0927107
-8	-.1540992
-9	-.1365185
-10	-.135313
-11	-.1445146
-12	-.1577798
-13	-.1439597
-14	-.1375055
-15	-.1407373
-16	-.204112
-17	-.2247997
-18	-.2673867
-19	-.2747974
-
-*/ 
+		twoway (kdensity fat_pc if prim_ever==1 & primary==0 & cohort==1986) (kdensity fat_pc if prim_ever==0 & primary==0 & year<1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Log fatalities per capita") title("PDF in pre-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity3, replace)
+		twoway (kdensity fat_pc if prim_ever==1 & primary==1 & cohort==1986) (kdensity fat_pc if prim_ever==0 & primary==0 & year>=1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Log fatalities per capita") title("PDF in post-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity4, replace)
+			graph combine kdensity3 kdensity4 
 	
-* check out ssc install event_plot 
 
-
-* Question 3c
-* did_multiplegt_dyn log_fatal_per_cap  state year primary,  graph_off save_results($oput_loc/q3c_cdh_results)    weight(population)
-
+		
 * ============================================================================= *
 * Question 4a
 /*
@@ -160,7 +78,7 @@ use "$dta_loc/pset2", clear
 	unique state 
 	
 * predictors are pre-treatment log fatalities and other covars 
-	synth log_fatal_per_cap  beer(1981(1)1993) precip(1981(1)1993) college(1981(1)1993) rural_speed(1981(1)1993) population(1981(1)1993) unemploy(1981(1)1993) totalvmt(1981(1)1993) snow32(1981(1)1993)  log_fatal_per_cap(1981(1)1993) , trunit(4) trperiod(1993)   fig  resultsperiod(1981(1)2003)  keep(synth_results, replace)
+	synth log_fatal_per_cap  beer(1981(1)1992) precip(1981(1)1992) college(1981(1)1992) rural_speed(1981(1)1992) population(1981(1)1992) unemploy(1981(1)1992) totalvmt(1981(1)1992) snow32(1981(1)1992)  log_fatal_per_cap(1981(1)1992) , trunit(4) trperiod(1993)   fig  resultsperiod(1981(1)2002)  keep(synth_results, replace)
 
 	graph export "$oput_loc/q4a_synthCA.png", replace 
 	
@@ -216,19 +134,6 @@ restore
 	effects_gname(primary_effects)  
 	graph export "$oput_loc/q4a_synth_estimation.png", replace
 	
-	
-	
-
-effects_ylabels(-30(10)30) effects_ymax(35) effects_ymin(-35) 
-sysuse synth_smoking, clear
-tsset state year
-synth_runner cigsale beer(1984(1)1988) lnincome(1972(1)1988) retprice age15to24 cigsale(1988) cigsale(1980) cigsale(1975), ///
-	trunit(3) trperiod(1989) gen_vars
-	
-
-effect_graphs , trlinediff(-1) effect_gname(cigsale1_effect) tc_gname(cigsale1_tc)
-	
-pval_graphs , pvals_gname(cigsale1_pval) pvals_std_gname(cigsale1_pval_t)
 
 * ============================================================================= *
 * Question 4b 
@@ -254,16 +159,54 @@ eststo clear
 			vce(placebo) ///   
 			method(sdid) ///
 			reps(100)  /// 
-			covariates(beer precip college rural_speed population snow32 unemploy totalvmt) ///
 			graph g1on g1_opt(xtitle("")  scheme(white_tableau)) g2_opt(scheme(white_tableau)) ///
 			graph_export($oput_loc/q4b_, .png)
 	//  vce(placebo), not bootstrap or jackknife because few treated units  
 	// repititions for bootstrap and placebo SE 
 
 	esttab sdid_1 using "$oput_loc/q4b_sdid.tex", nostar label  tex  replace  se
-
+	
+	covariates(beer precip college rural_speed population snow32 unemploy totalvmt) ///
 						
 * ============================================================================= *
 * Question 4c
 * ============================================================================= *
+
+	use "$dta_loc/pset2_q1", clear
+	isid state year
+
+	sort state year primary secondary
+	drop college beer unemploy totalvmt precip snow32 rural_speed urban_speed
+
+	// 1) Get predictions for alpha_i and beta_t by OLS in omega_0 
+	reg ln_fat_pc i.state i.year if primary == 0
+
+
+	// 2) Get \hat{tau}
+	// 2a) Compute \hat{y(0)} = in omega_1 population
+	predict yhat, xb
+	// 2b) Compute \hat{tau} = y-\hat{y(0)}
+	gen tau_hat_it = ln_fat_pc - yhat if primary == 1 // 
+
+	// 3) Estimate tau_w by a weighted sum over omega_q
+	// For weights, w_it, I follow Liu et al. (2022) AJPS who use a regular average
+	gen h = year - cohort if cohort != 999
+	byso h (cohort) : egen ATT_h_Liu = mean(tau_hat_it) if (state==4) // get horizon specific ATT
+
+	// why are these ATTs much larger than ATT dCDH? 
+	// Are my tau_hats right? What about my weights/averaging method?
+	label var h "Horizon"
+	label var ATT_h_Liu "ATT_h (Imputation ATTs by horizon, weighted regularly)"
+
+	egen ATT_Liu = mean(tau_hat_it) if state==4 // tau_w (tau given weights)
+	label var ATT_Liu "ATT Liu et al (Imputation ATT, weighted regularly)"
+
+	line yhat year  if state==4, scheme(swift_red) title("Predicted outcome for California") ytitle("Predicted log fatalities per capita for California") xline(1993)
+	graph export "$oput_loc/q4c.png", replace 
+
+
+
+
+
+
 
