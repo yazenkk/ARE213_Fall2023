@@ -35,6 +35,7 @@ restore
 		
 		gen diff1986_logfatal = control_logfatal - treat1986_logfatal 
 
+		/*
 		twoway (kdensity log_fatal_per_cap if prim_ever==1 & primary==0 & cohort==1986) (kdensity log_fatal_per_cap if prim_ever==0 & primary==0 & year<1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Log fatalities per capita") title("PDF in pre-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity1, replace)
 		twoway (kdensity log_fatal_per_cap if prim_ever==1 & primary==1 & cohort==1986) (kdensity log_fatal_per_cap if prim_ever==0 & primary==0 & year>=1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Log fatalities per capita") title("PDF in post-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity2, replace)
 		
@@ -45,10 +46,12 @@ restore
 		kdensity log_fatal_per_cap if prim_ever==1 & primary==1 & cohort==1986, nograph generate(a3 b3)
 		kdensity log_fatal_per_cap if prim_ever==0 & primary==0 & year>=1986, nograph generate(a4 b4)
 		gen diff_control = a1-a3
+		*/
 
-		twoway (kdensity fat_pc if prim_ever==1 & primary==0 & cohort==1986) (kdensity fat_pc if prim_ever==0 & primary==0 & year<1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Log fatalities per capita") title("PDF in pre-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity3, replace)
-		twoway (kdensity fat_pc if prim_ever==1 & primary==1 & cohort==1986) (kdensity fat_pc if prim_ever==0 & primary==0 & year>=1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Log fatalities per capita") title("PDF in post-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity4, replace)
-			graph combine kdensity3 kdensity4 
+		twoway (kdensity fat_pc if prim_ever==1 & primary==0 & cohort==1986) (kdensity fat_pc if prim_ever==0 & primary==0 & year<1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Fatalities per capita") title("PDF in pre-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity3, replace)
+		twoway (kdensity fat_pc if prim_ever==1 & primary==1 & cohort==1986) (kdensity fat_pc if prim_ever==0 & primary==0 & year>=1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Fatalities per capita") title("PDF in post-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity4, replace)
+		graph combine kdensity3 kdensity4 
+		graph export "$oput_loc/q2c.png", replace
 	
 
 		
