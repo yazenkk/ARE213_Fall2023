@@ -103,12 +103,34 @@ restore
 
 
 // Q1b ----------------------
+gen ln_fat = ln(fatalities)
 gen fat_pc = fatalities/population
 gen ln_fat_pc = ln(fatalities/population)
 label var ln_fat_pc "Log fatalities per capita"
 // hist ln_fat_pc
 // ANS: taking the log of the fraction of fatalities per capita (the outcome) 
 // is a good idea because it normalizes its distribution.
+
+* histogram
+histogram ln_fat_pc, percent ytitle(Percent) xtitle("Log of fatalities per capita") title(Log of fatalities per capita) scheme(white_tableau) name(histogram_1b_1, replace) 
+graph export "$do_loc/Graphs/histogram_1b_1.png" , replace 
+
+* histogram
+histogram fat_pc, percent ytitle(Percent) xtitle("Fatalities per capita") title(Fatalities per capita) scheme(white_tableau) name(histogram_1b_2, replace )
+graph export "$do_loc/Graphs/histogram_1b_2.png" , replace 
+
+
+* fatalties  (raw) 
+* histogram
+histogram fatalities, percent ytitle(Percent) xtitle("Fatalities") title(Fatalities) scheme(white_tableau) name(histogram_1b_3, replace)
+graph export "$do_loc/Graphs/histogram_1b_3.png" , replace 
+	
+histogram ln_fat, percent ytitle(Percent) xtitle("Log fatalities") title(Log fatalities) scheme(white_tableau) name(histogram_1b_4, replace)
+graph export "$do_loc/Graphs/histogram_1b_4.png" , replace 
+	
+graph combine histogram_1b_1 histogram_1b_2 histogram_1b_3 histogram_1b_4
+graph export "$do_loc/Graphs/histogram_1b_combined.png" , replace 
+
 
 
 // Q1c ----------------------
@@ -185,6 +207,49 @@ preserve
 			   xline(2000, lcolor(dkorange) lpatter(dash))
 restore
 
+* control vs primary  
+twoway (scatter ln_fat_pc year if primary==0 & secondary==0, ///
+			mcolor(blue%70) msize(3-pt) msymbol(circle)) ///
+	   (scatter ln_fat_pc year if primary==1 & secondary==0, ///
+			mcolor(red%70) msize(3-pt) msymbol(diamond)), ///
+		xtitle(Year) ///
+		title("Log of fatalities per capita by year (raw data)", ///
+			size(medlarge)) ///
+		legend(size(small) position(6)) ///
+		scheme(swift_red) ///
+		legend(label(1 "No law") label(2 "Primary law") )
+		
+graph export "$do_loc/Graphs/q1c_scatterraw.png", replace 
+
+
+* now do this relative to year of exposure to treatment
+bys state (year): gen sum=sum(primary)
+gen first_yr_primary=year if sum==1
+bys state (year): egen firstyr_primary=max(first_yr_primary)
+lab var firstyr_primary  "First year of having primary law"
+drop sum first_yr_primary
+
+gen diff_firstyr_primary = year-firstyr_primary
+lab var diff_firstyr_primary "Years since introduction of primary law"
+
+twoway (scatter ln_fat_pc diff_firstyr_primary if primary==0 & secondary==0, ///
+			mcolor(blue%70) ///
+			msize(3-pt) ///
+			msymbol(circle)) ///
+		(scatter ln_fat_pc diff_firstyr_primary if primary==1 & secondary==0, ///
+			mcolor(red%70) ///
+			msize(3-pt) ///
+			msymbol(diamond)), ///
+		xtitle(Year) ///
+		title(Log of fatalities per capita relative to year of introduction of primary law, ///
+			  size(medsmall)) ///
+		scheme(swift_red) ///
+		legend(size(small) position(6) label(1 "No law") label(2 "Primary law"))
+		
+graph export "$do_loc/Graphs/q1c_scatterraw_relativeyr.png", replace 
+
+
+drop diff_firstyr_primary
 
 // save new dta with additional vars
 compress
