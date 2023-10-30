@@ -3,58 +3,6 @@ Title: 		05_analysis_q4.do
 Outline:	Question 4, PSet 2 
 */
 
-
-* ============================================================================= *
-* 2c 
-	use "$dta_loc/pset2_q1", clear
-	rename ln_fat_pc log_fatal_per_cap 
-	byso cohort: egen w_g = count(cohort)
-	replace w_g = w_g/23 // 23 is number of periods (works due to balance)
-
-preserve
-	keep cohort w_g
-	duplicates drop
-	egen tot_w_g = total(w_g)
-	assert tot_w_g == 48 // states
-	replace w_g = w_g/tot_w_g // get relative weights
-	drop tot_w_g
-	lab var w_g "Cohort weight"
-	
-	tempfile est_w_g
-	save 	`est_w_g'
-restore
-
-	merge m:1 cohort using `est_w_g' 
-	assert _merge==3
-	drop _merge 
-
-	* make kdensities for 1986 as an example
-		* make variable for change in pdf across periods 
-		gen control_logfatal=log_fatal_per_cap if prim_ever==0
-		gen treat1986_logfatal=log_fatal_per_cap if cohort==1986
-		
-		gen diff1986_logfatal = control_logfatal - treat1986_logfatal 
-
-		/*
-		twoway (kdensity log_fatal_per_cap if prim_ever==1 & primary==0 & cohort==1986) (kdensity log_fatal_per_cap if prim_ever==0 & primary==0 & year<1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Log fatalities per capita") title("PDF in pre-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity1, replace)
-		twoway (kdensity log_fatal_per_cap if prim_ever==1 & primary==1 & cohort==1986) (kdensity log_fatal_per_cap if prim_ever==0 & primary==0 & year>=1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Log fatalities per capita") title("PDF in post-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity2, replace)
-		
-		graph combine kdensity1 kdensity2 
-		
-		kdensity log_fatal_per_cap if prim_ever==1 & primary==0 & cohort==1986, nograph generate(a1 b1)  
-		kdensity log_fatal_per_cap if prim_ever==1 & primary==0 & year<1986, nograph generate(a2 b2)  
-		kdensity log_fatal_per_cap if prim_ever==1 & primary==1 & cohort==1986, nograph generate(a3 b3)
-		kdensity log_fatal_per_cap if prim_ever==0 & primary==0 & year>=1986, nograph generate(a4 b4)
-		gen diff_control = a1-a3
-		*/
-
-		twoway (kdensity fat_pc if prim_ever==1 & primary==0 & cohort==1986) (kdensity fat_pc if prim_ever==0 & primary==0 & year<1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Fatalities per capita") title("PDF in pre-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity3, replace)
-		twoway (kdensity fat_pc if prim_ever==1 & primary==1 & cohort==1986) (kdensity fat_pc if prim_ever==0 & primary==0 & year>=1986, lpattern(dash)), ytitle() xtitle(Y(0)= "Fatalities per capita") title("PDF in post-treatment period (1986 cohort)") scheme(swift_red) legend(label(1 "Treated") label(2 "Comparison")) name(kdensity4, replace)
-		graph combine kdensity3 kdensity4 
-		graph export "$oput_loc/q2c.png", replace
-	
-
-		
 * ============================================================================= *
 * Question 4a
 /*
