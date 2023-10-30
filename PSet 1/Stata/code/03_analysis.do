@@ -44,9 +44,8 @@ local balance_list dbrwt ///
 					dlivord ///
 					dplural_1 
 					
-	
-/* PENDING YK to check
-iebaltab `balance_list', ///
+
+iebaltab `balance_list', stdev ///
 	grpvar(miss_any) ///
 	rowvarlabels normdiff starsno /// 
 	savetex("$do_loc/tables/table0_balance_miss.tex") ///
@@ -54,20 +53,6 @@ iebaltab `balance_list', ///
 	tblnonote 				/// 
 	texnotewidth(1) replace  		
 	
-	
-preserve
-	// adjust footnote width
-	import delimited "$do_loc/tables/table0_balance_miss.tex", clear
-	fix_import
-	count if strpos(text, "\multicolumn{6}") > 0 // confirm there's that line to fix
-	assert `r(N)' == 1
-	replace text = subinstr(text, "\multicolumn{6}", "\multicolumn{7}", .) if ///
-		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table0_balance_miss.tex", ///
-		noquote wide replace
-restore
-  */
-
 
 
 * ----------------------------------------------------------------------------- * 
@@ -94,31 +79,18 @@ local covar_list 	dbrwt ///
 					dplural_1
 
 		
-/* YK to fix 
+
 // generate balance table
 iebaltab `covar_list', ///
 	grpvar(tobacco) ///
 	savetex("$do_loc/tables/table1_balance.tex") ///
 	rowvarlabels ///
-	total ///
+	total stdev ///
 	starsno ///
 	tblnote("Notes: Insert footnote") 	///
 	tblnonote 	 						/// 
 	replace normdiff  onerow
 	
-	
-// adjust footnote width of latex output
-preserve
-	import delimited "$do_loc/tables/table1_balance.tex", clear
-	fix_import
-	count if strpos(text, "\multicolumn{8}") > 0 // confirm there's that line to fix
-	assert `r(N)' == 1
-	replace text = subinstr(text, "\multicolumn{8}", "\multicolumn{9}", .) if ///
-		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table1_balance.tex", ///
-		noquote wide replace
-restore
-*/ 
 
 
 	
@@ -156,13 +128,13 @@ restore
 * ============================================================================= *
 * Question 3: 
 * ============================================================================= *
+use "$dta_loc/data/pset1_clean.dta", clear
+
 
 * See 3a after 3b
 
 * ----------------------------------------------------------------------------- * 
 * Question 3b: Results sensitive to dropping controls one at a time?
-use "$dta_loc/data/pset1_clean.dta", clear
-
 eststo clear
 preserve 
 
@@ -178,6 +150,7 @@ preserve
 		local control_exclude: list varlist-exclude 
 		dis as error "Running reg dbrwt of tobacco and all but covar `control_num'"
 		qui eststo: reg dbrwt tobacco `control_exclude', robust
+		qui estadd local dropped_var "`control_num'"
 		
 		if inlist(`i', 8, 16, 24, 32, 37) {
 			esttab using "$do_loc/tables/table_3b_`i'.tex",   		///
@@ -191,9 +164,10 @@ preserve
 				wrap 												///
 				cells (b(fmt(2)) se(fmt(2) par))					///
 				keep(tobacco) 	 									///
-				stats(N, 											///
+				stats(N 											/// 	
+					  dropped_var, 									///
 					  fmt(%9.0f)									///
-					  labels("Observations")) 						///
+					  labels("Observations" "Dropped covariate"))  	///
 				replace
 				
 			// clear estimates after tabulating what's regressed so far.
@@ -242,6 +216,7 @@ esttab using "$do_loc/tables/table_3acd.tex",   		///
 	nobaselevels 										///
 	noconstant											///
 	label            									///
+	mlabel("Question 2a" "Question 3a" "Question 3c" "Question 3d") ///
 	varwidth(50)										///
 	wrap 												///
 	cells (b(fmt(2)) se(fmt(2) par))					///
@@ -256,7 +231,7 @@ esttab using "$do_loc/tables/table_3acd.tex",   		///
 		cardiac pre4000 								///
 		dlivord dmeduc_1 dgestat dmage dmar 			///
 		totord9_2 totord9_3 							///
-		csex  											/// 
+		csex  											///
 		isllb10_2 isllb10_3 							///
 		dplural_1 										///
 		dgestat_sq dmage_sq int_tobacco_dmage 			///
@@ -322,15 +297,14 @@ global oaxaca_covar_list alcohol mrace3_2 mrace3_3 hisp_moth ///
 	gen oaxaca_att = mean_tob1h_1 - mean_tob0h_1
 	di oaxaca_att 
 	
-	
-
-* PENDING : add to latex 
 
 
 
 * ============================================================================= *
 * Question 4: PROPENSITY SCORE MATCHING  
 * ============================================================================= *
+use "$dta_loc/data/pset1_clean.dta", clear
+
 * ----------------------------------------------------------------------------- * 
 * Question 4a: propensity score using logit with nonlinear terms and interactions 
 
@@ -399,31 +373,34 @@ forval i = 1/10 {
 	
 // Within bins of p(X) compare X among treated and controls
 // run regs controlling for bins so that D is within bin
-/* YK to fix
-iebaltab $covar_list, ///
+
+local covar_list 	dbrwt ///
+					mrace3_3 ///
+					hisp_moth ///
+					dmeduc_1 dmeduc_2 dmeduc_3  ///
+					dmage ///
+					dmar ///
+					csex /// 
+					alcohol ///
+					phyper ///
+					diabetes ///
+					lung ///
+					anemia ///
+					pre4000 /// 
+					dgestat ///
+					dlivord ///
+					dplural_1
+
+iebaltab `covar_list', ///
 	grpvar(tobacco) ///
 	fixedeffect(phatx_bins) ///
 	rowvarlabels ///
 	starsno  ///
 	savetex("$do_loc/tables/table4_balance_pbins.tex") ///
 	tblnote("Notes: Insert footnote") 				///
-	tblnonote 								/// 
+	tblnonote 	stdev normdiff							/// 
 	texnotewidth(1) 		///	
 	replace  
-	
-preserve
-	// adjust footnote width
-	import delimited "$do_loc/tables/table4_balance_pbins.tex", clear
-	fix_import
-	count if strpos(text, "\multicolumn{6}") > 0 // confirm there's that line to fix
-	assert `r(N)' == 1
-	replace text = subinstr(text, "\multicolumn{6}", "\multicolumn{7}", .) if ///
-		strpos(text, "Notes:") > 0
-	outfile using "$do_loc/tables/table4_balance_pbins.tex", ///
-		noquote wide replace
-
-restore
-*/
 
 
 * ----------------------------------------------------------------------------- * 
@@ -546,7 +523,6 @@ local att_ipw = round(`r(mean)', 0.01)
 	
 	file close fh 
 
-stop
 
 
 * ============================================================================= *
@@ -554,20 +530,29 @@ stop
 * ============================================================================= *
 * ----------------------------------------------------------------------------- * 
 * Question 5a: 
+
 foreach var of varlist $covar_list { // generate interactions
 	egen m_`var' = mean(`var') 			// bar
 	gen dm_`var' = `var' - m_`var' 		// X-X_bar
 	gen tbco_`var' = tobacco*dm_`var' 	// D(X-X_bar)
 }
-regress dbrwt tobacco $covar_list tbco_* [pw=ipw1], noconstant
+eststo clear
+eststo: regress dbrwt tobacco $covar_list tbco_* [pw=ipw1], noconstant
 
 
 
 * ----------------------------------------------------------------------------- * 
 * Question 5b: 
 
-// interactions
-local covars_to_interact $covar_list
+// interactions (we select a subset of the original covar_list)
+local covars_to_interact alcohol ///
+						adequacy_2 ///
+						cardiac ///
+						dlivord dmeduc_3 dmage /// 
+						totord9_4 ///
+						csex  /// 
+						isllb10_9
+						
 loc n1 : list sizeof covars_to_interact // for interaction loop
 dis `n1'
 
@@ -601,18 +586,27 @@ global covars_lasso $covar_list `covars_interact'
 ** Lasso steps
 set seed $seed_q5b // defined in 00_master.do
 
-// regress Y on X and collect selected covariates
-lasso linear dbrwt $covars_lasso, rseed("$seed_q5b") // linear model
-eststo lasso_logit_y
-global selectedvars_y `e(allvars_sel)'
-dis "Selected vars: `e(allvars_sel)'"
+preserve
+	// Keep a random 5% of the dataset to reduce run time.
+	// This is not ideal but I don't have processing power.
+	
+	gen rand = runiform()
+	keep if rand <0.05
+	
+	// regress Y on X and collect selected covariates
+	lasso linear dbrwt $covars_lasso, rseed("$seed_q5b") grid(10) // linear model
+	global selectedvars_y `e(allvars_sel)'
+	dis "Selected vars: `e(allvars_sel)'"
 
-// regress D on X and collect selected covariates
-lasso logit tobacco $covars_lasso, rseed("$seed_q5b") // logit model
-eststo lasso_logit_d
-global selectedvars_d `e(allvars_sel)'
-dis "Selected vars: `e(allvars_sel)'"
+	// regress D on X and collect selected covariates
+	lasso logit tobacco $covars_lasso, rseed("$seed_q5b") grid(10) // logit model (40 mins)
+	global selectedvars_d `e(allvars_sel)'
+	dis "Selected vars: `e(allvars_sel)'"
+restore
 
+foreach var of varlist $selectedvars_d {
+	dis "`var'"
+}
 
 /* Notes on lasso options:
 - lasso standardizes variables by default. See manual p. 152. (seed in 00_master_ps2.do)
@@ -620,9 +614,24 @@ dis "Selected vars: `e(allvars_sel)'"
 
 // Regress Y on D and union of selected covariates from two lasso regs above
 global lasso_covars_union: list global(selectedvars_y) | global(selectedvars_d)
-reg dbrwt tobacco $lasso_covars_union
+eststo: reg dbrwt tobacco $lasso_covars_union
 
-// ATE 
+// plot q5ab
+esttab using "$do_loc/tables/table_5ab.tex",   			///
+	style(tex)											///
+	nogaps												///
+	nobaselevels 										///
+	noconstant											///
+	label            									///
+	varwidth(50)										///
+	wrap 												///
+	cells (b(fmt(2)) se(fmt(2) par))					///
+	stats(N, 											///
+		  fmt(%9.0f)									///
+		  labels("Observations")) 	///
+	eqlabel(none) ///
+	keep(tobacco) ///
+	replace
 
 
 
