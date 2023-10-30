@@ -239,7 +239,7 @@ duplicates drop
 merge 1:1 h using `tau_SnA'
 
 // visualize: S&A estimates are larger in absolute terms
-twoway (kdensity ATT_h_dCDH) (kdensity ATT_h_SnA)
+// twoway (kdensity ATT_h_dCDH) (kdensity ATT_h_SnA)
 sum ATT_h_dCDH ATT_h_SnA
 drop _merge
 
@@ -247,9 +247,20 @@ label var h "Horizon"
 label var ATT_h_dCDH "ATT dCDH (C = not-yet-treated)"
 label var ATT_h_SnA  "ATT Sun and Abraham (C = never-treated)"
 
-// Meeting notes: compare weights with Cass's
+// get overall mean
+qui sum ATT_h_dCDH
+global att_est_3a = round(`r(mean)', 0.001)
 
+// plot
+line ATT_h_dCDH h, ///
+	yline($att_est_3a) ///
+	note("Note: Displayed are horizon-specific ATT estimates along with the general average in red.") ///
+ 	saving("$do_loc/Graphs/ATT_dCDH", replace)
 
+graph export "$do_loc/Graphs/ATT_dCDH.png", ///
+	width(1200) height(900) ///
+	replace
+	
 // save
 compress
 save "$dta_loc\q3a_ATTs", replace

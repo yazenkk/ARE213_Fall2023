@@ -18,6 +18,7 @@ In your view, does the static regression coefficient provide a useful summary of
 
 */
 
+set graphics off
 
 use "$dta_loc/pset2_q1", clear
 isid state year
@@ -26,7 +27,12 @@ sort state year primary secondary
 drop college beer unemploy totalvmt precip snow32 rural_speed urban_speed prim_ever
 
 // 1) Run static TWFE
-reg ln_fat_pc i.state i.year primary 
+reg ln_fat_pc primary i.state i.year  
+mat A = r(table)
+mat att = A[1, "primary"] // get att_est
+mat se = A[2, "primary"] // get se_est
+global att_est_3f = round(att[1,1], 0.001)
+global se_est_3f  = round(se[1,1], 0.001)
 
 
 // 2) Get weights using auxiliary reg via FWL: reg D on i and t FEs
@@ -34,7 +40,7 @@ reg ln_fat_pc i.state i.year primary
 reg primary i.state i.year  
 predict dres, residuals
 
-// two ways to get denominator
+// Two ways to get denominator in weights
 // method 1
 gen dres_sq = dres^2
 egen tot_dres_sq = total(dres_sq)
@@ -52,6 +58,7 @@ sum tot_w_it // this sums to zero because it's on both omega_0 and _1
 gen h = year - cohort if cohort != 999
 byso h (cohort) : egen w_h = mean(w_it_static) // get horizon specific w_it_static
 scatter w_h h if primary == 1 
+scatter w_it_static h if primary == 1 
 // ANS: distant horizons get negative weights, yet total weights sum to 1.
 // These are the forbidden comparisons?
 
@@ -63,15 +70,29 @@ sum tot_w_d // this sums to one because it's on omega_1 only as proven in Prop. 
 // Q: Compare them to the sample weights of each horizon.
 // generate population weights at each horizon
 gen pop_d = population if primary == 1
-egen tot_pop_d = total(pop_d)
+egen tot_pop_d = total(pop_d) if primary == 1
 gen w_sample = population/tot_pop_d
+egen w_s_tot = total (w_sample)
+
+label var h "Horizon"
 byso h (cohort) : egen w_h_pop = mean(w_sample) // get horizon specific w_it_static
 twoway (scatter w_h_pop h if primary == 1) ///
 		(scatter w_h h if primary == 1 ), ///
 			legend(label(1 "Population weights") ///
-				   label(2 "Static TWFE weight"))
+				   label(2 "Static TWFE weight")) ///
+		yline(0) ///
+		ytitle("Weights") ///
+		saving("$do_loc/Graphs/BJS_weights_h", replace)
+		
+
+graph export "$do_loc/Graphs/BJS_weights_h.png", ///
+	width(1200) height(900) ///
+	replace
+				   
+				   
 // ANS: TWFE weights are decreasing in h while the population weights are 
-// increasing because the sample size increases over time.
+// increasing because (1) the sample size increases over time and (2)
+// because fewer obs exist at longer horizons.
 preserve
 	collapse (mean) population, by(year)
 	scatter population year
@@ -79,10 +100,13 @@ restore
 
 // In your view, does the static regression coefficient provide a useful 
 // summary of causal effects in this setting? Discuss.
+
 // ANS: if the BJS paper provides any conclusion, it is that the static TWFE
-// is exactly wrong because if treatment effects are heterogeneous, then the 
+// is exactly wrong because, if treatment effects are heterogeneous, then the 
 // later horizons will be weighted negatively as we see in the horizon specifc
 // weights, w_h.
+
+
 
 
 

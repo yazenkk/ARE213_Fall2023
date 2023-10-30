@@ -31,7 +31,7 @@ set linesize 255
 
 if "`c(username)'" == "yfkashlan" {
 	
-	global do_loc  "//Client/C$/Users/yfkas/OneDrive/Documents/GitHub/ARE213_Fall2023/PSet 2/Stata/Code"
+	global do_loc  "//Client/C$/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 2/Stata"
 	global dta_loc "//Client/C$/Users/yfkas/Dropbox (Personal)/ARE213/Pset2/data"
 	
 	// programs
@@ -50,11 +50,18 @@ if "`c(username)'" == "rajdevb" {
 
 
 // install programs
-// do "$do_loc/01_programs.do"
+// do "$do_loc/Code/01_programs.do"
 
 // analyze
-// do "$do_loc/02_analysis_q1.do"
-// do "$do_loc/02_analysis_q2.do"
+do "$do_loc/Code/02_analysis_q1.do"
+do "$do_loc/Code/02_analysis_q2.do"
+do "$do_loc/Code/02_analysis_q3a.do"
+do "$do_loc/Code/02_analysis_q3b.do"
+do "$do_loc/Code/02_analysis_q3c.do"
+do "$do_loc/Code/02_analysis_q3d.do"
+do "$do_loc/Code/02_analysis_q3e.do"
+do "$do_loc/Code/02_analysis_q3f.do"
+do "$do_loc/Code/02_analysis_q3z.do" // stack results
 
 
 

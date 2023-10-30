@@ -96,7 +96,7 @@ cohorts.
 
 
 // Secondary cohorts for sole states in primary cohort: 
-list cohort_sec if inlist(cohort, 1987, 1993, 2002) & year == 1981
+// list cohort_sec if inlist(cohort, 1987, 1993, 2002) & year == 1981
 // 1986 -> 1987
 // 1986 -> 1993
 // 1987 -> 2002
@@ -199,4 +199,12 @@ preserve
 			   xline(2002, lcolor(blue) lpatter(dash))
 restore
 
-// The raw data show the same general trend.
+// 2c) The raw data show the same general trend.
+/*
+As per Roth and Santanna (2023), we can test against the null that the PTA is
+invariant to (strictly monotonic) transformations. Compare change in pdfs of 
+raw outcome (fatalities per capita) over time across treatment and control. If
+the distributions are indistinguishable, then the PTA holds under tranformation.
+
+*/
+

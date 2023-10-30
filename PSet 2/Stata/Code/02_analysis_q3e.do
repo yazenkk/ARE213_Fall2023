@@ -13,30 +13,16 @@ argue why they are potentially useful.
 
 */
 
-
-/*
-Title: 		02_analysis_q3d.do
-Outline:	Question 3, PSet 2 
-
-Q3 DinD estimation
-
-3. Now proceed with the DiD estimation. 
-
-(d) How sensitive are the estimates to including state-specific linear trends into your
-model of untreated potential outcomes?
-
-*/
-
 use "$dta_loc/pset2_q1", clear
 isid state year
 
 sort state year primary secondary
-drop unemploy precip rural_speed urban_speed
 
 // 1) Get predictions for alpha_i and beta_t by OLS in omega_0 
 // using state specific time trends atop state and time trends
 reg ln_fat_pc i.state i.year if primary == 0 
-reg ln_fat_pc i.state i.year beer if primary == 0 
+local covars college beer totalvmt precip snow32 rural_speed urban_speed
+reg ln_fat_pc i.state i.year `covars' if primary == 0 
 
 
 // 2) Get \hat{tau}
@@ -67,7 +53,13 @@ preserve
 	// save
 	compress
 	save "$dta_loc\q3e_ATTs", replace
+
+	
+	// get overall mean
+	qui sum ATT_Liu
+	global att_est_3e = round(`r(mean)', 0.001)
 restore
+
 
 
 // 4) Estimate standard error (conservative estimate)
@@ -78,30 +70,31 @@ replace cohort_coarse = 1980 if inrange(cohort, 1980, 1989)
 replace cohort_coarse = 1990 if inrange(cohort, 1990, 1999)
 replace cohort_coarse = 2000 if inrange(cohort, 2000, 2009)
 
-// get tau_hat_{it} - tau_hat_{Et}
+// get eps_it = tau_hat_{it} - tau_hat_{Et}
 byso cohort_coarse (h) : egen tau_hat_coarset = mean(tau_hat_it) 
+replace tau_hat_coarset = . if primary != 1
 gen eps_it = tau_hat_it - tau_hat_coarset
-egen SE_Liu = mean(eps_it) // BS come back to this.
+sum eps_it
 
+// let v_it = w_it = size of omega_1
+count if primary == 1
+gen v_it = 1/`r(N)'
+gen v_e_it = v_it * eps_it
 
-// how to get weights?
-
-
-sum ATT_Liu
-/*
-Results are sensitive to including covariates that adjust the 
-predicted outcome for observations in omega_0. If these covariates
-capture variance in y that is not captured by the TWFE model, then
-the tau hats will be smaller once X is included as we see here. R^2 is 90%
-without the beer variable and 93% with it hence beer does capture some 
-additional variation in the outcome, thereby lowering tau_hat. If the researcher 
-controls for such covariates, then the ATT will be more conservative.
-
-What about SE?
-*/
+// var(tau_it) = sum_i (sum_t v_it eps_it)^2
+byso state : egen sumt_v_e = total(v_e_it) // sum over time within state, i
+gen sumt_v_e_sq = sumt_v_e^2
+keep state sumt_v_e_sq
+duplicates drop
+egen sumi_sumt_v_e_sq = total(sumt_v_e_sq)
+gen se = sqrt(sumi_sumt_v_e_sq)
+qui sum se
+local se_est_3e = round(`r(mean)', 0.001)
 
 
 
+dis "ATT = $att_est_3e"
+dis "SE = $se_est_3e"
 
 
 

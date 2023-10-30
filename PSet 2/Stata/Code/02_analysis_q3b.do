@@ -17,6 +17,11 @@ Approach: following Theorem 2 in BJS (2023):
 	2a. Compute \hat{y(0)} = in omega_1 population and 
 	2b. compute \hat{tau} = y-\hat{y(0)}
 3) Estimate tau_w by a weighted sum over omega_q
+4) Estimate SEs
+	4a. Pool multiple cohorts for simplicity
+	4b. get eps_it = tau_hat_{it} - tau_hat_{Et}
+	4c. let v_it = w_it = size of omega_1 for simplicity
+	4d. Compute var(tau_it) = sum_i (sum_t v_it eps_it)^2
 
 */
 // set graphics off
@@ -61,12 +66,12 @@ preserve
 	save "$dta_loc\q3b_ATTs", replace
 	
 	// get overall mean
-	qui sum ATT_h_Liu
-	local att_mean `r(mean)'
+	qui sum ATT_Liu
+	global att_est_3b = round(`r(mean)', 0.001)
 
 	// plot
 	line ATT_h_Liu h, ///
-		yline(`att_mean') ///
+		yline($att_est) ///
 		note("Note: Displayed are horizon-specific ATT estimates along with the general average in red.") ///
 		saving("$do_loc/Graphs/ATT_BJS", replace)
 
@@ -103,5 +108,10 @@ keep state sumt_v_e_sq
 duplicates drop
 egen sumi_sumt_v_e_sq = total(sumt_v_e_sq)
 gen se = sqrt(sumi_sumt_v_e_sq)
+qui sum se
+global se_est_3b = round(`r(mean)', 0.001)
 
 
+
+dis "ATT = $att_est_3b"
+dis "SE = $se_est_3b"
