@@ -21,7 +21,7 @@ clear matrix
 cap log close 
 
 
-// log using "$do_loc/pset2_logfile.smcl", replace smcl
+log using "$do_loc/pset2_logfile.smcl", replace smcl
 
 
 set more off
@@ -48,7 +48,6 @@ if "`c(username)'" == "rajdevb" {
 	global dta_loc	"`mainfolder'/Dropbox/ARE213/Pset1"
 }
 
-
 // install programs
 // do "$do_loc/Code/01_programs.do"
 
@@ -65,7 +64,7 @@ do "$do_loc/Code/02_analysis_q3z.do" // stack results
 
 
 
-// log close
-// translate "$do_loc/pset2_logfile.smcl" "$do_loc/pset2_logfile.pdf", replace
+log close
+translate "$do_loc/pset2_logfile.smcl" "$do_loc/pset2_logfile.pdf", replace
 
 
