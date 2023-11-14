@@ -45,7 +45,7 @@ share of shock k across units i.
 	label var deltalines_std "deltalines (sd = 1)"
 
 	// 2) regress SSIV on confounder
-	reg deltalines_std dist_beijing, robust
+	reg dist_beijing deltalines_std, robust
 
 
 // shock-level
@@ -64,8 +64,8 @@ share of shock k across units i.
 	sum open_std  
 	
 	// 3) regress shock on confounder
-	reg open_std speed dist, robust // balance without weights
-	reg open_std speed [aw=s_k], robust // weights ruin balance
+	reg speed open_std, robust // balance without weights
+	reg speed open_std [aw=s_k], robust // weights ruin balance
 
 
 /*
@@ -87,8 +87,5 @@ ANS:
 	test for a city-level ``pre-trend."
 */
 
-
-// continue here to 4 pm. Then hit Delah until 8 for Macro. Then Gym. 
-// Then read dev paper and sleep.
 
 
