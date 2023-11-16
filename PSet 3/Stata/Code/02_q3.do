@@ -1,26 +1,11 @@
 /*
-Title: 		02_q3.do
-Purpose:	Question 3, PSet 3
+Title: 		02_q3b.do
+Purpose:	Question 3.b, PSet 3
 
-Outline: Question 3
+Outline: Question 3.b
 
 (b) Still, let’s try it out. Compute logNDi and estimate (2) by OLS without controls.
 Explain why this OLS may not be causal even if the specification is correct.
-
-(c) Briefly describe how Assumptions A1–A3 allow you to construct 
-counterfactual 2016 railway networks (i.e., sets of lines) that 
-were as likely to have happened as the realized network. 
-
-Simulate 999 such counterfactual networks; make sure to set a 
-seed, such that your results can be exactly reproduced. 
-
-Compute logNDi for each city in each simulation and average it across simulations. 
-
-We denote this average by μi. 
-
-Report two corrected estimates of τ2: recentering by and controlling for μi. 
-Are they very different from your estimate in 3(b)? 
-What do you learn from this?
 
 */
 
@@ -56,10 +41,15 @@ duplicates drop
 isid cityid2
 rename cityid2 cityid
 
+// merge in city characteristics
+merge 1:1 cityid using "$dta_loc/pset3_cities", nogen assert(3)
+
+// save for Q3c
+save "$dta_loc/q3b", replace
+
 
 /*3.b.i -----------------------------------------------------------------------
 Estimate (2) by OLS without controls */
-merge 1:1 cityid using "$dta_loc/pset3_cities", nogen assert(3)
 sum lognd
 reg empgrowth lognd
 
@@ -71,6 +61,10 @@ reg dist_beijing miss
 
 /*3.b.iii Threats to ID -------------------------------------------------------
 Explain why this OLS may not be causal even if the specification is correct. */
+// see overleaf
+
+
+
 
 
 
