@@ -49,27 +49,22 @@ forval t = 1/`T' {
 		
 		use "$dta_loc/pset3_lines", clear
 		isid lineid
-		expand nlinks // duplicate observations based on nlinks (.|w)
-		sort lineid
+		// equal weights within nlinks
+		byso nlinks : gen rand = runiform() 
+		sort nlinks rand
 		
-		// equal weights where nlinks defines number of draws per line
-		gen rand = runiform() 
-		sort rand
-		
+		// keep number of open lines within nlinks levels
 		// For lines with multiple draws, keep higher draw
-		byso lineid : egen higher_draw = max(rand) 
-		byso lineid : gen to_drop = rand < higher_draw // keep higher draw by lineid
-		drop if to_drop == 1
-		drop to_drop
-		assert _N == 149
-		
-		// generate shock indicator for highest 149-66=83 draws
-		sort higher_draw
-		gen open_`t' = _n > `line_ct'
-		byso open_`t' : egen city_ct = rank(lineid), track
-		sort open_`t' city_ct
-		
+		byso nlinks : egen open_ct = total(open)
+		sort nlinks rand
+		byso nlinks : egen rand_rank = rank(rand), field
+
+		// generate simulated shock
+		gen open_`t' = rand_rank <= open_ct
 		// confirm number of shocks generated equals original number
+		byso open_`t' : egen line_ct = rank(lineid), track
+		sort open_`t' line_ct
+		
 		count if open_`t' == 0
 		assert `r(N)' == `line_ct'
 		sort lineid
