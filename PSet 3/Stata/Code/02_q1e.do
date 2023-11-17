@@ -64,8 +64,11 @@ share of shock k across units i.
 	sum open_std  
 	
 	// 3) regress shock on confounder
+	keep lineid speed open open_std s_k
+	duplicates drop 
+	reg speed open, robust // balance without weights
 	reg speed open_std, robust // balance without weights
-	reg speed open_std [aw=s_k], robust // weights ruin balance
+	reg speed open_std [aw=s_k], robust
 
 
 /*

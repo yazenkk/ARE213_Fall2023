@@ -34,7 +34,7 @@ gen cond_dist = dist if open_i == 1
 sort cityid2 open_i cond_dist
 byso cityid2 : egen nd = min(cond_dist)
 gen lognd = log(nd)
-label var lognd "log nearest distance to city with HSR"
+label var lognd "log nearest distance"
 // hist lognd
 keep cityid2 lognd
 duplicates drop
@@ -45,13 +45,16 @@ rename cityid2 cityid
 merge 1:1 cityid using "$dta_loc/pset3_cities", nogen assert(3)
 
 // save for Q3c
-save "$dta_loc/q3b", replace
+save "$dta_loc/q3b_lognd", replace
 
 
 /*3.b.i -----------------------------------------------------------------------
 Estimate (2) by OLS without controls */
+encode province_en, gen(prov)
+
 sum lognd
 reg empgrowth lognd
+areg empgrowth lognd, absorb(prov) // 
 
 // cities with missing data are more remote 
 // (farther away from Beijing and from nearest city with HSR)
