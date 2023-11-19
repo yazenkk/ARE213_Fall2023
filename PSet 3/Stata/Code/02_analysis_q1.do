@@ -259,326 +259,63 @@ use `clean_dta', clear
 	esttab using "${dta_loc}/2b_reg"  , nostar label  tex  replace  se wide b(4)
 
 * 2c -------------------------------------------------------------------------- * 
-/* Manually use the BHJ equivalence result to compute tau^_1 from a weighted IV
-specification at the level of planned lines. Describe and interpret the outcome, 
-treatment, instrument, controls, and weights in this specificationg, taking into
-account he somewhat special structyure of DeltaLines_i relative to a generic 
-shift-share variable. Confirm that the estimate matches your answer to 1d 
-perfectly. You should find that there are a bit fewer than 149 observations - 
-why is that? Finally, report exposure-robust SEs for tau_hat1.  */ 
 
-* line level IV regression 
-	* calculate weights for iv regression
-	* Sik = line k passes through city i 
-	* s_k = line k passes through how many cities 
-
-	use "${dta_stations}", clear
-	gen Sik = 1 
-	lab var Sik "Indicator: line k passes through city i"
-	
-	keep Sik lineid cityid 
-	duplicates drop 
-
-	tempfile shock_num 
-	save 	`shock_num'
-	
-	
-	bys lineid: egen agg_sk = total(Sik) 
-	gen sk=agg_sk/148
-	keep agg_sk lineid 
-	duplicates drop 
-	lab var agg_sk "Number of cities line k passes through over total lines"
-	
-	tempfile shock2_num 
-	save 	`shock2_num'
-	
-	
 * generate residuals 
 	use `clean_dta', clear 
-	regress empgrowth Qi_*, robust // PENDING: TRY NLINKS?
-	predict reg1_coef 
+	drop if mi(empgrowth) | mi(deltalines) 
+	
+	regress empgrowth Qi_*
 	predict res_y, residuals
 	
-	regress deltalines Qi_*, robust  // PENDING: TRY NLINKS?
-	predict reg2_coef 
+	regress deltalines Qi_*
 	predict res_d, residuals	
-	
 	
 	keep cityid res_y res_d 
 	duplicates drop 
 	
+	count if mi(res_y) 
+	count if mi(res_d) 
+	
+	* drop if mi(res_y) | mi(res_d) 
+	
 	tempfile residuals 
-	save 	`residuals'
-	
-	* generate exposure-weighted averages of Vi 
-	merge 1:m cityid using `shock_num', gen(merge_shock) 
-	gen num_d = res_d * Sik 
-	gen num_y = res_y * Sik 
-	bys lineid: egen agg_num_d = total(num_d) 
-	bys lineid: egen agg_num_y = total(num_y)
-	bys lineid: egen agg_denom_d = total(Sik) 
-	
-	gen d_bar = agg_num_d/agg_denom_d
-	gen y_bar = agg_num_y/agg_denom_d 
-	drop if mi(lineid) 
-
-	keep lineid d_bar y_bar
-	duplicates drop 
-	tempfile bar_dta 
-	save 	`bar_dta'
-	
-	
-	use "${dta_lines}", clear 
-	merge 1:1 lineid using `shock2_num', gen(merge_shock) 
-
-	merge 1:1 lineid using `bar_dta', gen(merge_bar) 
-	
-	drop if lineid==252
-	ivregress 2sls y_bar (d_bar=open) i.nlinks [aw=agg_sk], robust
-
-	e
-	
-// 	use `clean_dta', clear 
-// 	keep Qi_* cityid 
-// 	forvalues i =1/10 {
-// 		bys cityid: egen city_Qi_`i'=sum(Qi_`i') 
-// 	}
-// 	keep cityid city_Qi_* 
-// 	duplicates drop
+	save 	`residuals' // 275 cities with data for y (empgrowth) and d (deltalines)
 	
 
-	* line-city level dataset 
+* combine all generated variables to create line-level dataset for main regression 
 	use "${dta_stations}", clear 
-	merge m:1 lineid using `shock2_num', gen(merge_shock) 
-	assert merge_shock == 3 
-	drop merge_shock 
+	gen Sik = 1 
+	lab var Sik "Indicator: line k passes through city i"
+	bys lineid: egen agg_sk = total(Sik) 
 	
-	merge 
-	
-	
-	
-	
-	
-	
-	e
-	
-		* merge m:1 cityid using `residuals', gen(merge_res) 
+	merge m:1 cityid using `residuals', gen(merge_residuals)
+	unique cityid if merge_residuals==3 
+	keep if merge_residuals==3 
 
-	* calculate exposure-weighted averages of Vi 
+	bys lineid: gen num_d = Sik * res_d
+	bys lineid: gen num_y = Sik * res_y 
+	bys lineid: egen d_bar = sum(num_d)
+	bys lineid: egen y_bar = sum(num_y) 
+	bys lineid: egen denom = sum(Sik) 
+	bys lineid: replace d_bar = d_bar/denom 
+	bys lineid: replace y_bar = y_bar/denom 
 	
-	gen num_y = Sik * res_y 
-	gen num_d = Sik * res_d 
-	bys lineid: egen num_yy = total(num_y) 
-	bys lineid: egen num_dd = total(num_d) 
-	drop num_y num_d
-	bys lineid: egen denom = total(Sik) 
+	gen totobs = _N 
+	gen sk = denom/totobs 
 	
-	bys lineid: gen wgt_res_y = num_yy / denom
-	bys lineid: gen wgt_res_d = num_dd / denom
+	
+	keep lineid y_bar d_bar   sk 
 
-	keep lineid wgt_res_y wgt_res_d 
-	drop if mi(lineid) 
-	
-	duplicates drop 
-	tempfile weights_calc
-	save 	`weights_calc'
-	
-	
-	
-* use line level dataset and merge in shock 
-	use "${dta_lines}", clear 
-	merge 1:1 lineid using `shock_num', nogen 	
-	merge 1:1 lineid using `weights_calc', nogen
-	merge 1:1 lineid using `shock2_num', nogen 
-	
-	ivregress 2sls wgt_res_y (wgt_res_d=open) i.nlinks [aw=sk], robust
-
-
-e
-
-
-
-
-
-
-	* generate exposure-weighted avgs of residuals 
-	keep res_y res_d cityid Qi_* 
-	duplicates drop 
-	
-	preserve 
-		use "${dta_lines}", clear
-		merge 1:m lineid using "${dta_stations}"
-		bys lineid: gen tot_cities=_N 
-		keep lineid tot_cities 
-	tempfile temp_3
-	save 	`temp_3'
-	restore 
-	
-	merge 1:m cityid using "${dta_stations}", gen(m4) 
-	drop m4 
-	
-	merge m:m lineid using `temp_3'
-e
-	bys lineid: egen sum_res_y = sum(res_y) 
-	bys lineid: egen sum_res_d = sum(res_d) 
-	
-	
-	
-	drop res_y res_d 
-	drop _merge 
-	
-	use `temp_1', clear
-	merge 1:m lineid using "${dta_stations}", gen(merge2)
-	merge m:1 cityid using `temp_2', gen(merge3)
-	
-	keep res_y res_d open Qi_* s_k 
-
-
-	use "${dta_stations}", clear 
-	merge m:1 cityid using `clean_dta', keepusing(empgrowth deltalines) 
-	merge m:1 lineid using "${dta_lines}", keepusing(open) gen(m2)
-	* dataset is unique at the lineid cityid level 
-
-	* generate residuals: regress employment growth on Qis 
-preserve
-	use `clean_dta', clear 
-	drop if mi(empgrowth)
-	
-	tempfile data_residuals
-	save 	`data_residuals' // unique at cityid level 
-restore 
-	
-	merge m:1 cityid using `data_residuals' , gen(m3)
-	drop m2 
-
-	
-	* generate weights for reg = wgt_calc 
-	gen denom = _N 
-	bys lineid: gen shock_num = sum(open) 
-	bys lineid: gen wgt_calc = shock_num/denom
-	drop denom shock_num 
-	
-	
-	* gen exposure-weighted averages of Vi 	
-	bys lineid: gen denom_s = sum(open) 
-	gen temp_y = reg1_y * open 
-	bys lineid: gen tot_temp_y = sum(temp_y) 
-	gen temp_d = reg2_d * open 
-	bys lineid: gen tot_temp_d = sum(temp_d) 
-	
-	gen num_y = tot_temp_y / denom_s 
-	gen num_d = tot_temp_d / denom_s 
-	
-	keep num_y num_d wgt_calc  open
-	e
-	ivregress 2sls num_y (num_d = open) 
-	numlinks_*
-	e
-	use "${dta_lines}", clear 
-	merge 1:m lineid using "${dta_stations}"
-	drop _merge 
-	
-	merge m:1 cityid using `data_residuals', keepusing(Qi_* reg1_y reg2_d wgt_calc) 
-	
-	
-	e
-	
-	
-	
-	
-	
-	
-	
-	drop m2 
-	
-	unique lineid cityid 
-
-	
-	bys lineid: asgen wavg_emp_k = empgrowth, w(open) 
-	bys lineid: asgen wavg_deltalines_k = deltalines, w(open) 
-	lab var wavg_emp_k 		  "Wgt avg of emp of cities linked to line"
-	lab var wavg_deltalines_k "Wgt avg of deltalines of cities linked to line"	
-	
-	bys lineid: egen avg_emp_k = mean(empgrowth)
-	bys lineid: egen avg_deltalines_k = mean(deltalines) 
-	
-	lab var avg_emp_k 		 "Avg emp of cities linked to line"
-	lab var avg_deltalines_k "Avg deltalines of cities linked to line" 
-	
-	keep lineid avg_emp_k  avg_deltalines_k wavg_* 
-	
-	
-	duplicates drop 
-	drop if mi(lineid)
-
-
-	merge 1:1 lineid using "${dta_lines}", keepusing(open nlinks)
-	assert _merge==3 
-	
-
-	use `clean_dta', clear 
-	
-
-	
-	
-	bys lineid: egen avg_resy = mean(reg1_y) 
-	bys lineid: egen avg_resd = mean(reg2_d)
-	bys lineid: asgen wavg_resy = reg1_y, w(open) 
-	bys lineid: asgen wavg_resd = reg2_d, w(open) 	
-	
-	forvalues i = 1/10 {
-	bys lineid: egen sum_Qi_`i' = sum(Qi_`i')
-	}
-	keep lineid wavg_resy wavg_resd open nlinks sum_Qi_*   avg_resy avg_resd 
 
 	duplicates drop 
 	
-	tab nlinks, gen(nlinks_) 
-	drop if mi(lineid) 
+	* merge in open and nlinks 
+	merge 1:1 lineid using "${dta_lines}"
 	
-	* generate weights = (1/N)*Sigma(S_ik) 
-	* the number of cities the line passes through / the number of cities 
+	eststo clear 
+	eststo: ivregress 2sls y_bar (d_bar=open) i.nlinks [aw=sk] , robust 
+	esttab using "${dta_loc}/2c_reg"  , nostar label  tex  replace  se wide b(4)
 
-	bys lineid: gen tot=_N 
-	bys lineid: gen weights = (sum(open))/tot
 
-	ivregress 2sls avg_resy (avg_resd = open) nlinks_* [aw=weights] , robust
-	
-	nlinks_* [aw=weights], robust 
-	e
 
 	
-
-	ivreg2 avg_resy (avg_resd=open) nlinks_*  [fweights=weights]
-	ivreg2 avg_resy (avg_resd=open) nlinks_*  [pweights=weights]
-	ivreg2 avg_resy (avg_resd=open) nlinks_*  [iweights=weights]
-	ivreg2 avg_resy (avg_resd=open) nlinks_*  [aweights=weights]
-
-	e
-	
-	
-preserve 
-ssaggregate empgrowth , controls("i.sum_nlinks num_plannedlines") s(deltaline) n(city_enc)
-restore 
-	* n = indsutry identifiers = city in our case 
-	* s = name of exposure weight variable 
-	*, string: indicates that the indstury identifier is a string 
-	
-ivreg
-
-
-
-
-	* can cross check with the ssaggregate package
-* spatial_hac_iv 
-
-
-* As we saw in D3 slide 16, conventional clustering of SE (i.e by province or Conley spatial clustering) will not caputre the fact that observations with similar shares are exposed to the same shocks -- both g_k and the unobserved v_k. This is where the 2c method comes in: Adao, Kolesar, Morales (2019) derive corrected formula, which leverages independence of g_k, regardless of correlations in e_i. BHJ show SE from the shock-level equivalent regression are valid. Conventional solution, directly extends to autocorrelation, spatial clsutering etc. 
-
-
-
-https://berenger.baospace.com/why-and-how-to-spatially-cluster-standard-errors-solved-in-stata/
-
-
-https://blogs.worldbank.org/impactevaluations/randomly-drawn-equators
-"Similar to cluster robust standard errors, these perform well only when there is a reasonable number of independent clusters (typically at least 30)"
