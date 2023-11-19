@@ -186,7 +186,6 @@ restore
 
 	esttab using "${dta_loc}/1d_reg"  , nostar label  tex  replace  se wide
 
-
 tempfile clean_dta
 save 	`clean_dta'
 
@@ -268,70 +267,218 @@ shift-share variable. Confirm that the estimate matches your answer to 1d
 perfectly. You should find that there are a bit fewer than 149 observations - 
 why is that? Finally, report exposure-robust SEs for tau_hat1.  */ 
 
-* shock-level IV regression 
-	* calculate average employment level per line (so average across all cities the line touches)
+* line level IV regression 
+	* calculate weights for iv regression
+	* Sik = line k passes through city i 
+	* s_k = line k passes through how many cities 
 
-	use `dta_stations', clear 
+	use "${dta_stations}", clear
+	gen Sik = 1 
+	keep Sik lineid 
+	duplicates drop 
 
+	tempfile shock_num 
+	save 	`shock_num'
+	
+	
+	bys lineid: egen sk = total(Sik) 
+	keep sk lineid 
+	duplicates drop 
+	
+	tempfile shock2_num 
+	save 	`shock2_num'
+	
+	
+* generate residuals 
+	use `clean_dta', clear 
+	regress empgrowth Qi_*, robust // PENDING: TRY NLINKS?
+	predict reg1_coef 
+	predict res_y, residuals
+	
+	regress deltalines Qi_*, robust  // PENDING: TRY NLINKS?
+	predict reg2_coef 
+	predict res_d, residuals	
+	
+	
+	keep cityid res_y res_d Qi_* 
+	duplicates drop 
+	
+	tempfile residuals 
+	save 	`residuals'
+	
+	
+	* line-city level dataset 
+	use "${dta_stations}", clear 
+	merge m:1 cityid using `residuals', gen(merge_res) 
+	merge m:1 lineid using `shock_num', gen(merge_shock) 
+	
+	
+	* calculate exposure-weighted averages of Vi 
+	gen num_y = Sik * res_y 
+	gen num_d = Sik * res_d 
+	bys lineid: egen num_yy = total(num_y) 
+	bys lineid: egen num_dd = total(num_d) 
+	drop num_y num_d
+	bys lineid: egen denom = total(Sik) 
+	
+	bys lineid: gen wgt_res_y = num_yy / denom
+	bys lineid: gen wgt_res_d = num_dd / denom
+
+	keep lineid wgt_res_y wgt_res_d 
+	drop if mi(lineid) 
+	
+	duplicates drop 
+	tempfile weights_calc
+	save 	`weights_calc'
+	
+	
+	
+* use line level dataset and merge in shock 
+	use "${dta_lines}", clear 
+	merge 1:1 lineid using `shock_num', nogen 	
+	merge 1:1 lineid using `weights_calc', nogen
+	merge 1:1 lineid using `shock2_num', nogen 
+	
+	ivregress 2sls wgt_res_y (wgt_res_d=open)  Qi_*  [aw=sk]
+
+
+e
+
+
+
+
+
+
+	* generate exposure-weighted avgs of residuals 
+	keep res_y res_d cityid Qi_* 
+	duplicates drop 
+	
+	preserve 
+		use "${dta_lines}", clear
+		merge 1:m lineid using "${dta_stations}"
+		bys lineid: gen tot_cities=_N 
+		keep lineid tot_cities 
+	tempfile temp_3
+	save 	`temp_3'
+	restore 
+	
+	merge 1:m cityid using "${dta_stations}", gen(m4) 
+	drop m4 
+	
+	merge m:m lineid using `temp_3'
+e
+	bys lineid: egen sum_res_y = sum(res_y) 
+	bys lineid: egen sum_res_d = sum(res_d) 
+	
+	
+	
+	drop res_y res_d 
+	drop _merge 
+	
+	use `temp_1', clear
+	merge 1:m lineid using "${dta_stations}", gen(merge2)
+	merge m:1 cityid using `temp_2', gen(merge3)
+	
+	keep res_y res_d open Qi_* s_k 
+
+
+	use "${dta_stations}", clear 
 	merge m:1 cityid using `clean_dta', keepusing(empgrowth deltalines) 
+	merge m:1 lineid using "${dta_lines}", keepusing(open) gen(m2)
+	* dataset is unique at the lineid cityid level 
+
+	* generate residuals: regress employment growth on Qis 
+preserve
+	use `clean_dta', clear 
+	drop if mi(empgrowth)
+	
+	tempfile data_residuals
+	save 	`data_residuals' // unique at cityid level 
+restore 
+	
+	merge m:1 cityid using `data_residuals' , gen(m3)
+	drop m2 
+
+	
+	* generate weights for reg = wgt_calc 
+	gen denom = _N 
+	bys lineid: gen shock_num = sum(open) 
+	bys lineid: gen wgt_calc = shock_num/denom
+	drop denom shock_num 
+	
+	
+	* gen exposure-weighted averages of Vi 	
+	bys lineid: gen denom_s = sum(open) 
+	gen temp_y = reg1_y * open 
+	bys lineid: gen tot_temp_y = sum(temp_y) 
+	gen temp_d = reg2_d * open 
+	bys lineid: gen tot_temp_d = sum(temp_d) 
+	
+	gen num_y = tot_temp_y / denom_s 
+	gen num_d = tot_temp_d / denom_s 
+	
+	keep num_y num_d wgt_calc  open
+	e
+	ivregress 2sls num_y (num_d = open) 
+	numlinks_*
+	e
+	use "${dta_lines}", clear 
+	merge 1:m lineid using "${dta_stations}"
+	drop _merge 
+	
+	merge m:1 cityid using `data_residuals', keepusing(Qi_* reg1_y reg2_d wgt_calc) 
+	
+	
+	e
+	
+	
+	
+	
+	
+	
+	
+	drop m2 
 	
 	unique lineid cityid 
+
 	
-		
+	bys lineid: asgen wavg_emp_k = empgrowth, w(open) 
+	bys lineid: asgen wavg_deltalines_k = deltalines, w(open) 
+	lab var wavg_emp_k 		  "Wgt avg of emp of cities linked to line"
+	lab var wavg_deltalines_k "Wgt avg of deltalines of cities linked to line"	
+	
 	bys lineid: egen avg_emp_k = mean(empgrowth)
 	bys lineid: egen avg_deltalines_k = mean(deltalines) 
 	
 	lab var avg_emp_k 		 "Avg emp of cities linked to line"
 	lab var avg_deltalines_k "Avg deltalines of cities linked to line" 
 	
-	keep lineid avg_emp_k  avg_deltalines_k
+	keep lineid avg_emp_k  avg_deltalines_k wavg_* 
 	
 	
 	duplicates drop 
 	drop if mi(lineid)
 
 
-	merge 1:1 lineid using `dta_lines', keepusing(open nlinks)
+	merge 1:1 lineid using "${dta_lines}", keepusing(open nlinks)
 	assert _merge==3 
 	
 
 	use `clean_dta', clear 
 	
-	* y = d + q 
-	* line-level regression
-	* instrument d by g 
+
 	
-	
-	* regress employment growth on Qis 
-	drop if mi(empgrowth)
-	regress empgrowth Qi_*, robust 
-	predict reg1_coef 
-	predict reg1_y, residuals
-	
-	* regress  delta lines on Qis 
-	regress deltalines Qi_*, robust 
-	predict reg2_coef 
-	predict reg2_d, residuals
-	
-	tempfile data_residuals
-	save 	`data_residuals'
-	
-	use `dta_lines', clear 
-	merge 1:m lineid using `dta_stations'
-	drop _merge 
-	
-	merge m:1 cityid using `data_residuals', keepusing(Qi_* reg1_y reg2_d) 
 	
 	bys lineid: egen avg_resy = mean(reg1_y) 
 	bys lineid: egen avg_resd = mean(reg2_d)
-	
+	bys lineid: asgen wavg_resy = reg1_y, w(open) 
+	bys lineid: asgen wavg_resd = reg2_d, w(open) 	
 	
 	forvalues i = 1/10 {
 	bys lineid: egen sum_Qi_`i' = sum(Qi_`i')
 	}
-	keep lineid avg_resy avg_resd open nlinks sum_Qi_*  
+	keep lineid wavg_resy wavg_resd open nlinks sum_Qi_*   avg_resy avg_resd 
 
-	
 	duplicates drop 
 	
 	tab nlinks, gen(nlinks_) 
@@ -340,10 +487,14 @@ why is that? Finally, report exposure-robust SEs for tau_hat1.  */
 	* generate weights = (1/N)*Sigma(S_ik) 
 	* the number of cities the line passes through / the number of cities 
 
-	gen weights = (nlinks+1)/ 275
+	bys lineid: gen tot=_N 
+	bys lineid: gen weights = (sum(open))/tot
 
-	ivreg2 avg_resy (avg_resd=open) nlinks_* [pweights=weights]
+	ivregress 2sls avg_resy (avg_resd = open) nlinks_* [aw=weights] , robust
 	
+	nlinks_* [aw=weights], robust 
+	e
+
 	
 
 	ivreg2 avg_resy (avg_resd=open) nlinks_*  [fweights=weights]

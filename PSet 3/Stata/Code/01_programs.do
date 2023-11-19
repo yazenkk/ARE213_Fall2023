@@ -16,3 +16,4 @@ ssc install shp2dta //1f
 ssc install spmap //1f 
 ssc install ssaggregate // to check  2c 
 ssc install reg2hdfe // for 2b. 
+ssc install asgen // weighted averages for q2
