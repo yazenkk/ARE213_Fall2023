@@ -304,7 +304,7 @@ use `clean_dta', clear
 	gen sk = denom/totobs 
 	
 	
-	keep lineid y_bar d_bar   sk 
+	keep lineid y_bar d_bar sk 
 
 
 	duplicates drop 
@@ -312,9 +312,12 @@ use `clean_dta', clear
 	* merge in open and nlinks 
 	merge 1:1 lineid using "${dta_lines}"
 	
+	lab var y_bar "Exposure-weighted avg of residuals of empgrowth"
+	lab var d_bar "Exposure-weighted avg of residuals of deltalines"
+	
 	eststo clear 
 	eststo: ivregress 2sls y_bar (d_bar=open) i.nlinks [aw=sk] , robust 
-	esttab using "${dta_loc}/2c_reg"  , nostar label  tex  replace  se wide b(4)
+	esttab using "${dta_loc}/2c_reg",  nostar label  tex  replace  se wide b(4)
 
 
 
