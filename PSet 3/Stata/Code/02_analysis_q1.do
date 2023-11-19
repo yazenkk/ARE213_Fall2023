@@ -274,16 +274,20 @@ why is that? Finally, report exposure-robust SEs for tau_hat1.  */
 
 	use "${dta_stations}", clear
 	gen Sik = 1 
-	keep Sik lineid 
+	lab var Sik "Indicator: line k passes through city i"
+	
+	keep Sik lineid cityid 
 	duplicates drop 
 
 	tempfile shock_num 
 	save 	`shock_num'
 	
 	
-	bys lineid: egen sk = total(Sik) 
-	keep sk lineid 
+	bys lineid: egen agg_sk = total(Sik) 
+	gen sk=agg_sk/148
+	keep agg_sk lineid 
 	duplicates drop 
+	lab var agg_sk "Number of cities line k passes through over total lines"
 	
 	tempfile shock2_num 
 	save 	`shock2_num'
@@ -306,15 +310,62 @@ why is that? Finally, report exposure-robust SEs for tau_hat1.  */
 	tempfile residuals 
 	save 	`residuals'
 	
-
+	* generate exposure-weighted averages of Vi 
+	merge 1:m cityid using `shock_num', gen(merge_shock) 
+	gen num_d = res_d * Sik 
+	gen num_y = res_y * Sik 
+	bys lineid: egen agg_num_d = total(num_d) 
+	bys lineid: egen agg_num_y = total(num_y)
+	bys lineid: egen agg_denom_d = total(Sik) 
 	
+	gen d_bar = agg_num_d/agg_denom_d
+	gen y_bar = agg_num_y/agg_denom_d 
+	drop if mi(lineid) 
+
+	keep lineid d_bar y_bar
+	duplicates drop 
+	tempfile bar_dta 
+	save 	`bar_dta'
+	
+	
+	use "${dta_lines}", clear 
+	merge 1:1 lineid using `shock2_num', gen(merge_shock) 
+
+	merge 1:1 lineid using `bar_dta', gen(merge_bar) 
+	
+	drop if lineid==252
+	ivregress 2sls y_bar (d_bar=open) i.nlinks [aw=agg_sk], robust
+
+	e
+	
+// 	use `clean_dta', clear 
+// 	keep Qi_* cityid 
+// 	forvalues i =1/10 {
+// 		bys cityid: egen city_Qi_`i'=sum(Qi_`i') 
+// 	}
+// 	keep cityid city_Qi_* 
+// 	duplicates drop
+	
+
 	* line-city level dataset 
 	use "${dta_stations}", clear 
-	merge m:1 cityid using `residuals', gen(merge_res) 
-	merge m:1 lineid using `shock_num', gen(merge_shock) 
+	merge m:1 lineid using `shock2_num', gen(merge_shock) 
+	assert merge_shock == 3 
+	drop merge_shock 
+	
+	merge 
 	
 	
+	
+	
+	
+	
+	e
+	
+		* merge m:1 cityid using `residuals', gen(merge_res) 
+
 	* calculate exposure-weighted averages of Vi 
+	
 	gen num_y = Sik * res_y 
 	gen num_d = Sik * res_d 
 	bys lineid: egen num_yy = total(num_y) 
@@ -340,7 +391,7 @@ why is that? Finally, report exposure-robust SEs for tau_hat1.  */
 	merge 1:1 lineid using `weights_calc', nogen
 	merge 1:1 lineid using `shock2_num', nogen 
 	
-	ivregress 2sls wgt_res_y (wgt_res_d=open)  [aw=sk]
+	ivregress 2sls wgt_res_y (wgt_res_d=open) i.nlinks [aw=sk], robust
 
 
 e
