@@ -300,12 +300,13 @@ why is that? Finally, report exposure-robust SEs for tau_hat1.  */
 	predict res_d, residuals	
 	
 	
-	keep cityid res_y res_d Qi_* 
+	keep cityid res_y res_d 
 	duplicates drop 
 	
 	tempfile residuals 
 	save 	`residuals'
 	
+
 	
 	* line-city level dataset 
 	use "${dta_stations}", clear 
@@ -339,7 +340,7 @@ why is that? Finally, report exposure-robust SEs for tau_hat1.  */
 	merge 1:1 lineid using `weights_calc', nogen
 	merge 1:1 lineid using `shock2_num', nogen 
 	
-	ivregress 2sls wgt_res_y (wgt_res_d=open)  Qi_*  [aw=sk]
+	ivregress 2sls wgt_res_y (wgt_res_d=open)  [aw=sk]
 
 
 e
