@@ -185,7 +185,6 @@ restore
 	eststo: reg empgrowth deltalines Qi_*, vce(robust)
 
 	esttab using "${dta_loc}/1d_reg"  , nostar label  tex  replace  se wide
-
 tempfile clean_dta
 save 	`clean_dta'
 
@@ -195,18 +194,32 @@ save 	`clean_dta'
 	
 * line-level balance tests 
 	* regression of line-level covariates on shocks
+
 	use "${dta_lines}", clear
 	
 	eststo clear 
-	eststo: reg speed open, vce(robust)
+	
+	eststo clear 
+	
+	* gen standardized 
+	summ open 
+	gen open_std =open/`r(sd)'
+
+	eststo: reg  open_std speed [aw=nlinks], vce(robust)
+	esttab using "${dta_loc}/1e_panel1_reg"  , nostar label  tex  replace  se wide
 	
 * city-level balance test 
 	* regressions on the shift-share instrument
 	use `city_withdeltalines', clear 
 
 	eststo clear
-	eststo: reg dist_beijing deltalines, vce(robust) 
-
+	
+	summ deltalines 
+	gen deltalines_std = deltalines/`r(sd)'
+	
+	eststo: reg  deltalines_std dist_beijing, vce(robust) 
+	esttab using "${dta_loc}/1e_panel2_reg"  , nostar label  tex  replace  se wide
+e
 * ============================================================================= *
 * 1f
 * ============================================================================= *
@@ -276,8 +289,6 @@ use `clean_dta', clear
 	count if mi(res_y) 
 	count if mi(res_d) 
 	
-	* drop if mi(res_y) | mi(res_d) 
-	
 	tempfile residuals 
 	save 	`residuals' // 275 cities with data for y (empgrowth) and d (deltalines)
 	
@@ -286,7 +297,7 @@ use `clean_dta', clear
 	use "${dta_stations}", clear 
 	gen Sik = 1 
 	lab var Sik "Indicator: line k passes through city i"
-	bys lineid: egen agg_sk = total(Sik) 
+	* bys lineid: egen agg_sk = total(Sik) 
 	
 	merge m:1 cityid using `residuals', gen(merge_residuals)
 	unique cityid if merge_residuals==3 
@@ -302,10 +313,8 @@ use `clean_dta', clear
 	
 	gen totobs = _N 
 	gen sk = denom/totobs 
-	
-	
-	keep lineid y_bar d_bar sk 
 
+	keep lineid y_bar d_bar sk 
 
 	duplicates drop 
 	
@@ -320,5 +329,11 @@ use `clean_dta', clear
 	esttab using "${dta_loc}/2c_reg",  nostar label  tex  replace  se wide b(4)
 
 
+	* try ssaggregate 
+	merge 1:m lineid using "${dta_stations}", gen(merge_stations)
+	
+	merge m:1 cityid using `city_withdeltalines', keepusing(empgrowth deltalines) gen(merge_cities) 
 
+	* ssaggregate empgrowth deltalines [aw=sk] , n(lineid) s(sk) controls("i.nlinks") 
+	
 	
