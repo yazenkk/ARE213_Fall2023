@@ -1,0 +1,41 @@
+{smcl}
+{txt}{sf}{ul off}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}/Users/rajdevb/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023/pset3_logfile.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}19 Nov 2023, 20:38:19
+{txt}
+{com}. 
+. 
+. * install programs
+. do "$do_loc/Code/01_programs.do"
+{err}{p 0 4 2}
+file /Users/rajdevb/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023/Code/01_programs.do
+not found
+{p_end}
+{txt}{search r(601), local:r(601);}
+
+end of do-file
+
+{search r(601), local:r(601);}
+
+{com}. do "/Users/rajdevb/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023/PSet 3/Stata/Code/00_master.do"
+{txt}
+{com}. * ============================================================================= *
+. *                                                       ARE 213: Problem set 3
+. * ============================================================================= *
+. 
+. * ============================================================================= *
+. * Set initial configurations and globals
+. * ============================================================================= *
+. 
+. 
+. clear all
+{res}{txt}
+{com}. version 15
+{txt}
+{com}. clear matrix
+{txt}
+{com}. cap log close 
+{smcl}
+{com}{sf}{ul off}

@@ -1,0 +1,959 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}/Users/rajdevb/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023/PSet 3/pset3_logfile.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}19 Nov 2023, 21:06:54
+{txt}
+{com}. 
+. 
+. * install programs
+. * do "$do_loc/Stata/Code/01_programs.do"
+. 
+. * analyze
+. do "$do_loc/Stata/Code/02_analysis_q1.do"
+{txt}
+{com}. * ============================================================================= *
+. *                                               ARE 213: Problem set 3 - Q1 + Q2 
+. * ============================================================================= *
+. 
+. * ============================================================================= *
+. * Load datasets 
+. * ============================================================================= *
+. 
+. * load datasets, save as global 
+.         global dta_lines  "${c -(}dta_loc{c )-}/data/pset3_lines.dta"
+{txt}
+{com}.         * 149 unique lines
+. 
+.         global dta_cities "${c -(}dta_loc{c )-}/data/pset3_cities.dta"
+{txt}
+{com}.         * 340 unique cities 
+. 
+.         global dta_stations "${c -(}dta_loc{c )-}/data/pset3_stations.dta"
+{txt}
+{com}.         * 565 unique city-line combinations 
+. 
+.         global dta_distance "${c -(}dta_loc{c )-}/data/pset3_distances.dta"
+{txt}
+{com}.         * 115600 unique city1-city2-dist combinations 
+. 
+.         
+. * ============================================================================= *
+. * Prepare datasets 
+. * ============================================================================= *
+.         * DeltaLines= number of open lines that go through city i 
+.         
+.         * using stations dataset, merge in lines 
+.         use "${c -(}dta_stations{c )-}", clear
+{txt}
+{com}.                 merge m:1 lineid using "${c -(}dta_lines{c )-}"
+{res}
+{txt}{col 5}Result{col 38}# of obs.
+{col 5}{hline 41}
+{col 5}not matched{col 30}{res}               0
+{txt}{col 5}matched{col 30}{res}             565{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}.                 assert _merge==3 
+{txt}
+{com}.                 drop _merge 
+{txt}
+{com}.         
+.         * for each city, gen var for number of open lines 
+.                 bys cityid: egen num_openlines_temp = sum(open)
+{txt}
+{com}.                 bys cityid: egen num_openlines=max(num_openlines_temp)
+{txt}
+{com}.                 lab var num_openlines "Number of open lines in city"
+{txt}
+{com}.                 drop num_openlines_temp 
+{txt}
+{com}.                 
+.         * for each city, number of planned lines
+.                 bys cityid: gen num_plannedlines = _N 
+{txt}
+{com}.                 lab var num_plannedlines "Number of planned lines in city"
+{txt}
+{com}.                 
+.                 rename num_openlines deltalines 
+{res}{txt}
+{com}. 
+.                 keep cityid deltalines num_plannedlines 
+{txt}
+{com}.                 duplicates drop 
+
+{p 0 4}{txt}Duplicates in terms of {txt} all variables{p_end}
+
+(300 observations deleted)
+
+{com}.                 
+.         tempfile dta_merge 
+{txt}
+{com}.         save    `dta_merge'
+{txt}file /var/folders/fz/p35j_lbj1yx73vng__9d6ync0000gn/T//S_02572.000005 saved
+
+{com}. 
+.         * starting from city-level dataset, merge in variables we just created 
+.         use "${c -(}dta_cities{c )-}", clear 
+{txt}
+{com}.                 merge 1:1 cityid using `dta_merge'
+{res}
+{txt}{col 5}Result{col 38}# of obs.
+{col 5}{hline 41}
+{col 5}not matched{col 30}{res}              75
+{txt}{col 9}from master{col 30}{res}              75{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               0{txt}  (_merge==2)
+
+{col 5}matched{col 30}{res}             265{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}.                 replace deltalines = 0 if _merge==1 
+{txt}(75 real changes made)
+
+{com}.                 drop _merge 
+{txt}
+{com}.                 
+.         tempfile city_withdeltalines 
+{txt}
+{com}.         save    `city_withdeltalines'
+{txt}file /var/folders/fz/p35j_lbj1yx73vng__9d6ync0000gn/T//S_02572.000006 saved
+
+{com}. 
+. * ============================================================================= *
+. * ============================================================================= *
+. * QUESTION 1 
+. * ============================================================================= *
+. * ============================================================================= *
+. 
+. * ============================================================================= *
+. * 1a
+. * ============================================================================= *
+. * Represent DeltaLines_i as a shift-share variable
+.         
+.         * Y = outcome = 2007-2016 log change in city employment 
+.         * DeltaLines= number of open lines that go through city i 
+. 
+. 
+.         * Compute DeltaLines_i for each city 
+.         * Mean/min/avg of DeltaLines_i across 340 cities?
+.                 tabstat deltalines, stats(min max mean med sd)
+
+{txt}{ralign 12:variable} {...}
+{c |}       min       max      mean       p50        sd
+{hline 13}{c +}{hline 50}
+{ralign 12:deltalines} {...}
+{c |}{...}
+ {res}        0         7  .9970588         1  1.143143
+{txt}{hline 13}{c BT}{hline 50}
+
+{com}.         /*
+>                 variable |       min       max      mean       p50        sd
+>         -------------+--------------------------------------------------
+>           deltalines |         0         7  .9970588         1  1.143143
+>         ----------------------------------------------------------------
+>         */
+.                 
+.         * how many cities with missing data? 
+.         unique cityid if mi(empgrowth)
+{txt}Number of unique values of cityid is  {res}65
+{txt}Number of records is  {res}65
+{txt}
+{com}.         
+.         * and what provinces are these missing cities from? 
+.         tab province_en if mi(empgrowth) 
+
+      {txt}province {c |}
+  English name {c |}      Freq.     Percent        Cum.
+{hline 15}{c +}{hline 35}
+         gansu {c |}{res}          2        3.08        3.08
+{txt}     guangdong {c |}{res}          3        4.62        7.69
+{txt}       guizhou {c |}{res}          5        7.69       15.38
+{txt}  heilongjiang {c |}{res}          1        1.54       16.92
+{txt}         henan {c |}{res}          1        1.54       18.46
+{txt}         hubei {c |}{res}          6        9.23       27.69
+{txt}         hunan {c |}{res}          1        1.54       29.23
+{txt}inner mongolia {c |}{res}          3        4.62       33.85
+{txt}       jiangsu {c |}{res}          4        6.15       40.00
+{txt}         jilin {c |}{res}          1        1.54       41.54
+{txt}       qinghai {c |}{res}          7       10.77       52.31
+{txt}       sichuan {c |}{res}          3        4.62       56.92
+{txt}         tibet {c |}{res}          6        9.23       66.15
+{txt}      xinjiang {c |}{res}         13       20.00       86.15
+{txt}        yunnan {c |}{res}          9       13.85      100.00
+{txt}{hline 15}{c +}{hline 35}
+         Total {c |}{res}         65      100.00
+{txt}
+{com}.         
+. * ============================================================================= *
+. * 1b
+. * ============================================================================= *
+. * Estimate (1) by OLS without controls and also adding fixed effects of 30 Chinese provinces. 
+. * Use heteroskedasticity-robust standard errors. 
+. * Is the coeffcient economically large? 
+. 
+.         
+.         replace province_en=proper(province_en) 
+{txt}(340 real changes made)
+
+{com}.         lab var empgrowth "Emp growth (log-change, 2007-2016)"
+{txt}
+{com}.         
+.         encode province_en, gen(province_enc)
+{txt}
+{com}.         
+.         eststo clear 
+{txt}
+{com}.         
+.         eststo: reg empgrowth deltalines  , vce(robust) 
+
+{txt}Linear regression                               Number of obs     = {res}       275
+                                                {txt}F(1, 273)         =  {res}    34.89
+                                                {txt}Prob > F          = {res}    0.0000
+                                                {txt}R-squared         = {res}    0.1235
+                                                {txt}Root MSE          =    {res} .24025
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}   empgrowth{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 2}deltalines {c |}{col 14}{res}{space 2} .0764717{col 26}{space 2} .0129456{col 37}{space 1}    5.91{col 46}{space 3}0.000{col 54}{space 4} .0509859{col 67}{space 3} .1019575
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .1812033{col 26}{space 2} .0213226{col 37}{space 1}    8.50{col 46}{space 3}0.000{col 54}{space 4} .1392256{col 67}{space 3} .2231809
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}({res}est1{txt} stored)
+
+{com}.         eststo: reg empgrowth deltalines i.province_enc , vce(robust)
+
+{txt}Linear regression                               Number of obs     = {res}       275
+                                                {txt}{help j_robustsingular:F(24, 244) }       =  {res}        .
+                                                {txt}Prob > F          = {res}         .
+                                                {txt}R-squared         = {res}    0.4801
+                                                {txt}Root MSE          =    {res} .19572
+
+{txt}{hline 16}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 17}{c |}{col 29}    Robust
+{col 1}      empgrowth{col 17}{c |}      Coef.{col 29}   Std. Err.{col 41}      t{col 49}   P>|t|{col 57}     [95% Con{col 70}f. Interval]
+{hline 16}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 5}deltalines {c |}{col 17}{res}{space 2} .0495705{col 29}{space 2} .0147147{col 40}{space 1}    3.37{col 49}{space 3}0.001{col 57}{space 4} .0205866{col 70}{space 3} .0785545
+{txt}{space 15} {c |}
+{space 3}province_enc {c |}
+{space 7}Beijing  {c |}{col 17}{res}{space 2} .0050034{col 29}{space 2} .0690736{col 40}{space 1}    0.07{col 49}{space 3}0.942{col 57}{space 4}-.1310531{col 70}{space 3}   .14106
+{txt}{space 5}Chongqing  {c |}{col 17}{res}{space 2} .0700398{col 29}{space 2} .0781418{col 40}{space 1}    0.90{col 49}{space 3}0.371{col 57}{space 4}-.0838787{col 70}{space 3} .2239582
+{txt}{space 8}Fujian  {c |}{col 17}{res}{space 2}-.0826864{col 29}{space 2} .0885755{col 40}{space 1}   -0.93{col 49}{space 3}0.351{col 57}{space 4}-.2571566{col 70}{space 3} .0917838
+{txt}{space 9}Gansu  {c |}{col 17}{res}{space 2}-.0312127{col 29}{space 2} .0699248{col 40}{space 1}   -0.45{col 49}{space 3}0.656{col 57}{space 4} -.168946{col 70}{space 3} .1065206
+{txt}{space 5}Guangdong  {c |}{col 17}{res}{space 2} .0222266{col 29}{space 2} .0756873{col 40}{space 1}    0.29{col 49}{space 3}0.769{col 57}{space 4}-.1268572{col 70}{space 3} .1713104
+{txt}{space 7}Guangxi  {c |}{col 17}{res}{space 2}-.1003566{col 29}{space 2} .0711068{col 40}{space 1}   -1.41{col 49}{space 3}0.159{col 57}{space 4}-.2404181{col 70}{space 3} .0397048
+{txt}{space 7}Guizhou  {c |}{col 17}{res}{space 2}-.0396211{col 29}{space 2}  .079218{col 40}{space 1}   -0.50{col 49}{space 3}0.617{col 57}{space 4}-.1956595{col 70}{space 3} .1164173
+{txt}{space 9}Hebei  {c |}{col 17}{res}{space 2}-.1525531{col 29}{space 2} .0745966{col 40}{space 1}   -2.05{col 49}{space 3}0.042{col 57}{space 4}-.2994886{col 70}{space 3}-.0056176
+{txt}{space 2}Heilongjiang  {c |}{col 17}{res}{space 2}-.5777725{col 29}{space 2} .0862798{col 40}{space 1}   -6.70{col 49}{space 3}0.000{col 57}{space 4}-.7477208{col 70}{space 3}-.4078242
+{txt}{space 9}Henan  {c |}{col 17}{res}{space 2} .0611924{col 29}{space 2} .0692235{col 40}{space 1}    0.88{col 49}{space 3}0.378{col 57}{space 4}-.0751596{col 70}{space 3} .1975443
+{txt}{space 9}Hubei  {c |}{col 17}{res}{space 2} .2047972{col 29}{space 2}   .11283{col 40}{space 1}    1.82{col 49}{space 3}0.071{col 57}{space 4}-.0174478{col 70}{space 3} .4270423
+{txt}{space 9}Hunan  {c |}{col 17}{res}{space 2}-.1973695{col 29}{space 2} .0791676{col 40}{space 1}   -2.49{col 49}{space 3}0.013{col 57}{space 4}-.3533085{col 70}{space 3}-.0414305
+{txt}Inner Mongolia  {c |}{col 17}{res}{space 2}-.1715452{col 29}{space 2} .0987305{col 40}{space 1}   -1.74{col 49}{space 3}0.084{col 57}{space 4}-.3660181{col 70}{space 3} .0229277
+{txt}{space 7}Jiangsu  {c |}{col 17}{res}{space 2} .1620782{col 29}{space 2} .0862199{col 40}{space 1}    1.88{col 49}{space 3}0.061{col 57}{space 4}-.0077521{col 70}{space 3} .3319084
+{txt}{space 7}Jiangxi  {c |}{col 17}{res}{space 2} .0926691{col 29}{space 2} .0793246{col 40}{space 1}    1.17{col 49}{space 3}0.244{col 57}{space 4}-.0635791{col 70}{space 3} .2489174
+{txt}{space 9}Jilin  {c |}{col 17}{res}{space 2} -.161518{col 29}{space 2} .0777596{col 40}{space 1}   -2.08{col 49}{space 3}0.039{col 57}{space 4}-.3146836{col 70}{space 3}-.0083523
+{txt}{space 6}Liaoning  {c |}{col 17}{res}{space 2}-.2534235{col 29}{space 2} .0713989{col 40}{space 1}   -3.55{col 49}{space 3}0.000{col 57}{space 4}-.3940604{col 70}{space 3}-.1127866
+{txt}{space 7}Ningxia  {c |}{col 17}{res}{space 2}-.1797775{col 29}{space 2} .0667367{col 40}{space 1}   -2.69{col 49}{space 3}0.008{col 57}{space 4} -.311231{col 70}{space 3} -.048324
+{txt}{space 7}Qinghai  {c |}{col 17}{res}{space 2} .0301956{col 29}{space 2} .0583123{col 40}{space 1}    0.52{col 49}{space 3}0.605{col 57}{space 4}-.0846641{col 70}{space 3} .1450553
+{txt}{space 7}Shaanxi  {c |}{col 17}{res}{space 2}-.0173778{col 29}{space 2} .0788702{col 40}{space 1}   -0.22{col 49}{space 3}0.826{col 57}{space 4}-.1727312{col 70}{space 3} .1379756
+{txt}{space 6}Shandong  {c |}{col 17}{res}{space 2}-.0324671{col 29}{space 2} .0703249{col 40}{space 1}   -0.46{col 49}{space 3}0.645{col 57}{space 4}-.1709884{col 70}{space 3} .1060542
+{txt}{space 6}Shanghai  {c |}{col 17}{res}{space 2} .2785096{col 29}{space 2} .0690736{col 40}{space 1}    4.03{col 49}{space 3}0.000{col 57}{space 4} .1424531{col 70}{space 3} .4145661
+{txt}{space 8}Shanxi  {c |}{col 17}{res}{space 2} -.184835{col 29}{space 2}   .07399{col 40}{space 1}   -2.50{col 49}{space 3}0.013{col 57}{space 4}-.3305757{col 70}{space 3}-.0390943
+{txt}{space 7}Sichuan  {c |}{col 17}{res}{space 2}-.0777822{col 29}{space 2} .0915913{col 40}{space 1}   -0.85{col 49}{space 3}0.397{col 57}{space 4}-.2581927{col 70}{space 3} .1026283
+{txt}{space 7}Tianjin  {c |}{col 17}{res}{space 2}-.1206159{col 29}{space 2} .0781418{col 40}{space 1}   -1.54{col 49}{space 3}0.124{col 57}{space 4}-.2745344{col 70}{space 3} .0333025
+{txt}{space 9}Tibet  {c |}{col 17}{res}{space 2} .1290949{col 29}{space 2} .0580041{col 40}{space 1}    2.23{col 49}{space 3}0.027{col 57}{space 4} .0148423{col 70}{space 3} .2433475
+{txt}{space 6}Xinjiang  {c |}{col 17}{res}{space 2} .0022207{col 29}{space 2} .1360058{col 40}{space 1}    0.02{col 49}{space 3}0.987{col 57}{space 4}-.2656745{col 70}{space 3}  .270116
+{txt}{space 8}Yunnan  {c |}{col 17}{res}{space 2}-.0685086{col 29}{space 2} .0727503{col 40}{space 1}   -0.94{col 49}{space 3}0.347{col 57}{space 4}-.2118074{col 70}{space 3} .0747902
+{txt}{space 6}Zhejiang  {c |}{col 17}{res}{space 2}-.0095148{col 29}{space 2} .0980219{col 40}{space 1}   -0.10{col 49}{space 3}0.923{col 57}{space 4}-.2025918{col 70}{space 3} .1835622
+{txt}{space 15} {c |}
+{space 10}_cons {c |}{col 17}{res}{space 2} .2813827{col 29}{space 2} .0580041{col 40}{space 1}    4.85{col 49}{space 3}0.000{col 57}{space 4} .1671301{col 70}{space 3} .3956353
+{txt}{hline 16}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}({res}est2{txt} stored)
+
+{com}.         
+.         esttab using "${c -(}dta_loc{c )-}/1b_reg"  , nostar label  tex  replace  se wide
+{res}{txt}(output written to {browse  `"/Users/rajdevb/Dropbox/ARE213/Pset3/1b_reg.tex"'})
+
+{com}. 
+. 
+. 
+. 
+. * ============================================================================= *
+. * 1c
+. * ============================================================================= *
+. 
+.         * moving forward using nlinks at the qk 
+.         * need to merge in nlinks (nlinks unique at lineid level) 
+. preserve 
+{txt}
+{com}.         * now dataset will be at city-line level 
+.         merge m:m cityid using "${c -(}dta_stations{c )-}", gen(merge1) 
+{res}
+{txt}{col 5}Result{col 38}# of obs.
+{col 5}{hline 41}
+{col 5}not matched{col 30}{res}              75
+{txt}{col 9}from master{col 30}{res}              75{txt}  (merge1==1)
+{col 9}from using{col 30}{res}               0{txt}  (merge1==2)
+
+{col 5}matched{col 30}{res}             565{txt}  (merge1==3)
+{col 5}{hline 41}
+
+{com}.         /*
+>                 Result                           # of obs.
+>                 -----------------------------------------
+>                 not matched                            75
+>                         from master                        75  (_merge==1)
+>                         from using                          0  (_merge==2)
+> 
+>                 matched                               565  (_merge==3)
+>                 -----------------------------------------
+>         */      
+.         merge m:1 lineid using "${c -(}dta_lines{c )-}", gen(merge2) 
+{res}
+{txt}{col 5}Result{col 38}# of obs.
+{col 5}{hline 41}
+{col 5}not matched{col 30}{res}              75
+{txt}{col 9}from master{col 30}{res}              75{txt}  (merge2==1)
+{col 9}from using{col 30}{res}               0{txt}  (merge2==2)
+
+{col 5}matched{col 30}{res}             565{txt}  (merge2==3)
+{col 5}{hline 41}
+
+{com}.         
+.         /*
+>                 Result                           # of obs.
+>                 -----------------------------------------
+>                 not matched                            75
+>                         from master                        75  (merge2==1)
+>                         from using                          0  (merge2==2)
+> 
+>                 matched                               565  (merge2==3)
+>                 -----------------------------------------
+>         */ 
+.         unique cityid lineid 
+{txt}Number of unique values of cityid lineid is  {res}640
+{txt}Number of records is  {res}640
+{txt}
+{com}.         
+.         /*
+>         Number of unique values of cityid lineid is  640
+>         Number of records is  640
+>         */      
+.         
+. 
+.         * Compute the city-level controls Qi corresponding to these qk.
+.         tab nlinks, gen(nlinks_) 
+
+  {txt}Number of {c |}
+cross-regio {c |}
+  nal links {c |}
+ created by {c |}
+       line {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}        104       18.41       18.41
+{txt}          2 {c |}{res}        110       19.47       37.88
+{txt}          3 {c |}{res}         83       14.69       52.57
+{txt}          4 {c |}{res}         60       10.62       63.19
+{txt}          5 {c |}{res}         40        7.08       70.27
+{txt}          6 {c |}{res}         59       10.44       80.71
+{txt}          7 {c |}{res}         24        4.25       84.96
+{txt}          8 {c |}{res}         18        3.19       88.14
+{txt}          9 {c |}{res}         48        8.50       96.64
+{txt}         18 {c |}{res}         19        3.36      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        565      100.00
+{txt}
+{com}.         forvalues i = 1/10 {c -(}
+{txt}  2{com}.                 bys cityid: egen Qi_`i' = sum(nlinks_`i')
+{txt}  3{com}.         {c )-}
+{txt}
+{com}.                         
+.         bys cityid: egen sum_nlinks = sum(nlinks)
+{txt}
+{com}.         lab var sum_nlinks "Citylevel sum of number of links across all lines"
+{txt}
+{com}.         
+.         * How many of them do you have and how do you interpret them? 
+.         
+.         tab sum_nlinks 
+
+  {txt}Citylevel {c |}
+     sum of {c |}
+  number of {c |}
+      links {c |}
+ across all {c |}
+      lines {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          0 {c |}{res}         75       11.72       11.72
+{txt}          1 {c |}{res}         11        1.72       13.44
+{txt}          2 {c |}{res}         23        3.59       17.03
+{txt}          3 {c |}{res}         35        5.47       22.50
+{txt}          4 {c |}{res}         36        5.62       28.12
+{txt}          5 {c |}{res}         38        5.94       34.06
+{txt}          6 {c |}{res}         37        5.78       39.84
+{txt}          7 {c |}{res}         23        3.59       43.44
+{txt}          8 {c |}{res}         21        3.28       46.72
+{txt}          9 {c |}{res}         29        4.53       51.25
+{txt}         10 {c |}{res}         35        5.47       56.72
+{txt}         11 {c |}{res}         22        3.44       60.16
+{txt}         12 {c |}{res}         24        3.75       63.91
+{txt}         13 {c |}{res}         14        2.19       66.09
+{txt}         14 {c |}{res}         14        2.19       68.28
+{txt}         15 {c |}{res}         17        2.66       70.94
+{txt}         16 {c |}{res}          3        0.47       71.41
+{txt}         17 {c |}{res}         14        2.19       73.59
+{txt}         18 {c |}{res}         17        2.66       76.25
+{txt}         19 {c |}{res}          3        0.47       76.72
+{txt}         20 {c |}{res}         11        1.72       78.44
+{txt}         21 {c |}{res}         14        2.19       80.62
+{txt}         22 {c |}{res}         10        1.56       82.19
+{txt}         23 {c |}{res}         10        1.56       83.75
+{txt}         25 {c |}{res}          3        0.47       84.22
+{txt}         26 {c |}{res}         17        2.66       86.88
+{txt}         27 {c |}{res}         22        3.44       90.31
+{txt}         28 {c |}{res}         10        1.56       91.88
+{txt}         29 {c |}{res}         11        1.72       93.59
+{txt}         32 {c |}{res}          9        1.41       95.00
+{txt}         34 {c |}{res}          9        1.41       96.41
+{txt}         36 {c |}{res}          5        0.78       97.19
+{txt}         37 {c |}{res}          9        1.41       98.59
+{txt}         39 {c |}{res}          9        1.41      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        640      100.00
+{txt}
+{com}.         
+.         keep cityid sum_nlinks Qi_* 
+{txt}
+{com}.         duplicates drop 
+
+{p 0 4}{txt}Duplicates in terms of {txt} all variables{p_end}
+
+(300 observations deleted)
+
+{com}.         tempfile sumnlinks_dta 
+{txt}
+{com}.         save    `sumnlinks_dta' 
+{txt}file /var/folders/fz/p35j_lbj1yx73vng__9d6ync0000gn/T//S_02572.000008 saved
+
+{com}. restore 
+{txt}
+{com}.         
+.         merge 1:1 cityid using `sumnlinks_dta'
+{res}
+{txt}{col 5}Result{col 38}# of obs.
+{col 5}{hline 41}
+{col 5}not matched{col 30}{res}               0
+{txt}{col 5}matched{col 30}{res}             340{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}.         assert _merge==3 
+{txt}
+{com}.         drop _merge 
+{txt}
+{com}.         
+.         unique sum_nlinks 
+{txt}Number of unique values of sum_nlinks is  {res}34
+{txt}Number of records is  {res}340
+{txt}
+{com}.         * 34 
+.         
+. 
+. * ============================================================================= *
+. * 1d
+. * ============================================================================= *
+. * Estimate (1) by OLS controlling for Qi instead of province fixed effects. 
+. * Does including Qi change the estimates? 
+. * Does your estimate rely on Assumptions A2 and A3?
+.  
+.         eststo clear 
+{txt}
+{com}.         reg empgrowth deltalines Qi_*, vce(robust) 
+
+{txt}Linear regression                               Number of obs     = {res}       275
+                                                {txt}F(11, 263)        =  {res}     7.35
+                                                {txt}Prob > F          = {res}    0.0000
+                                                {txt}R-squared         = {res}    0.2022
+                                                {txt}Root MSE          =    {res} .23352
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}   empgrowth{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 2}deltalines {c |}{col 14}{res}{space 2} .0209838{col 26}{space 2} .0225719{col 37}{space 1}    0.93{col 46}{space 3}0.353{col 54}{space 4}-.0234609{col 67}{space 3} .0654285
+{txt}{space 8}Qi_1 {c |}{col 14}{res}{space 2}  -.00063{col 26}{space 2} .0232427{col 37}{space 1}   -0.03{col 46}{space 3}0.978{col 54}{space 4}-.0463954{col 67}{space 3} .0451354
+{txt}{space 8}Qi_2 {c |}{col 14}{res}{space 2} .0076877{col 26}{space 2} .0298461{col 37}{space 1}    0.26{col 46}{space 3}0.797{col 54}{space 4}  -.05108{col 67}{space 3} .0664553
+{txt}{space 8}Qi_3 {c |}{col 14}{res}{space 2} .0286205{col 26}{space 2} .0297012{col 37}{space 1}    0.96{col 46}{space 3}0.336{col 54}{space 4} -.029862{col 67}{space 3}  .087103
+{txt}{space 8}Qi_4 {c |}{col 14}{res}{space 2} .0105053{col 26}{space 2} .0344413{col 37}{space 1}    0.31{col 46}{space 3}0.761{col 54}{space 4}-.0573105{col 67}{space 3} .0783211
+{txt}{space 8}Qi_5 {c |}{col 14}{res}{space 2} .0520196{col 26}{space 2} .0416149{col 37}{space 1}    1.25{col 46}{space 3}0.212{col 54}{space 4}-.0299213{col 67}{space 3} .1339604
+{txt}{space 8}Qi_6 {c |}{col 14}{res}{space 2} .1088843{col 26}{space 2} .0299937{col 37}{space 1}    3.63{col 46}{space 3}0.000{col 54}{space 4}  .049826{col 67}{space 3} .1679426
+{txt}{space 8}Qi_7 {c |}{col 14}{res}{space 2} .2144605{col 26}{space 2} .0466879{col 37}{space 1}    4.59{col 46}{space 3}0.000{col 54}{space 4} .1225309{col 67}{space 3} .3063902
+{txt}{space 8}Qi_8 {c |}{col 14}{res}{space 2} .1418453{col 26}{space 2} .0733712{col 37}{space 1}    1.93{col 46}{space 3}0.054{col 54}{space 4}-.0026244{col 67}{space 3}  .286315
+{txt}{space 8}Qi_9 {c |}{col 14}{res}{space 2}  .061053{col 26}{space 2} .0441635{col 37}{space 1}    1.38{col 46}{space 3}0.168{col 54}{space 4} -.025906{col 67}{space 3}  .148012
+{txt}{space 7}Qi_10 {c |}{col 14}{res}{space 2} .0864747{col 26}{space 2} .0471572{col 37}{space 1}    1.83{col 46}{space 3}0.068{col 54}{space 4} -.006379{col 67}{space 3} .1793283
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .1625225{col 26}{space 2} .0249329{col 37}{space 1}    6.52{col 46}{space 3}0.000{col 54}{space 4}  .113429{col 67}{space 3} .2116159
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}.         
+.         eststo: reg empgrowth deltalines Qi_*, vce(robust)
+
+{txt}Linear regression                               Number of obs     = {res}       275
+                                                {txt}F(11, 263)        =  {res}     7.35
+                                                {txt}Prob > F          = {res}    0.0000
+                                                {txt}R-squared         = {res}    0.2022
+                                                {txt}Root MSE          =    {res} .23352
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}   empgrowth{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 2}deltalines {c |}{col 14}{res}{space 2} .0209838{col 26}{space 2} .0225719{col 37}{space 1}    0.93{col 46}{space 3}0.353{col 54}{space 4}-.0234609{col 67}{space 3} .0654285
+{txt}{space 8}Qi_1 {c |}{col 14}{res}{space 2}  -.00063{col 26}{space 2} .0232427{col 37}{space 1}   -0.03{col 46}{space 3}0.978{col 54}{space 4}-.0463954{col 67}{space 3} .0451354
+{txt}{space 8}Qi_2 {c |}{col 14}{res}{space 2} .0076877{col 26}{space 2} .0298461{col 37}{space 1}    0.26{col 46}{space 3}0.797{col 54}{space 4}  -.05108{col 67}{space 3} .0664553
+{txt}{space 8}Qi_3 {c |}{col 14}{res}{space 2} .0286205{col 26}{space 2} .0297012{col 37}{space 1}    0.96{col 46}{space 3}0.336{col 54}{space 4} -.029862{col 67}{space 3}  .087103
+{txt}{space 8}Qi_4 {c |}{col 14}{res}{space 2} .0105053{col 26}{space 2} .0344413{col 37}{space 1}    0.31{col 46}{space 3}0.761{col 54}{space 4}-.0573105{col 67}{space 3} .0783211
+{txt}{space 8}Qi_5 {c |}{col 14}{res}{space 2} .0520196{col 26}{space 2} .0416149{col 37}{space 1}    1.25{col 46}{space 3}0.212{col 54}{space 4}-.0299213{col 67}{space 3} .1339604
+{txt}{space 8}Qi_6 {c |}{col 14}{res}{space 2} .1088843{col 26}{space 2} .0299937{col 37}{space 1}    3.63{col 46}{space 3}0.000{col 54}{space 4}  .049826{col 67}{space 3} .1679426
+{txt}{space 8}Qi_7 {c |}{col 14}{res}{space 2} .2144605{col 26}{space 2} .0466879{col 37}{space 1}    4.59{col 46}{space 3}0.000{col 54}{space 4} .1225309{col 67}{space 3} .3063902
+{txt}{space 8}Qi_8 {c |}{col 14}{res}{space 2} .1418453{col 26}{space 2} .0733712{col 37}{space 1}    1.93{col 46}{space 3}0.054{col 54}{space 4}-.0026244{col 67}{space 3}  .286315
+{txt}{space 8}Qi_9 {c |}{col 14}{res}{space 2}  .061053{col 26}{space 2} .0441635{col 37}{space 1}    1.38{col 46}{space 3}0.168{col 54}{space 4} -.025906{col 67}{space 3}  .148012
+{txt}{space 7}Qi_10 {c |}{col 14}{res}{space 2} .0864747{col 26}{space 2} .0471572{col 37}{space 1}    1.83{col 46}{space 3}0.068{col 54}{space 4} -.006379{col 67}{space 3} .1793283
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .1625225{col 26}{space 2} .0249329{col 37}{space 1}    6.52{col 46}{space 3}0.000{col 54}{space 4}  .113429{col 67}{space 3} .2116159
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}({res}est1{txt} stored)
+
+{com}. 
+.         esttab using "${c -(}dta_loc{c )-}/1d_reg"  , nostar label  tex  replace  se wide
+{res}{txt}(output written to {browse  `"/Users/rajdevb/Dropbox/ARE213/Pset3/1d_reg.tex"'})
+
+{com}. tempfile clean_dta
+{txt}
+{com}. save    `clean_dta'
+{txt}file /var/folders/fz/p35j_lbj1yx73vng__9d6ync0000gn/T//S_02572.000009 saved
+
+{com}. 
+. * ============================================================================= *
+. * 1e
+. * ============================================================================= *
+.         
+. * line-level balance tests 
+.         * regression of line-level covariates on shocks
+. 
+.         use "${c -(}dta_lines{c )-}", clear
+{txt}
+{com}.         
+.         eststo clear 
+{txt}
+{com}.         
+.         eststo clear 
+{txt}
+{com}.         
+.         * gen standardized 
+.         summ open 
+
+{txt}    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 8}open {c |}{res}        149     .557047    .4984103          0          1
+{txt}
+{com}.         gen open_std =open/`r(sd)'
+{txt}
+{com}. 
+.         eststo: reg  open_std speed [aw=nlinks], vce(robust)
+{txt}(sum of wgt is 426)
+
+Linear regression                               Number of obs     = {res}       149
+                                                {txt}F(1, 147)         =  {res}     0.11
+                                                {txt}Prob > F          = {res}    0.7461
+                                                {txt}R-squared         = {res}    0.0012
+                                                {txt}Root MSE          =    {res} .97887
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}    open_std{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}speed {c |}{col 14}{res}{space 2} .0005566{col 26}{space 2} .0017157{col 37}{space 1}    0.32{col 46}{space 3}0.746{col 54}{space 4} -.002834{col 67}{space 3} .0039473
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 1.088448{col 26}{space 2} .4776513{col 37}{space 1}    2.28{col 46}{space 3}0.024{col 54}{space 4} .1444981{col 67}{space 3} 2.032399
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}({res}est1{txt} stored)
+
+{com}.         esttab using "${c -(}dta_loc{c )-}/1e_panel1_reg"  , nostar label  tex  replace  se wide
+{res}{txt}(output written to {browse  `"/Users/rajdevb/Dropbox/ARE213/Pset3/1e_panel1_reg.tex"'})
+
+{com}.         
+. * city-level balance test 
+.         * regressions on the shift-share instrument
+.         use `city_withdeltalines', clear 
+{txt}
+{com}. 
+.         eststo clear
+{txt}
+{com}.         
+.         summ deltalines 
+
+{txt}    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 2}deltalines {c |}{res}        340    .9970588    1.143143          0          7
+{txt}
+{com}.         gen deltalines_std = deltalines/`r(sd)'
+{txt}
+{com}.         
+.         eststo: reg  deltalines_std dist_beijing, vce(robust) 
+
+{txt}Linear regression                               Number of obs     = {res}       340
+                                                {txt}F(1, 338)         =  {res}     2.36
+                                                {txt}Prob > F          = {res}    0.1254
+                                                {txt}R-squared         = {res}    0.0055
+                                                {txt}Root MSE          =    {res} .99873
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}deltalines~d{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+dist_beijing {c |}{col 14}{res}{space 2}-.0001127{col 26}{space 2} .0000733{col 37}{space 1}   -1.54{col 46}{space 3}0.125{col 54}{space 4} -.000257{col 67}{space 3} .0000316
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 1.013566{col 26}{space 2} .1096256{col 37}{space 1}    9.25{col 46}{space 3}0.000{col 54}{space 4} .7979314{col 67}{space 3}   1.2292
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}({res}est1{txt} stored)
+
+{com}.         esttab using "${c -(}dta_loc{c )-}/1e_panel2_reg"  , nostar label  tex  replace  se wide
+{res}{txt}(output written to {browse  `"/Users/rajdevb/Dropbox/ARE213/Pset3/1e_panel2_reg.tex"'})
+
+{com}. 
+. * ============================================================================= *
+. * 1f
+. * ============================================================================= *
+. 
+.         * translate .shp file into .dta
+.         shp2dta using chn_admbnda_adm2_ocha.shp,  data("china_data") coor("china_coordinates")  replace 
+{res}type: 5
+{txt}
+{com}. 
+.         * Display ∆Linesi on the map of China’s regions to visualize your treatment; 
+.         set graph off 
+{txt}
+{com}.         
+.         spmap deltalines using "china_coordinates", id(cityid) title("Number of opened railway lines per city") ///
+>         legend(on)  fcolor(Blues2) clbreaks(0 1 2 3 4 5 6 7 8) clmethod(custom)  ///
+>         legend(label(1 "0 lines") label(2 "0 lines") label(3 "1 line") label (4 "2 lines") label (5 "3 lines") label(6 "4 lines") label(7 "5 lines") label(8 "6 lines") label(9 "7 lines")) 
+{res}{txt}
+{com}.         graph export "1f_graph1.png", replace 
+{txt}(file /Users/rajdevb/Dropbox/ARE213/Pset3/data/1f_graph1.png written in PNG format)
+
+{com}. 
+. * ============================================================================= *
+. * ============================================================================= *
+. * QUESTION 2 
+. * ============================================================================= *
+. * ============================================================================= *
+. 
+. 
+. 
+. * ============================================================================= *
+. * 2a
+. * ============================================================================= *
+. 
+. 
+. * Compute standard errors clustered by province 
+. 
+. use `clean_dta', clear 
+{txt}
+{com}. 
+.         * vce(cluster clustvar) is a generalization of the vce(robust) calculation 
+.         eststo clear 
+{txt}
+{com}.         eststo: reg empgrowth deltalines Qi_* , vce(cluster province_enc) 
+
+{txt}Linear regression                               Number of obs     = {res}       275
+                                                {txt}F(11, 29)         =  {res}    18.32
+                                                {txt}Prob > F          = {res}    0.0000
+                                                {txt}R-squared         = {res}    0.2022
+                                                {txt}Root MSE          =    {res} .23352
+
+{txt}{ralign 78:(Std. Err. adjusted for {res:30} clusters in province_enc)}
+{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}   empgrowth{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 2}deltalines {c |}{col 14}{res}{space 2} .0209838{col 26}{space 2} .0234759{col 37}{space 1}    0.89{col 46}{space 3}0.379{col 54}{space 4}-.0270298{col 67}{space 3} .0689973
+{txt}{space 8}Qi_1 {c |}{col 14}{res}{space 2}  -.00063{col 26}{space 2} .0263325{col 37}{space 1}   -0.02{col 46}{space 3}0.981{col 54}{space 4}-.0544861{col 67}{space 3} .0532261
+{txt}{space 8}Qi_2 {c |}{col 14}{res}{space 2} .0076877{col 26}{space 2} .0374887{col 37}{space 1}    0.21{col 46}{space 3}0.839{col 54}{space 4}-.0689854{col 67}{space 3} .0843607
+{txt}{space 8}Qi_3 {c |}{col 14}{res}{space 2} .0286205{col 26}{space 2} .0349181{col 37}{space 1}    0.82{col 46}{space 3}0.419{col 54}{space 4}-.0427951{col 67}{space 3} .1000361
+{txt}{space 8}Qi_4 {c |}{col 14}{res}{space 2} .0105053{col 26}{space 2} .0286559{col 37}{space 1}    0.37{col 46}{space 3}0.717{col 54}{space 4}-.0481025{col 67}{space 3} .0691131
+{txt}{space 8}Qi_5 {c |}{col 14}{res}{space 2} .0520196{col 26}{space 2} .0577478{col 37}{space 1}    0.90{col 46}{space 3}0.375{col 54}{space 4} -.066088{col 67}{space 3} .1701271
+{txt}{space 8}Qi_6 {c |}{col 14}{res}{space 2} .1088843{col 26}{space 2} .0331563{col 37}{space 1}    3.28{col 46}{space 3}0.003{col 54}{space 4}  .041072{col 67}{space 3} .1766966
+{txt}{space 8}Qi_7 {c |}{col 14}{res}{space 2} .2144605{col 26}{space 2} .0376289{col 37}{space 1}    5.70{col 46}{space 3}0.000{col 54}{space 4} .1375008{col 67}{space 3} .2914202
+{txt}{space 8}Qi_8 {c |}{col 14}{res}{space 2} .1418453{col 26}{space 2} .0816687{col 37}{space 1}    1.74{col 46}{space 3}0.093{col 54}{space 4}-.0251859{col 67}{space 3} .3088764
+{txt}{space 8}Qi_9 {c |}{col 14}{res}{space 2}  .061053{col 26}{space 2} .0577329{col 37}{space 1}    1.06{col 46}{space 3}0.299{col 54}{space 4}-.0570241{col 67}{space 3} .1791301
+{txt}{space 7}Qi_10 {c |}{col 14}{res}{space 2} .0864747{col 26}{space 2} .0454591{col 37}{space 1}    1.90{col 46}{space 3}0.067{col 54}{space 4}-.0064995{col 67}{space 3} .1794489
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .1625225{col 26}{space 2} .0520617{col 37}{space 1}    3.12{col 46}{space 3}0.004{col 54}{space 4} .0560443{col 67}{space 3} .2690006
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}({res}est1{txt} stored)
+
+{com}.         
+.         esttab using "${c -(}dta_loc{c )-}/2a_reg"  , nostar label  tex  replace  se wide b(4)
+{res}{txt}(output written to {browse  `"/Users/rajdevb/Dropbox/ARE213/Pset3/2a_reg.tex"'})
+
+{com}. 
+. 
+. 
+. * ============================================================================= *
+. * 2b
+. * ============================================================================= *
+. 
+. * Compute spatially-clustered ("Conley") standard errors. 
+. * Describe any choices you have made. 
+.         eststo clear 
+{txt}
+{com}.         eststo: acreg empgrowth deltalines Qi_* , spatial longitude(longitude) latitude(latitude) dist(100) 
+{res}{txt}SPATIAL CORRECTION
+DistCutoff: {res}100
+{txt}LagCutoff:  {res}0
+{txt}No HAC Correction
+{res}{txt}No Absorbed FEs
+{res}{txt}Included instruments:{res} deltalines Qi_1 Qi_2 Qi_3 Qi_4 Qi_5 Qi_6 Qi_7 Qi_8 Qi_9 Qi_10
+{txt}{col 55}Number of obs = {res}     275
+{txt}Total (centered) SS     = {res} 17.97635705{txt}{col 55}Centered R2   = {res}  0.2022
+{txt}Total (uncentered) SS   = {res} 37.47749833{txt}{col 55}Uncentered R2 = {res}  0.6173
+{txt}Residual SS             = {res} 14.34239542
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}   empgrowth{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 2}deltalines {c |}{col 14}{res}{space 2} .0209838{col 26}{space 2} .0221476{col 37}{space 1}    0.95{col 46}{space 3}0.343{col 54}{space 4}-.0224247{col 67}{space 3} .0643922
+{txt}{space 8}Qi_1 {c |}{col 14}{res}{space 2}  -.00063{col 26}{space 2} .0258377{col 37}{space 1}   -0.02{col 46}{space 3}0.981{col 54}{space 4} -.051271{col 67}{space 3}  .050011
+{txt}{space 8}Qi_2 {c |}{col 14}{res}{space 2} .0076877{col 26}{space 2}  .029177{col 37}{space 1}    0.26{col 46}{space 3}0.792{col 54}{space 4}-.0494983{col 67}{space 3} .0648736
+{txt}{space 8}Qi_3 {c |}{col 14}{res}{space 2} .0286205{col 26}{space 2} .0325804{col 37}{space 1}    0.88{col 46}{space 3}0.380{col 54}{space 4}-.0352359{col 67}{space 3}  .092477
+{txt}{space 8}Qi_4 {c |}{col 14}{res}{space 2} .0105053{col 26}{space 2} .0314412{col 37}{space 1}    0.33{col 46}{space 3}0.738{col 54}{space 4}-.0511184{col 67}{space 3} .0721289
+{txt}{space 8}Qi_5 {c |}{col 14}{res}{space 2} .0520196{col 26}{space 2} .0439753{col 37}{space 1}    1.18{col 46}{space 3}0.237{col 54}{space 4}-.0341705{col 67}{space 3} .1382096
+{txt}{space 8}Qi_6 {c |}{col 14}{res}{space 2} .1088843{col 26}{space 2} .0294766{col 37}{space 1}    3.69{col 46}{space 3}0.000{col 54}{space 4} .0511111{col 67}{space 3} .1666575
+{txt}{space 8}Qi_7 {c |}{col 14}{res}{space 2} .2144605{col 26}{space 2} .0440252{col 37}{space 1}    4.87{col 46}{space 3}0.000{col 54}{space 4} .1281727{col 67}{space 3} .3007484
+{txt}{space 8}Qi_8 {c |}{col 14}{res}{space 2} .1418453{col 26}{space 2} .0661803{col 37}{space 1}    2.14{col 46}{space 3}0.032{col 54}{space 4} .0121343{col 67}{space 3} .2715562
+{txt}{space 8}Qi_9 {c |}{col 14}{res}{space 2}  .061053{col 26}{space 2} .0455301{col 37}{space 1}    1.34{col 46}{space 3}0.180{col 54}{space 4}-.0281843{col 67}{space 3} .1502903
+{txt}{space 7}Qi_10 {c |}{col 14}{res}{space 2} .0864747{col 26}{space 2} .0471772{col 37}{space 1}    1.83{col 46}{space 3}0.067{col 54}{space 4} -.005991{col 67}{space 3} .1789403
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .1625225{col 26}{space 2} .0305963{col 37}{space 1}    5.31{col 46}{space 3}0.000{col 54}{space 4} .1025548{col 67}{space 3} .2224901
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}({res}est1{txt} stored)
+
+{com}.         esttab using "${c -(}dta_loc{c )-}/2b_reg"  , nostar label  tex  replace  se wide b(4)
+{res}{txt}(output written to {browse  `"/Users/rajdevb/Dropbox/ARE213/Pset3/2b_reg.tex"'})
+
+{com}. 
+. * ============================================================================= *
+. * 2c
+. * ============================================================================= *
+. 
+. * generate residuals 
+.         use `clean_dta', clear 
+{txt}
+{com}.         drop if mi(empgrowth) | mi(deltalines) 
+{txt}(65 observations deleted)
+
+{com}.         
+.         regress empgrowth Qi_*
+
+{txt}      Source {c |}       SS           df       MS      Number of obs   ={res}       275
+{txt}{hline 13}{c +}{hline 34}   F(10, 264)      = {res}     6.59
+{txt}       Model {c |} {res} 3.59107265        10  .359107265   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 14.3852844       264  .054489714   {txt}R-squared       ={res}    0.1998
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.1695
+{txt}       Total {c |} {res}  17.976357       274  .065607143   {txt}Root MSE        =   {res} .23343
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}   empgrowth{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 8}Qi_1 {c |}{col 14}{res}{space 2} .0076507{col 26}{space 2} .0225862{col 37}{space 1}    0.34{col 46}{space 3}0.735{col 54}{space 4}-.0368212{col 67}{space 3} .0521227
+{txt}{space 8}Qi_2 {c |}{col 14}{res}{space 2} .0209805{col 26}{space 2} .0226489{col 37}{space 1}    0.93{col 46}{space 3}0.355{col 54}{space 4}-.0236149{col 67}{space 3} .0655759
+{txt}{space 8}Qi_3 {c |}{col 14}{res}{space 2} .0382195{col 26}{space 2} .0280039{col 37}{space 1}    1.36{col 46}{space 3}0.173{col 54}{space 4}-.0169199{col 67}{space 3} .0933588
+{txt}{space 8}Qi_4 {c |}{col 14}{res}{space 2} .0176592{col 26}{space 2} .0351398{col 37}{space 1}    0.50{col 46}{space 3}0.616{col 54}{space 4}-.0515307{col 67}{space 3} .0868492
+{txt}{space 8}Qi_5 {c |}{col 14}{res}{space 2} .0748668{col 26}{space 2} .0386938{col 37}{space 1}    1.93{col 46}{space 3}0.054{col 54}{space 4}-.0013208{col 67}{space 3} .1510544
+{txt}{space 8}Qi_6 {c |}{col 14}{res}{space 2} .1247488{col 26}{space 2} .0304867{col 37}{space 1}    4.09{col 46}{space 3}0.000{col 54}{space 4} .0647209{col 67}{space 3} .1847768
+{txt}{space 8}Qi_7 {c |}{col 14}{res}{space 2} .2315522{col 26}{space 2} .0499598{col 37}{space 1}    4.63{col 46}{space 3}0.000{col 54}{space 4} .1331817{col 67}{space 3} .3299226
+{txt}{space 8}Qi_8 {c |}{col 14}{res}{space 2} .1592532{col 26}{space 2} .0688565{col 37}{space 1}    2.31{col 46}{space 3}0.022{col 54}{space 4} .0236755{col 67}{space 3} .2948309
+{txt}{space 8}Qi_9 {c |}{col 14}{res}{space 2} .0783255{col 26}{space 2} .0363013{col 37}{space 1}    2.16{col 46}{space 3}0.032{col 54}{space 4} .0068487{col 67}{space 3} .1498023
+{txt}{space 7}Qi_10 {c |}{col 14}{res}{space 2} .1061033{col 26}{space 2} .0590335{col 37}{space 1}    1.80{col 46}{space 3}0.073{col 54}{space 4} -.010133{col 67}{space 3} .2223396
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2}   .16166{col 26}{space 2} .0220004{col 37}{space 1}    7.35{col 46}{space 3}0.000{col 54}{space 4} .1183414{col 67}{space 3} .2049786
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}.         predict res_y, residuals
+{txt}
+{com}.         
+.         regress deltalines Qi_*
+
+{txt}      Source {c |}       SS           df       MS      Number of obs   ={res}       275
+{txt}{hline 13}{c +}{hline 34}   F(10, 264)      = {res}    76.46
+{txt}       Model {c |} {res} 282.101188        10  28.2101188   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 97.4042669       264  .368955556   {txt}R-squared       ={res}    0.7433
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.7336
+{txt}       Total {c |} {res} 379.505455       274   1.3850564   {txt}Root MSE        =   {res} .60742
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}  deltalines{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 8}Qi_1 {c |}{col 14}{res}{space 2} .3946248{col 26}{space 2} .0587723{col 37}{space 1}    6.71{col 46}{space 3}0.000{col 54}{space 4} .2789028{col 67}{space 3} .5103469
+{txt}{space 8}Qi_2 {c |}{col 14}{res}{space 2}   .63348{col 26}{space 2} .0589354{col 37}{space 1}   10.75{col 46}{space 3}0.000{col 54}{space 4} .5174369{col 67}{space 3} .7495232
+{txt}{space 8}Qi_3 {c |}{col 14}{res}{space 2} .4574445{col 26}{space 2} .0728699{col 37}{space 1}    6.28{col 46}{space 3}0.000{col 54}{space 4} .3139643{col 67}{space 3} .6009246
+{txt}{space 8}Qi_4 {c |}{col 14}{res}{space 2} .3409267{col 26}{space 2} .0914385{col 37}{space 1}    3.73{col 46}{space 3}0.000{col 54}{space 4} .1608852{col 67}{space 3} .5209683
+{txt}{space 8}Qi_5 {c |}{col 14}{res}{space 2} 1.088805{col 26}{space 2} .1006864{col 37}{space 1}   10.81{col 46}{space 3}0.000{col 54}{space 4}  .890555{col 67}{space 3} 1.287056
+{txt}{space 8}Qi_6 {c |}{col 14}{res}{space 2} .7560382{col 26}{space 2} .0793304{col 37}{space 1}    9.53{col 46}{space 3}0.000{col 54}{space 4} .5998373{col 67}{space 3}  .912239
+{txt}{space 8}Qi_7 {c |}{col 14}{res}{space 2} .8145171{col 26}{space 2} .1300022{col 37}{space 1}    6.27{col 46}{space 3}0.000{col 54}{space 4} .5585439{col 67}{space 3}  1.07049
+{txt}{space 8}Qi_8 {c |}{col 14}{res}{space 2} .8295898{col 26}{space 2} .1791738{col 37}{space 1}    4.63{col 46}{space 3}0.000{col 54}{space 4} .4767984{col 67}{space 3} 1.182381
+{txt}{space 8}Qi_9 {c |}{col 14}{res}{space 2} .8231357{col 26}{space 2} .0944607{col 37}{space 1}    8.71{col 46}{space 3}0.000{col 54}{space 4} .6371434{col 67}{space 3} 1.009128
+{txt}{space 7}Qi_10 {c |}{col 14}{res}{space 2} .9354194{col 26}{space 2}  .153613{col 37}{space 1}    6.09{col 46}{space 3}0.000{col 54}{space 4} .6329569{col 67}{space 3} 1.237882
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2}-.0411011{col 26}{space 2} .0572481{col 37}{space 1}   -0.72{col 46}{space 3}0.473{col 54}{space 4} -.153822{col 67}{space 3} .0716198
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}.         predict res_d, residuals        
+{txt}
+{com}.         
+.         keep cityid res_y res_d 
+{txt}
+{com}.         duplicates drop 
+
+{p 0 4}{txt}Duplicates in terms of {txt} all variables{p_end}
+
+(0 observations are duplicates)
+
+{com}.         
+.         count if mi(res_y) 
+  {res}0
+{txt}
+{com}.         count if mi(res_d) 
+  {res}0
+{txt}
+{com}.         
+.         tempfile residuals 
+{txt}
+{com}.         save    `residuals' // 275 cities with data for y (empgrowth) and d (deltalines)
+{txt}file /var/folders/fz/p35j_lbj1yx73vng__9d6ync0000gn/T//S_02572.00000a saved
+
+{com}.         
+. 
+. * combine all generated variables to create line-level dataset for main regression 
+.         use "${c -(}dta_stations{c )-}", clear 
+{txt}
+{com}.         gen Sik = 1 
+{txt}
+{com}.         lab var Sik "Indicator: line k passes through city i"
+{txt}
+{com}.         * bys lineid: egen agg_sk = total(Sik) 
+.         
+.         merge m:1 cityid using `residuals', gen(merge_residuals)
+{res}
+{txt}{col 5}Result{col 38}# of obs.
+{col 5}{hline 41}
+{col 5}not matched{col 30}{res}              91
+{txt}{col 9}from master{col 30}{res}              52{txt}  (merge_residuals==1)
+{col 9}from using{col 30}{res}              39{txt}  (merge_residuals==2)
+
+{col 5}matched{col 30}{res}             513{txt}  (merge_residuals==3)
+{col 5}{hline 41}
+
+{com}.         unique cityid if merge_residuals==3 
+{txt}Number of unique values of cityid is  {res}236
+{txt}Number of records is  {res}513
+{txt}
+{com}.         keep if merge_residuals==3 
+{txt}(91 observations deleted)
+
+{com}. 
+.         bys lineid: gen num_d = Sik * res_d
+{txt}
+{com}.         bys lineid: gen num_y = Sik * res_y 
+{txt}
+{com}.         bys lineid: egen d_bar = sum(num_d)
+{txt}
+{com}.         bys lineid: egen y_bar = sum(num_y) 
+{txt}
+{com}.         bys lineid: egen denom = sum(Sik) 
+{txt}
+{com}.         bys lineid: replace d_bar = d_bar/denom 
+{txt}(501 real changes made)
+
+{com}.         bys lineid: replace y_bar = y_bar/denom 
+{txt}(501 real changes made)
+
+{com}.         
+.         gen totobs = _N 
+{txt}
+{com}.         gen sk = denom/totobs 
+{txt}
+{com}. 
+.         keep lineid y_bar d_bar sk 
+{txt}
+{com}. 
+.         duplicates drop 
+
+{p 0 4}{txt}Duplicates in terms of {txt} all variables{p_end}
+
+(365 observations deleted)
+
+{com}.         
+.         * merge in open and nlinks 
+.         merge 1:1 lineid using "${c -(}dta_lines{c )-}"
+{res}
+{txt}{col 5}Result{col 38}# of obs.
+{col 5}{hline 41}
+{col 5}not matched{col 30}{res}               1
+{txt}{col 9}from master{col 30}{res}               0{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               1{txt}  (_merge==2)
+
+{col 5}matched{col 30}{res}             148{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}.         
+.         lab var y_bar "Exposure-weighted avg of residuals of empgrowth"
+{txt}
+{com}.         lab var d_bar "Exposure-weighted avg of residuals of deltalines"
+{txt}
+{com}.         
+.         eststo clear 
+{txt}
+{com}.         eststo: ivregress 2sls y_bar (d_bar=open) i.nlinks [aw=sk] , robust 
+{res}{txt}(sum of wgt is   1.0000e+00)
+{res}
+{txt}{col 1}Instrumental variables (2SLS) regression{col 51}Number of obs{col 67}= {res}       148
+{txt}{col 1}{col 51}Wald chi2({res}10{txt}){col 67}= {res}      0.70
+{txt}{col 1}{col 51}Prob > chi2{col 67}= {res}    1.0000
+{txt}{col 1}{col 51}R-squared{col 67}= {res}    0.0152
+{txt}{col 51}Root MSE{col 67}=    {res} .12767
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}    Robust
+{col 1}       y_bar{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      z{col 46}   P>|z|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}d_bar {c |}{col 14}{res}{space 2} .0209838{col 26}{space 2} .0259665{col 37}{space 1}    0.81{col 46}{space 3}0.419{col 54}{space 4}-.0299096{col 67}{space 3} .0718772
+{txt}{space 12} {c |}
+{space 6}nlinks {c |}
+{space 10}2  {c |}{col 14}{res}{space 2} 1.48e-09{col 26}{space 2} .0326402{col 37}{space 1}    0.00{col 46}{space 3}1.000{col 54}{space 4}-.0639736{col 67}{space 3} .0639736
+{txt}{space 10}3  {c |}{col 14}{res}{space 2} 2.60e-09{col 26}{space 2} .0400932{col 37}{space 1}    0.00{col 46}{space 3}1.000{col 54}{space 4}-.0785813{col 67}{space 3} .0785813
+{txt}{space 10}4  {c |}{col 14}{res}{space 2} 1.52e-09{col 26}{space 2} .0349928{col 37}{space 1}    0.00{col 46}{space 3}1.000{col 54}{space 4}-.0685846{col 67}{space 3} .0685846
+{txt}{space 10}5  {c |}{col 14}{res}{space 2} 3.26e-09{col 26}{space 2} .0535652{col 37}{space 1}    0.00{col 46}{space 3}1.000{col 54}{space 4}-.1049858{col 67}{space 3} .1049858
+{txt}{space 10}6  {c |}{col 14}{res}{space 2} 1.07e-09{col 26}{space 2} .0332296{col 37}{space 1}    0.00{col 46}{space 3}1.000{col 54}{space 4}-.0651288{col 67}{space 3} .0651288
+{txt}{space 10}7  {c |}{col 14}{res}{space 2} 2.20e-09{col 26}{space 2} .0385387{col 37}{space 1}    0.00{col 46}{space 3}1.000{col 54}{space 4}-.0755344{col 67}{space 3} .0755344
+{txt}{space 10}8  {c |}{col 14}{res}{space 2} 1.78e-09{col 26}{space 2} .0693076{col 37}{space 1}    0.00{col 46}{space 3}1.000{col 54}{space 4}-.1358403{col 67}{space 3} .1358403
+{txt}{space 10}9  {c |}{col 14}{res}{space 2} 2.80e-09{col 26}{space 2} .0575285{col 37}{space 1}    0.00{col 46}{space 3}1.000{col 54}{space 4}-.1127537{col 67}{space 3} .1127537
+{txt}{space 9}18  {c |}{col 14}{res}{space 2} 3.04e-09{col 26}{space 2}  .024958{col 37}{space 1}    0.00{col 46}{space 3}1.000{col 54}{space 4}-.0489168{col 67}{space 3} .0489168
+{txt}{space 12} {c |}
+{space 7}_cons {c |}{col 14}{res}{space 2}-1.92e-09{col 26}{space 2}  .024958{col 37}{space 1}   -0.00{col 46}{space 3}1.000{col 54}{space 4}-.0489168{col 67}{space 3} .0489168
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{p 0 15 179}Instrumented:{space 2}d_bar{p_end}
+{p 0 15 179}Instruments:{space 3}2.nlinks 3.nlinks 4.nlinks 5.nlinks 6.nlinks 7.nlinks 8.nlinks 9.nlinks 18.nlinks open{p_end}
+({res}est1{txt} stored)
+
+{com}.         esttab using "${c -(}dta_loc{c )-}/2c_reg",  nostar label  tex  replace  se wide b(4)
+{res}{txt}(output written to {browse  `"/Users/rajdevb/Dropbox/ARE213/Pset3/2c_reg.tex"'})
+
+{com}. 
+. 
+{txt}end of do-file
+
+{com}. 
+. 
+. 
+. log close
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}/Users/rajdevb/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023/PSet 3/pset3_logfile.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res}19 Nov 2023, 21:07:03
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}

@@ -57,7 +57,13 @@
 		
 	tempfile city_withdeltalines 
 	save 	`city_withdeltalines'
-	
+
+* ============================================================================= *
+* ============================================================================= *
+* QUESTION 1 
+* ============================================================================= *
+* ============================================================================= *
+
 * ============================================================================= *
 * 1a
 * ============================================================================= *
@@ -219,7 +225,7 @@ save 	`clean_dta'
 	
 	eststo: reg  deltalines_std dist_beijing, vce(robust) 
 	esttab using "${dta_loc}/1e_panel2_reg"  , nostar label  tex  replace  se wide
-e
+
 * ============================================================================= *
 * 1f
 * ============================================================================= *
@@ -235,23 +241,19 @@ e
 	legend(label(1 "0 lines") label(2 "0 lines") label(3 "1 line") label (4 "2 lines") label (5 "3 lines") label(6 "4 lines") label(7 "5 lines") label(8 "6 lines") label(9 "7 lines")) 
 	graph export "1f_graph1.png", replace 
 
-
-	merge 1:1 cityid using `clean_dta', keepusing(Qi_*)
-	
-	* make a map for deltalines, after residualizing on Qi to visualize the identifying variation
-	* make it clear which regions are in the treated group and which are in the control group and which have missing data 
-	
-	
-
-* ============================================================================= *
-* 1c
 * ============================================================================= *
 * ============================================================================= *
-* 1c
+* QUESTION 2 
+* ============================================================================= *
 * ============================================================================= *
 
 
-* 2a -------------------------------------------------------------------------- * 
+
+* ============================================================================= *
+* 2a
+* ============================================================================= *
+
+
 * Compute standard errors clustered by province 
 
 use `clean_dta', clear 
@@ -264,14 +266,19 @@ use `clean_dta', clear
 
 
 
-* 2b -------------------------------------------------------------------------- * 
+* ============================================================================= *
+* 2b
+* ============================================================================= *
+
 * Compute spatially-clustered ("Conley") standard errors. 
 * Describe any choices you have made. 
 	eststo clear 
 	eststo: acreg empgrowth deltalines Qi_* , spatial longitude(longitude) latitude(latitude) dist(100) 
 	esttab using "${dta_loc}/2b_reg"  , nostar label  tex  replace  se wide b(4)
 
-* 2c -------------------------------------------------------------------------- * 
+* ============================================================================= *
+* 2c
+* ============================================================================= *
 
 * generate residuals 
 	use `clean_dta', clear 
@@ -328,12 +335,3 @@ use `clean_dta', clear
 	eststo: ivregress 2sls y_bar (d_bar=open) i.nlinks [aw=sk] , robust 
 	esttab using "${dta_loc}/2c_reg",  nostar label  tex  replace  se wide b(4)
 
-
-	* try ssaggregate 
-	merge 1:m lineid using "${dta_stations}", gen(merge_stations)
-	
-	merge m:1 cityid using `city_withdeltalines', keepusing(empgrowth deltalines) gen(merge_cities) 
-
-	* ssaggregate empgrowth deltalines [aw=sk] , n(lineid) s(sk) controls("i.nlinks") 
-	
-	
