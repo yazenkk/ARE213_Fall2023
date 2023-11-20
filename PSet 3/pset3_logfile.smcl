@@ -3,7 +3,7 @@
       name:  {res}<unnamed>
        {txt}log:  {res}/Users/rajdevb/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023/PSet 3/pset3_logfile.smcl
   {txt}log type:  {res}smcl
- {txt}opened on:  {res}19 Nov 2023, 21:06:54
+ {txt}opened on:  {res}20 Nov 2023, 09:58:08
 {txt}
 {com}. 
 . 
@@ -468,34 +468,7 @@ cross-regio {c |}
 .  
 .         eststo clear 
 {txt}
-{com}.         reg empgrowth deltalines Qi_*, vce(robust) 
-
-{txt}Linear regression                               Number of obs     = {res}       275
-                                                {txt}F(11, 263)        =  {res}     7.35
-                                                {txt}Prob > F          = {res}    0.0000
-                                                {txt}R-squared         = {res}    0.2022
-                                                {txt}Root MSE          =    {res} .23352
-
-{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
-{col 14}{c |}{col 26}    Robust
-{col 1}   empgrowth{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
-{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
-{space 2}deltalines {c |}{col 14}{res}{space 2} .0209838{col 26}{space 2} .0225719{col 37}{space 1}    0.93{col 46}{space 3}0.353{col 54}{space 4}-.0234609{col 67}{space 3} .0654285
-{txt}{space 8}Qi_1 {c |}{col 14}{res}{space 2}  -.00063{col 26}{space 2} .0232427{col 37}{space 1}   -0.03{col 46}{space 3}0.978{col 54}{space 4}-.0463954{col 67}{space 3} .0451354
-{txt}{space 8}Qi_2 {c |}{col 14}{res}{space 2} .0076877{col 26}{space 2} .0298461{col 37}{space 1}    0.26{col 46}{space 3}0.797{col 54}{space 4}  -.05108{col 67}{space 3} .0664553
-{txt}{space 8}Qi_3 {c |}{col 14}{res}{space 2} .0286205{col 26}{space 2} .0297012{col 37}{space 1}    0.96{col 46}{space 3}0.336{col 54}{space 4} -.029862{col 67}{space 3}  .087103
-{txt}{space 8}Qi_4 {c |}{col 14}{res}{space 2} .0105053{col 26}{space 2} .0344413{col 37}{space 1}    0.31{col 46}{space 3}0.761{col 54}{space 4}-.0573105{col 67}{space 3} .0783211
-{txt}{space 8}Qi_5 {c |}{col 14}{res}{space 2} .0520196{col 26}{space 2} .0416149{col 37}{space 1}    1.25{col 46}{space 3}0.212{col 54}{space 4}-.0299213{col 67}{space 3} .1339604
-{txt}{space 8}Qi_6 {c |}{col 14}{res}{space 2} .1088843{col 26}{space 2} .0299937{col 37}{space 1}    3.63{col 46}{space 3}0.000{col 54}{space 4}  .049826{col 67}{space 3} .1679426
-{txt}{space 8}Qi_7 {c |}{col 14}{res}{space 2} .2144605{col 26}{space 2} .0466879{col 37}{space 1}    4.59{col 46}{space 3}0.000{col 54}{space 4} .1225309{col 67}{space 3} .3063902
-{txt}{space 8}Qi_8 {c |}{col 14}{res}{space 2} .1418453{col 26}{space 2} .0733712{col 37}{space 1}    1.93{col 46}{space 3}0.054{col 54}{space 4}-.0026244{col 67}{space 3}  .286315
-{txt}{space 8}Qi_9 {c |}{col 14}{res}{space 2}  .061053{col 26}{space 2} .0441635{col 37}{space 1}    1.38{col 46}{space 3}0.168{col 54}{space 4} -.025906{col 67}{space 3}  .148012
-{txt}{space 7}Qi_10 {c |}{col 14}{res}{space 2} .0864747{col 26}{space 2} .0471572{col 37}{space 1}    1.83{col 46}{space 3}0.068{col 54}{space 4} -.006379{col 67}{space 3} .1793283
-{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .1625225{col 26}{space 2} .0249329{col 37}{space 1}    6.52{col 46}{space 3}0.000{col 54}{space 4}  .113429{col 67}{space 3} .2116159
-{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
-{res}{txt}
-{com}.         
-.         eststo: reg empgrowth deltalines Qi_*, vce(robust)
+{com}.         eststo: reg empgrowth deltalines Qi_*, vce(robust)
 
 {txt}Linear regression                               Number of obs     = {res}       275
                                                 {txt}F(11, 263)        =  {res}     7.35
@@ -522,11 +495,45 @@ cross-regio {c |}
 {txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
 {res}{txt}({res}est1{txt} stored)
 
-{com}. 
-.         esttab using "${c -(}dta_loc{c )-}/1d_reg"  , nostar label  tex  replace  se wide
-{res}{txt}(output written to {browse  `"/Users/rajdevb/Dropbox/ARE213/Pset3/1d_reg.tex"'})
+{com}.         esttab using "${c -(}dta_loc{c )-}/1d_reg_1"  , nostar label  tex  replace  se wide
+{res}{txt}(output written to {browse  `"/Users/rajdevb/Dropbox/ARE213/Pset3/1d_reg_1.tex"'})
 
-{com}. tempfile clean_dta
+{com}.         
+.         eststo clear 
+{txt}
+{com}.         eststo: reg empgrowth deltalines Qi_*, vce(hc3) // to get same output as python 
+
+{txt}Linear regression                               Number of obs     = {res}       275
+                                                {txt}F(11, 263)        =  {res}     6.50
+                                                {txt}Prob > F          = {res}    0.0000
+                                                {txt}R-squared         = {res}    0.2022
+                                                {txt}Root MSE          =    {res} .23352
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 14}{c |}{col 26}  Robust HC3
+{col 1}   empgrowth{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 2}deltalines {c |}{col 14}{res}{space 2} .0209838{col 26}{space 2} .0238326{col 37}{space 1}    0.88{col 46}{space 3}0.379{col 54}{space 4}-.0259433{col 67}{space 3} .0679108
+{txt}{space 8}Qi_1 {c |}{col 14}{res}{space 2}  -.00063{col 26}{space 2} .0243792{col 37}{space 1}   -0.03{col 46}{space 3}0.979{col 54}{space 4}-.0486333{col 67}{space 3} .0473733
+{txt}{space 8}Qi_2 {c |}{col 14}{res}{space 2} .0076877{col 26}{space 2}  .032209{col 37}{space 1}    0.24{col 46}{space 3}0.812{col 54}{space 4}-.0557326{col 67}{space 3}  .071108
+{txt}{space 8}Qi_3 {c |}{col 14}{res}{space 2} .0286205{col 26}{space 2} .0311588{col 37}{space 1}    0.92{col 46}{space 3}0.359{col 54}{space 4} -.032732{col 67}{space 3} .0899731
+{txt}{space 8}Qi_4 {c |}{col 14}{res}{space 2} .0105053{col 26}{space 2} .0368555{col 37}{space 1}    0.29{col 46}{space 3}0.776{col 54}{space 4}-.0620641{col 67}{space 3} .0830747
+{txt}{space 8}Qi_5 {c |}{col 14}{res}{space 2} .0520196{col 26}{space 2} .0438038{col 37}{space 1}    1.19{col 46}{space 3}0.236{col 54}{space 4}-.0342313{col 67}{space 3} .1382704
+{txt}{space 8}Qi_6 {c |}{col 14}{res}{space 2} .1088843{col 26}{space 2}  .031444{col 37}{space 1}    3.46{col 46}{space 3}0.001{col 54}{space 4} .0469702{col 67}{space 3} .1707984
+{txt}{space 8}Qi_7 {c |}{col 14}{res}{space 2} .2144605{col 26}{space 2} .0509585{col 37}{space 1}    4.21{col 46}{space 3}0.000{col 54}{space 4} .1141219{col 67}{space 3} .3147991
+{txt}{space 8}Qi_8 {c |}{col 14}{res}{space 2} .1418453{col 26}{space 2}  .081052{col 37}{space 1}    1.75{col 46}{space 3}0.081{col 54}{space 4} -.017748{col 67}{space 3} .3014386
+{txt}{space 8}Qi_9 {c |}{col 14}{res}{space 2}  .061053{col 26}{space 2} .0479879{col 37}{space 1}    1.27{col 46}{space 3}0.204{col 54}{space 4}-.0334364{col 67}{space 3} .1555424
+{txt}{space 7}Qi_10 {c |}{col 14}{res}{space 2} .0864747{col 26}{space 2} .0518233{col 37}{space 1}    1.67{col 46}{space 3}0.096{col 54}{space 4}-.0155666{col 67}{space 3}  .188516
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .1625225{col 26}{space 2} .0257329{col 37}{space 1}    6.32{col 46}{space 3}0.000{col 54}{space 4} .1118537{col 67}{space 3} .2131912
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}({res}est1{txt} stored)
+
+{com}.         esttab using "${c -(}dta_loc{c )-}/1d_reg_2"  , nostar label  tex  replace  se wide
+{res}{txt}(output written to {browse  `"/Users/rajdevb/Dropbox/ARE213/Pset3/1d_reg_2.tex"'})
+
+{com}. 
+.         
+. tempfile clean_dta
 {txt}
 {com}. save    `clean_dta'
 {txt}file /var/folders/fz/p35j_lbj1yx73vng__9d6ync0000gn/T//S_02572.000009 saved
@@ -623,7 +630,7 @@ dist_beijing {c |}{col 14}{res}{space 2}-.0001127{col 26}{space 2} .0000733{col 
 . * ============================================================================= *
 . 
 .         * translate .shp file into .dta
-.         shp2dta using chn_admbnda_adm2_ocha.shp,  data("china_data") coor("china_coordinates")  replace 
+.         shp2dta using "${c -(}dta_loc{c )-}/data/chn_admbnda_adm2_ocha.shp",  data("china_data") coor("china_coordinates")  replace 
 {res}type: 5
 {txt}
 {com}. 
@@ -636,7 +643,7 @@ dist_beijing {c |}{col 14}{res}{space 2}-.0001127{col 26}{space 2} .0000733{col 
 >         legend(label(1 "0 lines") label(2 "0 lines") label(3 "1 line") label (4 "2 lines") label (5 "3 lines") label(6 "4 lines") label(7 "5 lines") label(8 "6 lines") label(9 "7 lines")) 
 {res}{txt}
 {com}.         graph export "1f_graph1.png", replace 
-{txt}(file /Users/rajdevb/Dropbox/ARE213/Pset3/data/1f_graph1.png written in PNG format)
+{txt}(file /Users/rajdevb/Downloads/1f_graph1.png written in PNG format)
 
 {com}. 
 . * ============================================================================= *
@@ -953,7 +960,7 @@ DistCutoff: {res}100
       {txt}name:  {res}<unnamed>
        {txt}log:  {res}/Users/rajdevb/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023/PSet 3/pset3_logfile.smcl
   {txt}log type:  {res}smcl
- {txt}closed on:  {res}19 Nov 2023, 21:07:03
+ {txt}closed on:  {res}20 Nov 2023, 09:58:20
 {txt}{.-}
 {smcl}
 {txt}{sf}{ul off}

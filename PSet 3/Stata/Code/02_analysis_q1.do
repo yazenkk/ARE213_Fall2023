@@ -186,11 +186,14 @@ restore
 * Does your estimate rely on Assumptions A2 and A3?
  
 	eststo clear 
-	reg empgrowth deltalines Qi_*, vce(robust) 
-	
 	eststo: reg empgrowth deltalines Qi_*, vce(robust)
-
-	esttab using "${dta_loc}/1d_reg"  , nostar label  tex  replace  se wide
+	esttab using "${dta_loc}/1d_reg_1"  , nostar label  tex  replace  se wide
+	
+	eststo clear 
+	eststo: reg empgrowth deltalines Qi_*, vce(hc3) // to get same output as python 
+	esttab using "${dta_loc}/1d_reg_2"  , nostar label  tex  replace  se wide
+e
+	
 tempfile clean_dta
 save 	`clean_dta'
 
@@ -231,7 +234,7 @@ save 	`clean_dta'
 * ============================================================================= *
 
 	* translate .shp file into .dta
-	shp2dta using chn_admbnda_adm2_ocha.shp,  data("china_data") coor("china_coordinates")  replace 
+	shp2dta using "${dta_loc}/data/chn_admbnda_adm2_ocha.shp",  data("china_data") coor("china_coordinates")  replace 
 
 	* Display ∆Linesi on the map of China’s regions to visualize your treatment; 
 	set graph off 
