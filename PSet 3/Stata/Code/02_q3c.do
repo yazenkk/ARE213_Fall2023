@@ -34,7 +34,7 @@ We repeat part b only with randomly generated shocks g_k = open at the line leve
 // L_k and propensity to get shocked? Not stratified for now.
 pause on
 set seed 154
-local T = 10
+local T = 999
 
 use "$dta_loc/pset3_lines", clear
 count if open == 0 // get count of shocks to resample
@@ -102,6 +102,7 @@ forval t = 1/`T' {
 		byso cityid2 : egen nd = min(cond_dist)
 		gen lognd_`t' = log(nd)
 		label var lognd_`t' "log nearest distance to city with HSR"
+		
 		// hist lognd
 		keep cityid2 lognd_`t'
 		duplicates drop
@@ -127,6 +128,8 @@ forval t = 1/`T' {
 		}
 	}
 }
+
+
 
 // save
 compress

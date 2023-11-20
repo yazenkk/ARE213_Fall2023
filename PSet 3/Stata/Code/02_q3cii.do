@@ -54,7 +54,6 @@ esttab using "$do_loc/Tables/table_3c.tex",   			///
 	style(tex)											///
 	nogaps												///
 	nobaselevels 										///
-	noconstant											///
 	label            									///
 	varwidth(50)										///
 	wrap 												///
