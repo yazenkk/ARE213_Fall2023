@@ -48,6 +48,7 @@ tempfile lines_dta
 save 	`lines_dta'
 
 // Get city-line matrix indicating which lines were open
+// Transform v_k to V_i
 use "$dta_loc/pset3_stations", clear // city-line matrix
 merge m:1 lineid using "`lines_dta'", keepusing(nlinks planned) // merge open var
 gen q_1 = 1 // constant
