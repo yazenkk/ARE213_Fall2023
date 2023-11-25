@@ -31,12 +31,10 @@ if "`c(username)'" == "yfkashlan" {
 		
 }
 
-if "`c(username)'" == "rajdevb" {
+if "`c(username)'" == "yazenkashlan" {
 
-	local mainfolder "/Users/rajdevb"
-	
-	global do_loc	"`mainfolder'/Desktop/GIT_RajdevBrar/GitHub_are213/ARE213_Fall2023"
-	global dta_loc	"`mainfolder'/Dropbox/ARE213/Pset3"
+	global do_loc  "/Users/yazenkashlan/Documents/GitHub/ARE213_Fall2023/PSet 3/Stata"
+	global dta_loc "/Users/yazenkashlan/Library/CloudStorage/Dropbox/ARE213/Pset3/data"
 }
 
 log using "$do_loc/pset3_logfile.smcl", replace smcl

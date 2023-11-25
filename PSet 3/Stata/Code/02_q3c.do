@@ -34,7 +34,7 @@ We repeat part b only with randomly generated shocks g_k = open at the line leve
 // L_k and propensity to get shocked? Not stratified for now.
 pause on
 set seed 154
-local T = 999
+local T = 9
 
 use "$dta_loc/pset3_lines", clear
 count if open == 0 // get count of shocks to resample
@@ -51,6 +51,7 @@ forval t = 1/`T' {
 		isid lineid
 		// equal weights within nlinks
 		byso nlinks : gen rand = runiform() 
+		pause 
 		sort nlinks rand
 		
 		// keep number of open lines within nlinks levels

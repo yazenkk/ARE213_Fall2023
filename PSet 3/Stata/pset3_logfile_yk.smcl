@@ -1,0 +1,3706 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}/Users/yazenkashlan/Documents/GitHub/ARE213_Fall2023/PSet 3/Stata/pset3_logfile.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}24 Nov 2023, 15:40:24
+{txt}
+{com}. 
+. 
+. // install programs
+. // do "$do_loc/Code/01_programs.do"
+. 
+. // analyze
+. do "$do_loc/Code/02_q3.do"
+{txt}
+{com}. /*
+> Title:          02_q3b.do
+> Purpose:        Question 3.b, PSet 3
+> 
+> Outline: Question 3.b
+> 
+> (b) Still, let’s try it out. Compute logNDi and estimate (2) by OLS without controls.
+> Explain why this OLS may not be causal even if the specification is correct.
+> 
+> */
+. 
+. /* ---------------------------------------------------------------------------
+> 3.b.i Compute logND */
+. 
+. // 1 Get list of cities with stations for lines open by 2016
+. use "$dta_loc/pset3_stations", clear 
+{txt}
+{com}. merge m:1 lineid using "$dta_loc/pset3_lines", nogen assert(3) keepusing(open)
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}               0
+{txt}{col 5}Matched{col 30}{res}             565{txt}  
+{col 5}{hline 41}
+
+{com}. byso cityid : egen open_i = max(open)
+{txt}
+{com}. keep cityid open_i
+{txt}
+{com}. duplicates drop
+
+{p 0 4}{txt}Duplicates in terms of {txt} all variables{p_end}
+
+(300 observations deleted)
+
+{com}. isid cityid
+{txt}
+{com}. label var open_i "City has any station open by 2016"
+{txt}
+{com}. tempfile city_wline_dta
+{txt}
+{com}. save    `city_wline_dta'
+{txt}{p 0 4 2}
+file {bf}
+/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//S_67330.000001{rm}
+saved
+as .dta format
+{p_end}
+
+{com}. 
+. // 2 merge station dummy with matrix of cross-city distances
+. use "$dta_loc/pset3_distances", clear // distance between cities
+{txt}
+{com}. rename cityid1 cityid
+{res}{txt}
+{com}. merge m:1 cityid using `city_wline_dta', assert(1 3) nogen // no cities only in using
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}          25,500
+{txt}{col 9}from master{col 30}{res}          25,500{txt}  
+{col 9}from using{col 30}{res}               0{txt}  
+
+{col 5}Matched{col 30}{res}          90,100{txt}  
+{col 5}{hline 41}
+
+{com}. replace open_i = 0 if open_i == .
+{txt}(25,500 real changes made)
+
+{com}. 
+. // 3 find ND (nearest distance)
+. gen cond_dist = dist if open_i == 1
+{txt}(46,920 missing values generated)
+
+{com}. sort cityid2 open_i cond_dist
+{txt}
+{com}. byso cityid2 : egen nd = min(cond_dist)
+{txt}
+{com}. gen lognd = log(nd)
+{txt}
+{com}. label var lognd "log nearest distance"
+{txt}
+{com}. // hist lognd
+. keep cityid2 lognd
+{txt}
+{com}. duplicates drop
+
+{p 0 4}{txt}Duplicates in terms of {txt} all variables{p_end}
+
+(115,260 observations deleted)
+
+{com}. isid cityid2
+{txt}
+{com}. rename cityid2 cityid
+{res}{txt}
+{com}. 
+. // merge in city characteristics
+. merge 1:1 cityid using "$dta_loc/pset3_cities", nogen assert(3)
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}               0
+{txt}{col 5}Matched{col 30}{res}             340{txt}  
+{col 5}{hline 41}
+
+{com}. 
+. // save for Q3c
+. save "$dta_loc/q3b_lognd", replace
+{txt}{p 0 4 2}
+file {bf}
+/Users/yazenkashlan/Library/CloudStorage/Dropbox/ARE213/Pset3/data/q3b_lognd.dta{rm}
+saved
+{p_end}
+
+{com}. 
+. 
+. /*3.b.i -----------------------------------------------------------------------
+> Estimate (2) by OLS without controls */
+. encode province_en, gen(prov)
+{txt}
+{com}. 
+. sum lognd
+
+{txt}    Variable {c |}        Obs        Mean    Std. dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}lognd {c |}{res}        340    4.380005    .8717383   2.692482   7.272453
+{txt}
+{com}. reg empgrowth lognd
+
+{txt}      Source {c |}       SS           df       MS      Number of obs   ={res}       275
+{txt}{hline 13}{c +}{hline 34}   F(1, 273)       = {res}    38.05
+{txt}       Model {c |} {res} 2.19897546         1  2.19897546   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 15.7773816       273  .057792607   {txt}R-squared       ={res}    0.1223
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.1191
+{txt}       Total {c |} {res}  17.976357       274  .065607143   {txt}Root MSE        =   {res}  .2404
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}   empgrowth{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}lognd {c |}{col 14}{res}{space 2}-.1331077{col 26}{space 2} .0215789{col 37}{space 1}   -6.17{col 46}{space 3}0.000{col 54}{space 4}-.1755898{col 67}{space 3}-.0906255
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .8279967{col 26}{space 2} .0922075{col 37}{space 1}    8.98{col 46}{space 3}0.000{col 54}{space 4} .6464686{col 67}{space 3} 1.009525
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. areg empgrowth lognd, absorb(prov) // 
+{res}
+{txt}{col 1}Linear regression, absorbing indicators{col 53}{lalign 17:Number of obs}{col 70} = {res}{ralign 6:275}
+{txt}{col 1}Absorbed variable: {res:prov}{col 53}{lalign 17:No. of categories}{col 70} = {res}{ralign 6:30}
+{txt}{col 53}{lalign 17:F({res:1}, {res:244})}{col 70} = {res}{ralign 6:11.70}
+{txt}{col 53}{lalign 17:Prob > F}{col 70} = {res}{ralign 6:0.0007}
+{txt}{col 53}{lalign 17:R-squared}{col 70} = {res}{ralign 6:0.4645}
+{txt}{col 53}{lalign 17:Adj R-squared}{col 70} = {res}{ralign 6:0.3987}
+{txt}{col 53}{lalign 17:Root MSE}{col 70} = {res}{ralign 6:0.1986}
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}   empgrowth{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}lognd {c |}{col 14}{res}{space 2}-.0830188{col 26}{space 2} .0242666{col 37}{space 1}   -3.42{col 46}{space 3}0.001{col 54}{space 4}-.1308176{col 67}{space 3}-.0352201
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} .6166268{col 26}{space 2} .1031008{col 37}{space 1}    5.98{col 46}{space 3}0.000{col 54}{space 4} .4135457{col 67}{space 3} .8197079
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+F test of absorbed indicators: F({res}29{txt}, {res}244{txt}) = {res}5.377{col 62}{txt} Prob > F = {res}0.000
+{txt}
+{com}. 
+. // cities with missing data are more remote 
+. // (farther away from Beijing and from nearest city with HSR)
+. gen miss = missing(empgrowth)
+{txt}
+{com}. reg lognd miss
+
+{txt}      Source {c |}       SS           df       MS      Number of obs   ={res}       340
+{txt}{hline 13}{c +}{hline 34}   F(1, 338)       = {res}    56.46
+{txt}       Model {c |} {res} 36.8719355         1  36.8719355   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res}  220.74355       338  .653087425   {txt}R-squared       ={res}    0.1431
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.1406
+{txt}       Total {c |} {res} 257.615485       339  .759927685   {txt}Root MSE        =   {res} .80814
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}       lognd{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 8}miss {c |}{col 14}{res}{space 2} .8374606{col 26}{space 2} .1114557{col 37}{space 1}    7.51{col 46}{space 3}0.000{col 54}{space 4} .6182266{col 67}{space 3} 1.056695
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 4.219902{col 26}{space 2} .0487326{col 37}{space 1}   86.59{col 46}{space 3}0.000{col 54}{space 4} 4.124045{col 67}{space 3} 4.315759
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. reg dist_beijing miss
+
+{txt}      Source {c |}       SS           df       MS      Number of obs   ={res}       340
+{txt}{hline 13}{c +}{hline 34}   F(1, 338)       = {res}    82.61
+{txt}       Model {c |} {res}   28749484         1    28749484   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res}  117622406       338  347995.283   {txt}R-squared       ={res}    0.1964
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.1940
+{txt}       Total {c |} {res}  146371890       339  431775.486   {txt}Root MSE        =   {res} 589.91
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}dist_beijing{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 8}miss {c |}{col 14}{res}{space 2} 739.4886{col 26}{space 2} 81.35853{col 37}{space 1}    9.09{col 46}{space 3}0.000{col 54}{space 4} 579.4557{col 67}{space 3} 899.5214
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 1113.033{col 26}{space 2} 35.57299{col 37}{space 1}   31.29{col 46}{space 3}0.000{col 54}{space 4} 1043.061{col 67}{space 3} 1183.005
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. /*3.b.iii Threats to ID -------------------------------------------------------
+> Explain why this OLS may not be causal even if the specification is correct. */
+. // see overleaf
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}. do "$do_loc/Code/02_q3c.do"
+{txt}
+{com}. /*
+> Title:          02_q3c.do
+> Purpose:        Question 3.c, PSet 3
+> 
+> Outline: Question 3.c.i
+> 
+> Briefly describe how Assumptions A1–A3 allow you to construct 
+> counterfactual 2016 railway networks (i.e., sets of lines) that 
+> were as likely to have happened as the realized network. 
+> 
+> c.i
+> Simulate 999 such counterfactual networks; make sure to set a 
+> seed, such that your results can be exactly reproduced. 
+> 
+> Compute logNDi for each city in each simulation and average it across simulations. 
+> 
+> We denote this average by μi. 
+> 
+> c.ii
+> Report two corrected estimates of τ2: recentering by and controlling for μi. 
+> Are they very different from your estimate in 3(b)? 
+> What do you learn from this?
+> 
+> */
+. 
+. 
+. /*3.c.i  ---------------------------------------------------------------------
+> Estimate (2) by OLS without controls 
+> We repeat part b only with randomly generated shocks g_k = open at the line level
+> */
+. 
+. // Question: should I adjust probablity of opening by the number of links?
+. // link stratified randomization? How do I force a positive relation between
+. // L_k and propensity to get shocked? Not stratified for now.
+. pause on
+{txt}
+{com}. set seed 154
+{txt}
+{com}. local T = 9
+{txt}
+{com}. 
+. use "$dta_loc/pset3_lines", clear
+{txt}
+{com}. count if open == 0 // get count of shocks to resample
+  {res}66
+{txt}
+{com}. local line_ct `r(N)' // 66
+{txt}
+{com}. 
+. forval t = 1/`T' {c -(}
+{txt}  2{com}. 
+.         dis "Simulation t = `t'"
+{txt}  3{com}.         dis "   - Randomize shocks"
+{txt}  4{com}.         // 0 randomize the shocks (line openings)
+.         qui {c -(}
+{txt}  5{com}.                 
+.                 use "$dta_loc/pset3_lines", clear
+{txt}  6{com}.                 isid lineid
+{txt}  7{com}.                 // equal weights within nlinks
+.                 byso nlinks : gen rand = runiform() 
+{txt}  8{com}.                 pause 
+{txt}  9{com}.                 sort nlinks rand
+{txt} 10{com}.                 
+.                 // keep number of open lines within nlinks levels
+.                 // For lines with multiple draws, keep higher draw
+.                 byso nlinks : egen open_ct = total(open)
+{txt} 11{com}.                 sort nlinks rand
+{txt} 12{com}.                 byso nlinks : egen rand_rank = rank(rand), field
+{txt} 13{com}. 
+.                 // generate simulated shock
+.                 gen open_`t' = rand_rank <= open_ct
+{txt} 14{com}.                 // confirm number of shocks generated equals original number
+.                 byso open_`t' : egen line_ct = rank(lineid), track
+{txt} 15{com}.                 sort open_`t' line_ct
+{txt} 16{com}.                 
+.                 count if open_`t' == 0
+{txt} 17{com}.                 assert `r(N)' == `line_ct'
+{txt} 18{com}.                 sort lineid
+{txt} 19{com}.                 drop open rand
+{txt} 20{com}.                 rename open_`t' open
+{txt} 21{com}.                 tempfile line_rand
+{txt} 22{com}.                 save    `line_rand'
+{txt} 23{com}.         {c )-}
+{txt} 24{com}.         
+.         dis "   - Merge openness data"
+{txt} 25{com}.         qui {c -(}
+{txt} 26{com}.                 // 1 Get list of cities with stations for lines open by 2016
+.                 use "$dta_loc/pset3_stations", clear 
+{txt} 27{com}.                 merge m:1 lineid using "`line_rand'", nogen assert(3) keepusing(open)
+{txt} 28{com}.                 byso cityid : egen open_i = max(open)
+{txt} 29{com}.                 keep cityid open_i
+{txt} 30{com}.                 duplicates drop
+{txt} 31{com}.                 isid cityid
+{txt} 32{com}.                 label var open_i "City has any station open by 2016"
+{txt} 33{com}.                 tempfile city_wline_dta
+{txt} 34{com}.                 save    `city_wline_dta'
+{txt} 35{com}.                 
+.                 // 2 merge station dummy with matrix of cross-city distances
+.                 use "$dta_loc/pset3_distances", clear // distance between cities
+{txt} 36{com}.                 rename cityid1 cityid
+{txt} 37{com}.                 merge m:1 cityid using `city_wline_dta', assert(1 3) nogen // no cities only in using
+{txt} 38{com}.                 replace open_i = 0 if open_i == .
+{txt} 39{com}.         {c )-}
+{txt} 40{com}.         
+.         dis "   - Find nearest distance to HSR city for each city"
+{txt} 41{com}.         qui {c -(}
+{txt} 42{com}.                 // 3 find ND (nearest distance)
+.                 gen cond_dist = dist if open_i == 1
+{txt} 43{com}.                 sort cityid2 open_i cond_dist
+{txt} 44{com}.                 byso cityid2 : egen nd = min(cond_dist)
+{txt} 45{com}.                 gen lognd_`t' = log(nd)
+{txt} 46{com}.                 label var lognd_`t' "log nearest distance to city with HSR"
+{txt} 47{com}.                 
+.                 // hist lognd
+.                 keep cityid2 lognd_`t'
+{txt} 48{com}.                 duplicates drop
+{txt} 49{com}.                 isid cityid2
+{txt} 50{com}.                 rename cityid2 cityid
+{txt} 51{com}.         {c )-}
+{txt} 52{com}.         
+.         dis "   - Merge result `t'"
+{txt} 53{com}.         qui {c -(}
+{txt} 54{com}.                 tempfile lognd_dta_`t'
+{txt} 55{com}.                 save    `lognd_dta_`t''
+{txt} 56{com}.                 
+.                 if `t' == 1 {c -(}
+{txt} 57{com}.                         use `lognd_dta_1', clear
+{txt} 58{com}.                         tempfile lognd_dta
+{txt} 59{com}.                         save    `lognd_dta', replace    
+{txt} 60{com}.                 {c )-}
+{txt} 61{com}.                 else {c -(}
+{txt} 62{com}.                         use `lognd_dta'
+{txt} 63{com}.                         merge 1:1 cityid using `lognd_dta_`t'', assert(3) nogen
+{txt} 64{com}.                         tempfile lognd_dta
+{txt} 65{com}.                         save    `lognd_dta', replace                    
+{txt} 66{com}.                 {c )-}
+{txt} 67{com}.         {c )-}
+{txt} 68{com}. {c )-}
+Simulation t = 1
+   - Randomize shocks
+{txt}pause:  
+{com}-> . q
+{txt}execution resumes...
+   - Merge openness data
+   - Find nearest distance to HSR city for each city
+   - Merge result 1
+Simulation t = 2
+   - Randomize shocks
+pause:  
+{com}-> . isid lineid
+-> . q
+{txt}execution resumes...
+   - Merge openness data
+   - Find nearest distance to HSR city for each city
+   - Merge result 2
+Simulation t = 3
+   - Randomize shocks
+pause:  
+{com}-> . q
+{txt}execution resumes...
+   - Merge openness data
+   - Find nearest distance to HSR city for each city
+   - Merge result 3
+Simulation t = 4
+   - Randomize shocks
+pause:  
+{com}-> . BREAK
+{txt}sending Break to calling program...
+{err}{hline 2}Break{hline 2}
+{txt}{search r(1), local:r(1);}
+
+end of do-file
+{err}{hline 2}Break{hline 2}
+{txt}{search r(1), local:r(1);}
+
+end of do-file
+
+{err}{hline 2}Break{hline 2}
+{txt}{search r(1), local:r(1);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. 
+. set seed 154
+{txt}
+{com}. clear
+{txt}
+{com}. set obs 10
+{txt}{p}
+Number of observations ({bf:_N}) was 0,
+now 10.
+{p_end}
+
+{com}. gen rand = runiform()
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. 
+. set seed 154
+{txt}
+{com}. clear
+{txt}
+{com}. set obs 10
+{txt}{p}
+Number of observations ({bf:_N}) was 0,
+now 10.
+{p_end}
+
+{com}. forval t = 1/10 {c -(}
+{txt}  2{com}.         gen rand_`t' = runiform()
+{txt}  3{com}. {c )-}
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. 
+. set seed 154
+{txt}
+{com}. clear
+{txt}
+{com}. set obs 10
+{txt}{p}
+Number of observations ({bf:_N}) was 0,
+now 10.
+{p_end}
+
+{com}. gen rand_1 = runiform()
+{txt}
+{com}. gen rand_2 = runiform()
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. 
+. set seed 154
+{txt}
+{com}. clear
+{txt}
+{com}. set obs 10
+{txt}{p}
+Number of observations ({bf:_N}) was 0,
+now 10.
+{p_end}
+
+{com}. gen rand_2 = runiform()
+{txt}
+{com}. gen rand_1 = runiform()
+{txt}
+{com}. 
+. 
+{txt}end of do-file
+
+{com}. cls
+
+. clear
+
+. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. use "${c -(}data_dir{c )-}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord", clear
+{err}{p 0 4 2}
+file {bf:{err}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord.dta}
+not found
+{p_end}
+{txt}{search r(601), local:r(601);}
+
+end of do-file
+
+{search r(601), local:r(601);}
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/00_master.do"
+{txt}
+{com}. /* 
+> Title: Master script for kerosene paper
+> Author: Yazen Kashlan
+> Date: 11/2/2023
+> 
+> Version 16.1
+> */
+. 
+. clear all                                                                               
+{res}{txt}
+{com}. set more off                                                                            
+{txt}
+{com}. program drop _all                                                                               
+{txt}
+{com}. version 16.1
+{txt}
+{com}. 
+. 
+. 
+. if "`c(username)'" == "yfkashlan" {c -(}     // C:GitHub
+. 
+.         // DATA (onedrive)
+.         global data_dir "//Client/C$/Users/yfkas/OneDrive/Documents/personal/Berk/02_Ideas/Kerosene/Data"
+.         // DO FILES and OUTPUT (GitHub)
+.         global git_dir  "//Client/C$/Users/yfkas/Documents/GitHub/personal-code/econ_210a"  
+.         
+. //      // programs
+. //      net set ado "//Client/C$\Users/yfkas/Documents/stata_packages"
+. //      adopath + "//Client/C$/Users/yfkas/Documents/stata_packages"
+.         sysdir set PLUS "//Client/C$\Users/yfkas/Documents/stata_packages"
+.         sysdir set PERSONAL "//Client/C$\Users/yfkas/Documents/stata_packages"
+. {c )-}
+{txt}
+{com}. else if "`c(username)'" == "yfkas" {c -(}    // C:GitHub
+. 
+.         // DATA (onedrive)
+.         global data_dir "C:/Users/yfkas/OneDrive/Documents/personal/Berk/01_Courses/03_spring_23/ECON210A/lighting/Data" 
+.         // DO FILES and OUTPUT (GitHub)
+.         global git_dir  "C:/Users/yfkas/OneDrive/Documents/GitHub/personal-code/econ_210a"  
+.         
+. {c )-}
+{txt}
+{com}. 
+. global data_dir_icpsr "${c -(}data_dir{c )-}/00_raw/ICPSR_02896-V3/ICPSR_02896" 
+{txt}
+{com}. 
+. 
+. ** SSC programs
+. 
+. // ssc install reghdfe
+. // ssc install panelView, replace
+. // for colorpalette
+. // ssc install palettes, replace
+. // ssc install colrspace, replace
+. 
+. ** NET programs
+. // net get geo2xy, from("http://fmwww.bc.edu/repec/bocode/g") // for "geo2xy_us_coor.dta" in clean_rr
+. 
+. ** custom programs
+. // do "${c -(}git_dir{c )-}/my_programs/resizeCol.do"
+. 
+. stop
+{err}command {bf}stop{sf} is unrecognized
+{txt}{search r(199), local:r(199);}
+
+end of do-file
+
+{search r(199), local:r(199);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. use "${c -(}data_dir{c )-}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord", clear
+{err}{p 0 4 2}
+file {bf:{err}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord.dta}
+not found
+{p_end}
+{txt}{search r(601), local:r(601);}
+
+end of do-file
+
+{search r(601), local:r(601);}
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/00_master.do"
+{txt}
+{com}. /* 
+> Title: Master script for kerosene paper
+> Author: Yazen Kashlan
+> Date: 11/2/2023
+> 
+> Version 16.1
+> */
+. 
+. clear all                                                                               
+{res}{txt}
+{com}. set more off                                                                            
+{txt}
+{com}. program drop _all                                                                               
+{txt}
+{com}. version 16.1
+{txt}
+{com}. 
+. 
+. 
+. if "`c(username)'" == "yfkashlan" {c -(}     // C:GitHub
+. 
+.         // DATA (onedrive)
+.         global data_dir "//Client/C$/Users/yfkas/OneDrive/Documents/personal/Berk/02_Ideas/Kerosene/Data"
+.         // DO FILES and OUTPUT (GitHub)
+.         global git_dir  "//Client/C$/Users/yfkas/Documents/GitHub/personal-code/econ_210a"  
+.         
+. //      // programs
+. //      net set ado "//Client/C$\Users/yfkas/Documents/stata_packages"
+. //      adopath + "//Client/C$/Users/yfkas/Documents/stata_packages"
+.         sysdir set PLUS "//Client/C$\Users/yfkas/Documents/stata_packages"
+.         sysdir set PERSONAL "//Client/C$\Users/yfkas/Documents/stata_packages"
+. {c )-}
+{txt}
+{com}. else if "`c(username)'" == "yfkas" {c -(}    // C:GitHub
+. 
+.         // DATA (onedrive)
+.         global data_dir "C:/Users/yfkas/OneDrive/Documents/personal/Berk/01_Courses/03_spring_23/ECON210A/lighting/Data" 
+.         // DO FILES and OUTPUT (GitHub)
+.         global git_dir  "C:/Users/yfkas/OneDrive/Documents/GitHub/personal-code/econ_210a"  
+.         
+. {c )-}
+{txt}
+{com}. else if "`c(username)'" == "yazenkashlan" {c -(}
+. 
+.         global do_loc  "/Users/yazenkashlan/Documents/GitHub/ARE213_Fall2023/PSet 3/Stata"
+.         global dta_loc "/Users/yazenkashlan/Library/CloudStorage/Dropbox/ARE213/Pset3/data"
+. {c )-}
+{txt}
+{com}. 
+. global data_dir_icpsr "${c -(}data_dir{c )-}/00_raw/ICPSR_02896-V3/ICPSR_02896" 
+{txt}
+{com}. 
+. 
+. ** SSC programs
+. 
+. // ssc install reghdfe
+. // ssc install panelView, replace
+. // for colorpalette
+. // ssc install palettes, replace
+. // ssc install colrspace, replace
+. 
+. ** NET programs
+. // net get geo2xy, from("http://fmwww.bc.edu/repec/bocode/g") // for "geo2xy_us_coor.dta" in clean_rr
+. 
+. ** custom programs
+. // do "${c -(}git_dir{c )-}/my_programs/resizeCol.do"
+. 
+. stop
+{err}command {bf}stop{sf} is unrecognized
+{txt}{search r(199), local:r(199);}
+
+end of do-file
+
+{search r(199), local:r(199);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. use "${c -(}data_dir{c )-}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord", clear
+{err}{p 0 4 2}
+file {bf:{err}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord.dta}
+not found
+{p_end}
+{txt}{search r(601), local:r(601);}
+
+end of do-file
+
+{search r(601), local:r(601);}
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/00_master.do"
+{txt}
+{com}. /* 
+> Title: Master script for kerosene paper
+> Author: Yazen Kashlan
+> Date: 11/2/2023
+> 
+> Version 16.1
+> */
+. 
+. clear all                                                                               
+{res}{txt}
+{com}. set more off                                                                            
+{txt}
+{com}. program drop _all                                                                               
+{txt}
+{com}. version 16.1
+{txt}
+{com}. 
+. 
+. 
+. if "`c(username)'" == "yfkashlan" {c -(}     // C:GitHub
+. 
+.         // DATA (onedrive)
+.         global data_dir "//Client/C$/Users/yfkas/OneDrive/Documents/personal/Berk/02_Ideas/Kerosene/Data"
+.         // DO FILES and OUTPUT (GitHub)
+.         global git_dir  "//Client/C$/Users/yfkas/Documents/GitHub/personal-code/econ_210a"  
+.         
+. //      // programs
+. //      net set ado "//Client/C$\Users/yfkas/Documents/stata_packages"
+. //      adopath + "//Client/C$/Users/yfkas/Documents/stata_packages"
+.         sysdir set PLUS "//Client/C$\Users/yfkas/Documents/stata_packages"
+.         sysdir set PERSONAL "//Client/C$\Users/yfkas/Documents/stata_packages"
+. {c )-}
+{txt}
+{com}. else if "`c(username)'" == "yfkas" {c -(}    // C:GitHub
+. 
+.         // DATA (onedrive)
+.         global data_dir "C:/Users/yfkas/OneDrive/Documents/personal/Berk/01_Courses/03_spring_23/ECON210A/lighting/Data" 
+.         // DO FILES and OUTPUT (GitHub)
+.         global git_dir  "C:/Users/yfkas/OneDrive/Documents/GitHub/personal-code/econ_210a"  
+.         
+. {c )-}
+{txt}
+{com}. else if "`c(username)'" == "yazenkashlan" {c -(}
+. 
+.         global git_dir  "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene"
+.         global data_dir "/Users/yazenkashlan/Library/CloudStorage/OneDrive-Personal/Documents/personal/Berk/02_Ideas/Kerosene/Data"
+. {c )-}
+{txt}
+{com}. 
+. global data_dir_icpsr "${c -(}data_dir{c )-}/00_raw/ICPSR_02896-V3/ICPSR_02896" 
+{txt}
+{com}. 
+. 
+. ** SSC programs
+. 
+. // ssc install reghdfe
+. // ssc install panelView, replace
+. // for colorpalette
+. // ssc install palettes, replace
+. // ssc install colrspace, replace
+. 
+. ** NET programs
+. // net get geo2xy, from("http://fmwww.bc.edu/repec/bocode/g") // for "geo2xy_us_coor.dta" in clean_rr
+. 
+. ** custom programs
+. // do "${c -(}git_dir{c )-}/my_programs/resizeCol.do"
+. 
+. stop
+{err}command {bf}stop{sf} is unrecognized
+{txt}{search r(199), local:r(199);}
+
+end of do-file
+
+{search r(199), local:r(199);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. use "${c -(}data_dir{c )-}/00_raw/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord", clear
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. br
+
+. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. rename _ID id_new
+{res}{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. merge m:1 id_new using ///
+>         "${c -(}data_dir{c )-}/00_raw/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_data", ///
+>         keepusing(track InOpBy) gen(_mdata)
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}               0
+{txt}{col 5}Matched{col 30}{res}       1,065,540{txt}  (_mdata==3)
+{col 5}{hline 41}
+
+{com}. assert _mdata == 3
+{txt}
+{com}. drop _mdata
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. geoinpoly _Y _X using "geo2xy_us_coor.dta" // generates an _ID variable
+{err}command {bf}geoinpoly{sf} is unrecognized
+{txt}{search r(199), local:r(199);}
+
+end of do-file
+
+{search r(199), local:r(199);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. ssc install geoinpoly
+{txt}checking {hilite:geoinpoly} consistency and verifying not already installed...
+installing into /Users/yazenkashlan/Library/Application Support/Stata/ado/plus/...
+installation complete.
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. do "${c -(}git_dir{c )-}/00_programs.do"
+{txt}
+{com}. // Programs
+. 
+. 
+. 
+. ssc install geoinpoly
+{txt}checking {hilite:geoinpoly} consistency and verifying not already installed...
+all files already exist and are up to date.
+
+{com}. 
+. 
+{txt}end of do-file
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. geoinpoly _Y _X using "geo2xy_us_coor.dta" // generates an _ID variable
+{res}{err}{p 0 4 2}
+file {bf:{err}geo2xy_us_coor.dta}
+not found
+{p_end}
+{txt}{search r(601), local:r(601);}
+
+end of do-file
+
+{search r(601), local:r(601);}
+
+{com}. help geoinpoly
+
+. geoinpoly_examples ex2a
+
+{res}. set seed 34124
+
+. clear
+
+. set obs 50
+{txt}{p}
+Number of observations ({bf:_N}) was 0,
+now 50.
+{p_end}
+
+{res}. gen pointid = _n
+
+. gen double lat = 36.99908399999999631
+
+. gen double lon = -109.0452229999999929
+
+. replace lat = lat + runiform() - .5 if _n > 1
+{txt}(49 real changes made)
+
+{res}. replace lon = lon + runiform() - .5 if _n > 1
+{txt}(49 real changes made)
+
+{res}. geoinpoly lat lon using "geo2xy_us_coor.dta"
+{err}{p 0 4 2}
+file {bf:{err}geo2xy_us_coor.dta}
+not found
+{p_end}
+{txt}{search r(601), local:r(601);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. net get geo2xy, from("http://fmwww.bc.edu/repec/bocode/g") // for "geo2xy_us_coor.dta" in clean_rr
+checking {hilite:geo2xy} consistency and verifying not already installed...
+
+copying into {hilite:current directory}...
+      copying  {hilite:geo2xy_us_coor.dta}
+      copying  {hilite:geo2xy_canada_coor.dta}
+      copying  {hilite:geo2xy_canada_data.dta}
+      copying  {hilite:geo2xy_us_data.dta}
+      copying  {hilite:geo2xy_world_coor.dta}
+      copying  {hilite:geo2xy_world_data.dta}
+ancillary files successfully copied.
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. use "${c -(}data_dir{c )-}/00_raw/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord", clear
+{txt}
+{com}. rename _ID id_new
+{res}{txt}
+{com}. 
+. // merge length and year vars
+. merge m:1 id_new using ///
+>         "${c -(}data_dir{c )-}/00_raw/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_data", ///
+>         keepusing(track InOpBy) gen(_mdata)
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}               0
+{txt}{col 5}Matched{col 30}{res}       1,065,540{txt}  (_mdata==3)
+{col 5}{hline 41}
+
+{com}. assert _mdata == 3
+{txt}
+{com}. drop _mdata
+{txt}
+{com}. 
+. // Associate coordinates with states
+. geoinpoly _Y _X using "geo2xy_us_coor.dta" // generates an _ID variable
+{res}{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. br
+
+. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. gen prob = 1 if _X != . & _ID == . // rr w/o states
+{txt}(1,064,747 missing values generated)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. merge m:1 _ID using "geo2xy_us_data.dta" // , keep(master match) nogen
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}          79,639
+{txt}{col 9}from master{col 30}{res}          79,636{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               3{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}         985,904{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. assert id_new == . if inlist(NAME, "Puerto Rico", "Alaska", "Hawaii") 
+{txt}
+{com}. 
+. // Generate length of track by state-year
+. byso _ID InOpBy : egen tot_miles = total(track)
+{txt}
+{com}. order tot_miles, after(track)
+{txt}
+{com}. keep tot_miles _ID NAME STUSPS InOpBy prob
+{txt}
+{com}. duplicates drop
+
+{p 0 4}{txt}Duplicates in terms of {txt} all variables{p_end}
+
+(1,064,721 observations deleted)
+
+{com}. 
+. // housekeeping
+. sort NAME InOpBy
+{txt}
+{com}. rename InOpBy year
+{res}{txt}
+{com}. label var year "Year in operation by"
+{txt}
+{com}. rename _ID state_id
+{res}{txt}
+{com}. rename NAME state_long
+{res}{txt}
+{com}. rename STUSPS state
+{res}{txt}
+{com}. order year state state_id state_long tot_miles 
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. use "${c -(}data_dir{c )-}/cleaned/rail_1830_1972.dta", clear
+{err}{p 0 4 2}
+file {bf:{err}/Users/yazenkashlan/Library/CloudStorage/OneDrive-Personal/Documents/personal/Berk/02_Ideas/Kerosene/Data/cleaned/rail_1830_1972.dta}
+not found
+{p_end}
+{txt}{search r(601), local:r(601);}
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/01_clean_rr.do"
+{txt}
+{com}. /* 
+> Project: ECON 210A research paper
+> Title: Cleaning script
+> Subtitle: Railroad Data take 2
+> 
+> Author: Yazen Kashlan
+> Date: 11/24/2023
+> */
+. 
+. local gen_shp = 0
+{txt}
+{com}. 
+. if `gen_shp' == 1 {c -(}
+.         
+.         // read Atack files (coordinate system changed using QGIS)
+.         shp2dta using "${c -(}data_dir{c )-}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966", ///
+>                 database("${c -(}data_dir{c )-}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_data") ///
+>                 coordinates("${c -(}data_dir{c )-}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord") ///
+>                 genid(id_new) replace
+. 
+. {c )-}
+{txt}
+{com}.         
+. ** plot
+. // use "${c -(}data_dir{c )-}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_data", clear
+. // spmap using "${c -(}data_dir{c )-}/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord", ///
+. //      id(id_new)
+. 
+. 
+. ** get length of track by state-year
+. use "${c -(}data_dir{c )-}/00_raw/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_coord", clear
+{txt}
+{com}. rename _ID id_new
+{res}{txt}
+{com}. 
+. // merge length and year vars
+. merge m:1 id_new using ///
+>         "${c -(}data_dir{c )-}/00_raw/RR1826-1911Modified0509161/RR1826-1911Modified050916_wgs_1966_data", ///
+>         keepusing(track InOpBy) gen(_mdata)
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}               0
+{txt}{col 5}Matched{col 30}{res}       1,065,540{txt}  (_mdata==3)
+{col 5}{hline 41}
+
+{com}. assert _mdata == 3
+{txt}
+{com}. drop _mdata
+{txt}
+{com}. 
+. // Associate coordinates with states
+. geoinpoly _Y _X using "geo2xy_us_coor.dta" // generates an _ID variable
+{res}{txt}
+{com}. 
+. save "${c -(}data_dir{c )-}/cleaned/rail_intermediate.dta", replace 
+{txt}{p 0 4 2}
+(file {bf}
+/Users/yazenkashlan/Library/CloudStorage/OneDrive-Personal/Documents/personal/Berk/02_Ideas/Kerosene/Data/cleaned/rail_intermediate.dta{rm}
+not found)
+{p_end}
+{err}{p 0 4 2}
+file {bf:{err}/Users/yazenkashlan/Library/CloudStorage/OneDrive-Personal/Documents/personal/Berk/02_Ideas/Kerosene/Data/cleaned/rail_intermediate.dta}
+could not be opened
+{p_end}
+{txt}{search r(603), local:r(603);}
+
+end of do-file
+
+{search r(603), local:r(603);}
+
+{com}. use "${c -(}data_dir{c )-}/01_clean_219/rail_1830_1972.dta", clear
+{err}{p 0 4 2}
+file {bf:{err}/Users/yazenkashlan/Library/CloudStorage/OneDrive-Personal/Documents/personal/Berk/02_Ideas/Kerosene/Data/01_clean_219/rail_1830_1972.dta}
+not found
+{p_end}
+{txt}{search r(601), local:r(601);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. save "${c -(}data_dir{c )-}/01_clean_219/rail_1830_1972.dta", replace 
+{txt}{p 0 4 2}
+(file {bf}
+/Users/yazenkashlan/Library/CloudStorage/OneDrive-Personal/Documents/personal/Berk/02_Ideas/Kerosene/Data/01_clean_219/rail_1830_1972.dta{rm}
+not found)
+{p_end}
+{p 0 4 2}
+file {bf}
+/Users/yazenkashlan/Library/CloudStorage/OneDrive-Personal/Documents/personal/Berk/02_Ideas/Kerosene/Data/01_clean_219/rail_1830_1972.dta{rm}
+saved
+{p_end}
+
+{com}. 
+{txt}end of do-file
+
+{com}. br
+
+. br
+
+. scatter _Y _X if InOpBy == 1830
+{res}
+{com}. scatter _Y _X if InOpBy < 1860
+{res}
+{com}. scatter _Y _X if InOpBy < 1890
+{res}
+{com}. scatter _Y _X if inrange(InOpBy, 1890, 1950)
+{res}
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/03_analysis_cty.do"
+{txt}
+{com}. /* 
+> Project: Kerosene
+> Title: Analysis script
+> Subtitle: 
+> 
+> Author: Yazen Kashlan
+> Date: 11/5/2023
+> 
+> 
+> */
+. 
+. 
+. 
+. use "${c -(}data_dir{c )-}/01_clean_219/outcomes_cty_decade.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. 
+. drop *0s*
+{txt}
+{com}. // keep year cty_code totpop mfgcap mfglabor mfgout ///
+. //                      l_mfg_prod_cap l_mfg_prod_lab l_totpop l_mfg_prod_lab_g ///
+. 
+. 
+. reghdfe l_mfg_prod_lab entry_mktg_d, absorb(i.year i.cty_code)
+{err}reghdfe requires the {bf:ftools} package, which is not installed
+    - install from {stata ssc install ftools:SSC}
+    - install from {stata `"net install ftools, from("https://github.com/sergiocorreia/ftools/raw/master/src/")"':Github}
+{com}(error occurred while loading reghdfe.ado)
+{txt}{search r(9), local:r(9);}
+
+end of do-file
+
+{search r(9), local:r(9);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. ssc install ftools
+{txt}checking {hilite:ftools} consistency and verifying not already installed...
+installing into /Users/yazenkashlan/Library/Application Support/Stata/ado/plus/...
+installation complete.
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/03_analysis_cty.do"
+{txt}
+{com}. /* 
+> Project: Kerosene
+> Title: Analysis script
+> Subtitle: 
+> 
+> Author: Yazen Kashlan
+> Date: 11/5/2023
+> 
+> 
+> */
+. 
+. 
+. 
+. use "${c -(}data_dir{c )-}/01_clean_219/outcomes_cty_decade.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. 
+. drop *0s*
+{txt}
+{com}. // keep year cty_code totpop mfgcap mfglabor mfgout ///
+. //                      l_mfg_prod_cap l_mfg_prod_lab l_totpop l_mfg_prod_lab_g ///
+. 
+. 
+. reghdfe l_mfg_prod_lab entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 167 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    20,165
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  17265{txt}){col 67}= {res}      5.08
+{txt}{col 51}Prob > F{col 67}= {res}    0.0242
+{txt}{col 51}R-squared{col 67}= {res}    0.6388
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5781
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0003
+{txt}{col 51}Root MSE{col 67}= {res}    0.4555
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~b{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1122335{col 26}{space 2} .0498014{col 37}{space 1}    2.25{col 46}{space 3}0.024{col 54}{space 4} .0146178{col 67}{space 3} .2098493
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 10.98249{col 26}{space 2} .0032353{col 37}{space 1} 3394.56{col 46}{space 3}0.000{col 54}{space 4} 10.97615{col 67}{space 3} 10.98884
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2891{col 27}{space 1}        1{col 39}{result}{space 1}     2890{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. // there is evidence of a static TWFE.
+. 
+. // raw data graph with cohort verticals
+. foreach lev in levels logs {c -(}
+{txt}  2{com}.         
+.         if "`lev'" == "levels" local yvar mfg_prod_lab
+{txt}  3{com}.         if "`lev'" == "logs"   local yvar l_mfg_prod_lab
+{txt}  4{com}.         preserve
+{txt}  5{com}.                 collapse (mean) `yvar', by(mktg_decentry year)
+{txt}  6{com}.                 replace mktg_decentry = 99 if mktg_decentry == .
+{txt}  7{com}.                 
+.                 // plot raw data by cohort with vertical E_i
+.                 twoway (line `yvar' year if mktg_decentry == 99, lcolor(black) ) ///
+>                            (line `yvar' year if mktg_decentry == 1870, lcolor(gs10) ) ///                  
+>                            (line `yvar' year if mktg_decentry == 1880, lcolor(red) ) ///
+>                            (line `yvar' year if mktg_decentry == 1890, lcolor(gold) ) ///
+>                            (line `yvar' year if mktg_decentry == 1900, lcolor(blue) ), ///
+>                                 legend(label(1 "No shock") ///
+>                                            label(2 "1870") /// 
+>                                            label(3 "1880") /// 
+>                                            label(4 "1890") /// 
+>                                            label(5 "1900") position(3) cols(1)) ///
+>                                    xline(1870, lcolor(gs10) lpatter(dash)) ///
+>                                    xline(1880, lcolor(red) lpatter(dash)) ///
+>                                    xline(1890, lcolor(gold) lpatter(dash)) ///
+>                                    xline(1900, lcolor(blue) lpatter(dash))
+{txt}  8{com}.         restore
+{txt}  9{com}.         pause
+{txt} 10{com}. {c )-}
+{res}{txt}(10 real changes made)
+{res}{txt}pause:  
+{com}-> . q
+{txt}execution resumes...
+{res}{txt}(10 real changes made)
+{res}{txt}pause:  
+{com}-> . q
+{txt}execution resumes...
+
+{com}. 
+. // But the graph says there's no story. Not sure how to proceed. 
+. // Perhaps I constructed my treated counties too loosely? 
+. // Perhaps excluding California and other states from treatment was non-trivial. 
+. //              Go back and figure out how to add them back. Assume treated MSA based on major cities?
+. // Perhaps I need to account for spillover counties in a donut around the MSA?
+. // Perhaps I need to include controls and then evaluate this on say 
+. //              growth residualized on railroad expansion at t-1 
+. 
+. // come back to this with a clear mind. Revise cleaning all decisions.
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}. br
+
+. desc year
+
+{txt}Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+{hline}
+{p 0 48}{res}{bind:year           }{txt}{bind: int     }{bind:%9.0g     }{space 1}{bind:         }{bind:  }{res}{res}Year{p_end}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. import excel "${c -(}data_dir{c )-}/00_raw/sonjvus_appendix_d.xlsx", ///
+>         sheet("data") firstrow allstring clear
+{res}{err}{p}file {bf:/Users/yazenkashlan/Library/CloudStorage/OneDrive-Personal/Documents/personal/Berk/02_Ideas/Kerosene/Data/00_raw/sonjvus_appendix_d.xlsx} not found{p_end}{txt}{search r(601), local:r(601);}
+
+end of do-file
+
+{search r(601), local:r(601);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. import excel "${c -(}data_dir{c )-}/00_raw/SONJ_v_US/sonjvus_appendix_d.xlsx", ///
+>         sheet("data") firstrow allstring clear
+{res}{text}(7 vars, 217 obs)
+
+{com}. 
+{txt}end of do-file
+
+{com}. br
+
+. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. destring year concern_type acq_method year_uncertain loc_uncertain, replace
+{txt}year: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(9 missing values generated)
+{res}{txt}concern_type: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}acq_method: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(1 missing value generated)
+{res}{txt}year_uncertain: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(139 missing values generated)
+{res}{txt}loc_uncertain: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(197 missing values generated)
+{res}{txt}
+{com}. replace year_uncertain = 0 if year_uncertain == .
+{txt}(129 real changes made)
+
+{com}. replace loc_uncertain = 0 if loc_uncertain == .
+{txt}(197 real changes made)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. ds, has(type string) 
+{txt}{col 1}concern{col 11}location
+
+{com}. foreach var in `r(varlist)'  {c -(}
+{txt}  2{com}.     replace `var' = trim(`var')
+{txt}  3{com}. {c )-}
+{txt}(81 real changes made)
+(14 real changes made)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. tab concern_type
+
+{txt}concern_typ {c |}
+          e {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}        135       62.21       62.21
+{txt}          2 {c |}{res}         58       26.73       88.94
+{txt}          3 {c |}{res}         24       11.06      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        217      100.00
+{txt}
+{com}. label define concerns 1 "Manufacturing" 2 "Marketing" 3 "Pipeline", replace
+{txt}
+{com}. label values concern_type concerns
+{txt}
+{com}. 
+. tab acq_method
+
+ {txt}acq_method {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}         60       27.78       27.78
+{txt}          2 {c |}{res}        112       51.85       79.63
+{txt}          3 {c |}{res}         44       20.37      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        216      100.00
+{txt}
+{com}. label define aqc_type 1 "Stock purchase" 2 "Property purchase" 3 "Property purchase through vehicle", replace
+{txt}
+{com}. label values acq_method aqc_type 
+{txt}
+{com}. 
+. foreach var of varlist location {c -(}
+{txt}  2{com}.         replace `var' = subinstr(`var', "*", "", .)
+{txt}  3{com}.         replace `var' = subinstr(`var', "#", "", .)
+{txt}  4{com}.         replace `var' = strupper(`var')
+{txt}  5{com}.         replace `var' = strtrim(`var')
+{txt}  6{com}. {c )-}
+{txt}(0 real changes made)
+(0 real changes made)
+(217 real changes made)
+(0 real changes made)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. merge m:1 location using "${c -(}data_dir{c )-}/01_clean_219/msa_firm_ctylist.dta"
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}              28
+{txt}{col 9}from master{col 30}{res}              28{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               0{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}             189{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. sort concern_type location 
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. gen msa_text = string(msa_code)
+{txt}
+{com}. encode msa_text, gen(msa_code_lab) label(msa_text)
+{txt}
+{com}. labellist msa_code_lab
+{err}command {bf}labellist{sf} is unrecognized
+{txt}{search r(199), local:r(199);}
+
+end of do-file
+
+{search r(199), local:r(199);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. ssc install labellist
+{txt}checking {hilite:labellist} consistency and verifying not already installed...
+installing into /Users/yazenkashlan/Library/Application Support/Stata/ado/plus/...
+installation complete.
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. gen msa_text = string(msa_code)
+{err}variable {bf}msa_text{sf} already defined
+{txt}{search r(110), local:r(110);}
+
+end of do-file
+
+{search r(110), local:r(110);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. labellist msa_code_lab
+{res}msa_text:
+           1 . 
+           2 1120 
+           3 1280 
+           4 1600 
+           5 1640 
+           6 1680 
+           7 1840 
+           8 3760 
+           9 4920 
+          10 520 
+          11 5360 
+          12 5560 
+          13 5605 
+          14 6160 
+          15 6280 
+          16 6400 
+          17 6760 
+          18 6840 
+          19 7040 
+          20 720 
+          21 7360 
+          22 8400 
+          23 8840 
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. merge m:1 msa_code using "${c -(}data_dir{c )-}/01_clean_219/msa_yr_ctylist.dta", gen(_msa)
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}             153
+{txt}{col 9}from master{col 30}{res}              92{txt}  (_msa==1)
+{col 9}from using{col 30}{res}              61{txt}  (_msa==2)
+
+{col 5}Matched{col 30}{res}             125{txt}  (_msa==3)
+{col 5}{hline 41}
+
+{com}. keep if _msa != 2
+{txt}(61 observations deleted)
+
+{com}. sort msa_code concern_type location
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. gen cty_sonj_v_us = "", after(location)
+{txt}(217 missing values generated)
+
+{com}. 
+. // single county concerns
+. replace cty_sonj_v_us = county if county != ""
+{txt}variable {bf}{res}cty_sonj_v_us{sf}{txt} was {bf}{res}str1{sf}{txt} now {bf}{res}str14{sf}
+{txt}(41 real changes made)
+
+{com}. 
+. // msa county concerns
+. // get decade for county list
+. gen decade_entry = floor(year/10)*10, after(year)
+{txt}(9 missing values generated)
+
+{com}. replace cty_sonj_v_us = yr_1860_list if inrange(decade_entry, 1860, 1869) & ///
+>                                                                                 yr_1860_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}(0 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1870_list if inrange(decade_entry, 1870, 1879) & ///
+>                                                                                 yr_1870_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}variable {bf}{res}cty_sonj_v_us{sf}{txt} was {bf}{res}str14{sf}{txt} now {bf}{res}str54{sf}
+{txt}(69 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1880_list if inrange(decade_entry, 1880, 1899) & ///
+>                                                                                 yr_1880_list != "" & /// no 1890 list
+>                                                                                 cty_sonj_v_us == "" //
+{txt}(37 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1900_list if inrange(decade_entry, 1900, 1909) & ///
+>                                                                                 yr_1900_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}(11 real changes made)
+
+{com}. 
+. sort cty_sonj_v_us msa
+{txt}
+{com}. replace cty_sonj_v_us = "CUMBERLAND-ME" if concern      == "Portland Kerosene Oil Co" ///
+>                                                                                  & location == "MAINE"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "ESSEX-NJ" if concern   == "New Jersey Oil Co." ///
+>                                                                                  & location == "NEWARK"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "DAVIDSON-TN" if concern        == "Cassetty Oil Company" ///
+>                                                                                  & location == "NASHVILLE, TN"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "FULTON-GA" if (concern == "Commercial Oil Co." | ///
+>                                                                                 concern == "Peoples Oil Co.") ///
+>                                                                                 & location == "ATLANTA"
+{txt}(2 real changes made)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. use "${c -(}data_dir{c )-}/01_clean_219/outcomes_cty_decade.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. reghdfe l_mfg_prod_lab entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 167 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    20,165
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  17265{txt}){col 67}= {res}      5.08
+{txt}{col 51}Prob > F{col 67}= {res}    0.0242
+{txt}{col 51}R-squared{col 67}= {res}    0.6388
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5781
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0003
+{txt}{col 51}Root MSE{col 67}= {res}    0.4555
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~b{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1122335{col 26}{space 2} .0498014{col 37}{space 1}    2.25{col 46}{space 3}0.024{col 54}{space 4} .0146178{col 67}{space 3} .2098493
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 10.98249{col 26}{space 2} .0032353{col 37}{space 1} 3394.56{col 46}{space 3}0.000{col 54}{space 4} 10.97615{col 67}{space 3} 10.98884
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2891{col 27}{space 1}        1{col 39}{result}{space 1}     2890{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/03_analysis_cty.do"
+{txt}
+{com}. /* 
+> Project: Kerosene
+> Title: Analysis script
+> Subtitle: 
+> 
+> Author: Yazen Kashlan
+> Date: 11/5/2023
+> 
+> 
+> */
+. 
+. 
+. 
+. use "${c -(}data_dir{c )-}/01_clean_219/outcomes_cty_decade.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. 
+. drop *0s*
+{txt}
+{com}. // keep year cty_code totpop mfgcap mfglabor mfgout ///
+. //                      l_mfg_prod_cap l_mfg_prod_lab l_totpop l_mfg_prod_lab_g ///
+. 
+. 
+. reghdfe l_mfg_prod_lab entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 167 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    20,165
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  17265{txt}){col 67}= {res}      5.08
+{txt}{col 51}Prob > F{col 67}= {res}    0.0242
+{txt}{col 51}R-squared{col 67}= {res}    0.6388
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5781
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0003
+{txt}{col 51}Root MSE{col 67}= {res}    0.4555
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~b{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1122335{col 26}{space 2} .0498014{col 37}{space 1}    2.25{col 46}{space 3}0.024{col 54}{space 4} .0146178{col 67}{space 3} .2098493
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 10.98249{col 26}{space 2} .0032353{col 37}{space 1} 3394.56{col 46}{space 3}0.000{col 54}{space 4} 10.97615{col 67}{space 3} 10.98884
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2891{col 27}{space 1}        1{col 39}{result}{space 1}     2890{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. // there is evidence of a static TWFE.
+. 
+. // raw data graph with cohort verticals
+. foreach lev in  logs {c -(} // levels
+{txt}  2{com}.         
+. //      if "`lev'" == "levels" local yvar mfg_prod_lab_g
+.         if "`lev'" == "logs"   local yvar l_mfg_prod_lab_g
+{txt}  3{com}.         preserve
+{txt}  4{com}.                 collapse (mean) `yvar', by(mktg_decentry year)
+{txt}  5{com}.                 replace mktg_decentry = 99 if mktg_decentry == .
+{txt}  6{com}.                 
+.                 // plot raw data by cohort with vertical E_i
+.                 twoway (line `yvar' year if mktg_decentry == 99, lcolor(black) ) ///
+>                            (line `yvar' year if mktg_decentry == 1870, lcolor(gs10) ) ///                  
+>                            (line `yvar' year if mktg_decentry == 1880, lcolor(red) ) ///
+>                            (line `yvar' year if mktg_decentry == 1890, lcolor(gold) ) ///
+>                            (line `yvar' year if mktg_decentry == 1900, lcolor(blue) ), ///
+>                                 legend(label(1 "No shock") ///
+>                                            label(2 "1870") /// 
+>                                            label(3 "1880") /// 
+>                                            label(4 "1890") /// 
+>                                            label(5 "1900") position(3) cols(1)) ///
+>                                    xline(1870, lcolor(gs10) lpatter(dash)) ///
+>                                    xline(1880, lcolor(red) lpatter(dash)) ///
+>                                    xline(1890, lcolor(gold) lpatter(dash)) ///
+>                                    xline(1900, lcolor(blue) lpatter(dash))
+{txt}  7{com}.         restore
+{txt}  8{com}.         pause
+{txt}  9{com}. {c )-}
+{res}{txt}(10 real changes made)
+{res}{txt}pause:  
+{com}-> . BREAK
+{txt}sending Break to calling program...
+{err}{hline 2}Break{hline 2}
+{txt}{search r(1), local:r(1);}
+
+end of do-file
+
+{err}{hline 2}Break{hline 2}
+{txt}{search r(1), local:r(1);}
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/03_analysis_cty.do"
+{txt}
+{com}. /* 
+> Project: Kerosene
+> Title: Analysis script
+> Subtitle: 
+> 
+> Author: Yazen Kashlan
+> Date: 11/5/2023
+> 
+> 
+> */
+. 
+. 
+. 
+. use "${c -(}data_dir{c )-}/01_clean_219/outcomes_cty_decade.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. 
+. drop *0s*
+{txt}
+{com}. // keep year cty_code totpop mfgcap mfglabor mfgout ///
+. //                      l_mfg_prod_cap l_mfg_prod_lab l_totpop l_mfg_prod_lab_g ///
+. 
+. 
+. reghdfe l_mfg_prod_lab entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 167 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    20,165
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  17265{txt}){col 67}= {res}      5.08
+{txt}{col 51}Prob > F{col 67}= {res}    0.0242
+{txt}{col 51}R-squared{col 67}= {res}    0.6388
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5781
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0003
+{txt}{col 51}Root MSE{col 67}= {res}    0.4555
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~b{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1122335{col 26}{space 2} .0498014{col 37}{space 1}    2.25{col 46}{space 3}0.024{col 54}{space 4} .0146178{col 67}{space 3} .2098493
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 10.98249{col 26}{space 2} .0032353{col 37}{space 1} 3394.56{col 46}{space 3}0.000{col 54}{space 4} 10.97615{col 67}{space 3} 10.98884
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2891{col 27}{space 1}        1{col 39}{result}{space 1}     2890{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. // there is evidence of a static TWFE.
+. 
+. // raw data graph with cohort verticals
+. foreach lev in levels logs {c -(}
+{txt}  2{com}.         
+.         if "`lev'" == "levels" local yvar mfg_prod_lab
+{txt}  3{com}.         if "`lev'" == "logs"   local yvar l_mfg_prod_lab
+{txt}  4{com}.         preserve
+{txt}  5{com}.                 collapse (mean) `yvar', by(mktg_decentry year)
+{txt}  6{com}.                 replace mktg_decentry = 99 if mktg_decentry == .
+{txt}  7{com}.                 
+.                 // plot raw data by cohort with vertical E_i
+.                 twoway (line `yvar' year if mktg_decentry == 99, lcolor(black) ) ///
+>                            (line `yvar' year if mktg_decentry == 1870, lcolor(gs10) ) ///                  
+>                            (line `yvar' year if mktg_decentry == 1880, lcolor(red) ) ///
+>                            (line `yvar' year if mktg_decentry == 1890, lcolor(gold) ) ///
+>                            (line `yvar' year if mktg_decentry == 1900, lcolor(blue) ), ///
+>                                 legend(label(1 "No shock") ///
+>                                            label(2 "1870") /// 
+>                                            label(3 "1880") /// 
+>                                            label(4 "1890") /// 
+>                                            label(5 "1900") position(3) cols(1)) ///
+>                                    xline(1870, lcolor(gs10) lpatter(dash)) ///
+>                                    xline(1880, lcolor(red) lpatter(dash)) ///
+>                                    xline(1890, lcolor(gold) lpatter(dash)) ///
+>                                    xline(1900, lcolor(blue) lpatter(dash))
+{txt}  8{com}.         restore
+{txt}  9{com}.         pause
+{txt} 10{com}. {c )-}
+{res}{txt}(10 real changes made)
+{res}{txt}pause:  
+{com}-> . q
+{txt}execution resumes...
+{res}{txt}(10 real changes made)
+{res}{txt}pause:  
+{com}-> . q
+{txt}execution resumes...
+
+{com}. 
+. // But the graph says there's no story. Not sure how to proceed. 
+. // Perhaps I constructed my treated counties too loosely? 
+. // Perhaps excluding California and other states from treatment was non-trivial. 
+. //              Go back and figure out how to add them back. Assume treated MSA based on major cities?
+. // Perhaps I need to account for spillover counties in a donut around the MSA?
+. // Perhaps I need to include controls and then evaluate this on say 
+. //              growth residualized on railroad expansion at t-1 
+. 
+. // come back to this with a clear mind. Revise cleaning all decisions.
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. byso cty (year) : egen l_mfg_prod_lab_lead = l_mfg_prod_lab[_n+1]
+{err}unknown {bf:egen} function {bf:l_mfg_prod_lab[_n+1]()}
+{txt}{search r(133), local:r(133);}
+
+end of do-file
+
+{search r(133), local:r(133);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. byso cty (year) : gen l_mfg_prod_lab_lead = l_mfg_prod_lab[_n+1]
+{txt}(5,504 missing values generated)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. order l_mfg_prod_lab_lead, after(l_mfg_prod_lab)
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. reghdfe l_mfg_prod_lab_lead entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 181 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    17,792
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  14996{txt}){col 67}= {res}      7.39
+{txt}{col 51}Prob > F{col 67}= {res}    0.0066
+{txt}{col 51}R-squared{col 67}= {res}    0.6460
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5800
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0005
+{txt}{col 51}Root MSE{col 67}= {res}    0.4380
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~d{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1475197{col 26}{space 2} .0542712{col 37}{space 1}    2.72{col 46}{space 3}0.007{col 54}{space 4} .0411415{col 67}{space 3} .2538979
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 11.04735{col 26}{space 2} .0033115{col 37}{space 1} 3336.09{col 46}{space 3}0.000{col 54}{space 4} 11.04086{col 67}{space 3} 11.05384
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2787{col 27}{space 1}        1{col 39}{result}{space 1}     2786{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. byso cty (year) : gen mfg_prod_lab_lead = mfg_prod_lab[_n+1]
+{txt}(5,504 missing values generated)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. order mfg_prod_lab_lead, after(mfg_prod_lab)
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. reghdfe mfg_prod_lab entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 167 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    20,165
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  17265{txt}){col 67}= {res}      5.78
+{txt}{col 51}Prob > F{col 67}= {res}    0.0162
+{txt}{col 51}R-squared{col 67}= {res}    0.5609
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.4872
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0003
+{txt}{col 51}Root MSE{col 67}= {res}48985.3605
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}mfg_prod_lab{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} 12877.58{col 26}{space 2} 5355.786{col 37}{space 1}    2.40{col 46}{space 3}0.016{col 54}{space 4} 2379.699{col 67}{space 3} 23375.47
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 76424.86{col 26}{space 2} 347.9357{col 37}{space 1}  219.65{col 46}{space 3}0.000{col 54}{space 4} 75742.87{col 67}{space 3} 77106.85
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2891{col 27}{space 1}        1{col 39}{result}{space 1}     2890{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. reghdfe mfg_prod_lab_lead entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 181 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    17,792
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  14996{txt}){col 67}= {res}      5.89
+{txt}{col 51}Prob > F{col 67}= {res}    0.0152
+{txt}{col 51}R-squared{col 67}= {res}    0.5846
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5072
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0004
+{txt}{col 51}Root MSE{col 67}= {res}48741.1624
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}mfg_prod_l~d{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} 14659.59{col 26}{space 2}  6039.86{col 37}{space 1}    2.43{col 46}{space 3}0.015{col 54}{space 4} 2820.728{col 67}{space 3} 26498.46
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2}  80211.9{col 26}{space 2} 368.5342{col 37}{space 1}  217.65{col 46}{space 3}0.000{col 54}{space 4} 79489.53{col 67}{space 3} 80934.27
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2787{col 27}{space 1}        1{col 39}{result}{space 1}     2786{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. reghdfe mfg_prod_lab_lead entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 181 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    17,792
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  14996{txt}){col 67}= {res}      5.89
+{txt}{col 51}Prob > F{col 67}= {res}    0.0152
+{txt}{col 51}R-squared{col 67}= {res}    0.5846
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5072
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0004
+{txt}{col 51}Root MSE{col 67}= {res}48741.1624
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}mfg_prod_l~d{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} 14659.59{col 26}{space 2}  6039.86{col 37}{space 1}    2.43{col 46}{space 3}0.015{col 54}{space 4} 2820.728{col 67}{space 3} 26498.46
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2}  80211.9{col 26}{space 2} 368.5342{col 37}{space 1}  217.65{col 46}{space 3}0.000{col 54}{space 4} 79489.53{col 67}{space 3} 80934.27
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2787{col 27}{space 1}        1{col 39}{result}{space 1}     2786{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. reghdfe l_mfg_prod_lab_lead entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 181 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    17,792
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  14996{txt}){col 67}= {res}      7.39
+{txt}{col 51}Prob > F{col 67}= {res}    0.0066
+{txt}{col 51}R-squared{col 67}= {res}    0.6460
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5800
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0005
+{txt}{col 51}Root MSE{col 67}= {res}    0.4380
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~d{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1475197{col 26}{space 2} .0542712{col 37}{space 1}    2.72{col 46}{space 3}0.007{col 54}{space 4} .0411415{col 67}{space 3} .2538979
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 11.04735{col 26}{space 2} .0033115{col 37}{space 1} 3336.09{col 46}{space 3}0.000{col 54}{space 4} 11.04086{col 67}{space 3} 11.05384
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2787{col 27}{space 1}        1{col 39}{result}{space 1}     2786{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/03_analysis_cty.do"
+{txt}
+{com}. /* 
+> Project: Kerosene
+> Title: Analysis script
+> Subtitle: 
+> 
+> Author: Yazen Kashlan
+> Date: 11/5/2023
+> 
+> 
+> */
+. 
+. 
+. 
+. use "${c -(}data_dir{c )-}/01_clean_219/outcomes_cty_decade.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. 
+. drop *0s*
+{txt}
+{com}. // keep year cty_code totpop mfgcap mfglabor mfgout ///
+. //                      l_mfg_prod_cap l_mfg_prod_lab l_totpop l_mfg_prod_lab_g ///
+. 
+. // generate lead outcome variable
+. byso cty (year) : gen mfg_prod_lab_lead = mfg_prod_lab[_n+1]
+{txt}(5,504 missing values generated)
+
+{com}. order mfg_prod_lab_lead, after(mfg_prod_lab)
+{txt}
+{com}. byso cty (year) : gen l_mfg_prod_lab_lead = l_mfg_prod_lab[_n+1]
+{txt}(5,504 missing values generated)
+
+{com}. order l_mfg_prod_lab_lead, after(l_mfg_prod_lab)
+{txt}
+{com}. 
+. * Test for TWFE. Still need to finish cleaning up treatment variable
+. reghdfe l_mfg_prod_lab entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 167 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    20,165
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  17265{txt}){col 67}= {res}      5.08
+{txt}{col 51}Prob > F{col 67}= {res}    0.0242
+{txt}{col 51}R-squared{col 67}= {res}    0.6388
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5781
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0003
+{txt}{col 51}Root MSE{col 67}= {res}    0.4555
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~b{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1122335{col 26}{space 2} .0498014{col 37}{space 1}    2.25{col 46}{space 3}0.024{col 54}{space 4} .0146178{col 67}{space 3} .2098493
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 10.98249{col 26}{space 2} .0032353{col 37}{space 1} 3394.56{col 46}{space 3}0.000{col 54}{space 4} 10.97615{col 67}{space 3} 10.98884
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2891{col 27}{space 1}        1{col 39}{result}{space 1}     2890{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. // there is evidence of a static TWFE. Same in levels
+. 
+. reghdfe l_mfg_prod_lab_lead entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 181 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    17,792
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  14996{txt}){col 67}= {res}      7.39
+{txt}{col 51}Prob > F{col 67}= {res}    0.0066
+{txt}{col 51}R-squared{col 67}= {res}    0.6460
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5800
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0005
+{txt}{col 51}Root MSE{col 67}= {res}    0.4380
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~d{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1475197{col 26}{space 2} .0542712{col 37}{space 1}    2.72{col 46}{space 3}0.007{col 54}{space 4} .0411415{col 67}{space 3} .2538979
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 11.04735{col 26}{space 2} .0033115{col 37}{space 1} 3336.09{col 46}{space 3}0.000{col 54}{space 4} 11.04086{col 67}{space 3} 11.05384
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2787{col 27}{space 1}        1{col 39}{result}{space 1}     2786{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. // regressing the leading outcome shows even stronger results. Same in levels
+. 
+. // raw data graph with cohort verticals
+. foreach lev in levels logs {c -(}
+{txt}  2{com}.         
+.         if "`lev'" == "levels" local yvar mfg_prod_lab_lead
+{txt}  3{com}.         if "`lev'" == "logs"   local yvar l_mfg_prod_lab_lead
+{txt}  4{com}.         preserve
+{txt}  5{com}.                 collapse (mean) `yvar', by(mktg_decentry year)
+{txt}  6{com}.                 replace mktg_decentry = 99 if mktg_decentry == .
+{txt}  7{com}.                 
+.                 // plot raw data by cohort with vertical E_i
+.                 twoway (line `yvar' year if mktg_decentry == 99, lcolor(black) ) ///
+>                            (line `yvar' year if mktg_decentry == 1870, lcolor(gs10) ) ///                  
+>                            (line `yvar' year if mktg_decentry == 1880, lcolor(red) ) ///
+>                            (line `yvar' year if mktg_decentry == 1890, lcolor(gold) ) ///
+>                            (line `yvar' year if mktg_decentry == 1900, lcolor(blue) ), ///
+>                                 legend(label(1 "No shock") ///
+>                                            label(2 "1870") /// 
+>                                            label(3 "1880") /// 
+>                                            label(4 "1890") /// 
+>                                            label(5 "1900") position(3) cols(1)) ///
+>                                    xline(1870, lcolor(gs10) lpatter(dash)) ///
+>                                    xline(1880, lcolor(red) lpatter(dash)) ///
+>                                    xline(1890, lcolor(gold) lpatter(dash)) ///
+>                                    xline(1900, lcolor(blue) lpatter(dash))
+{txt}  8{com}.         restore
+{txt}  9{com}.         pause
+{txt} 10{com}. {c )-}
+{res}{txt}(10 real changes made)
+{res}{txt}pause:  
+{com}-> . q
+{txt}execution resumes...
+{res}{txt}(10 real changes made)
+{res}{txt}pause:  
+{com}-> . q
+{txt}execution resumes...
+
+{com}. 
+. // But the graph says there's no story. Not sure how to proceed. 
+. // Perhaps I constructed my treated counties too loosely? 
+. // Perhaps excluding California and other states from treatment was non-trivial. 
+. //              Go back and figure out how to add them back. Assume treated MSA based on major cities?
+. // Perhaps I need to account for spillover counties in a donut around the MSA?
+. // Perhaps I need to include controls and then evaluate this on say 
+. //              growth residualized on railroad expansion at t-1 
+. 
+. // come back to this with a clear mind. Revise cleaning all decisions.
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/03_analysis_cty.do"
+{txt}
+{com}. /* 
+> Project: Kerosene
+> Title: Analysis script
+> Subtitle: 
+> 
+> Author: Yazen Kashlan
+> Date: 11/5/2023
+> 
+> 
+> */
+. 
+. 
+. 
+. use "${c -(}data_dir{c )-}/01_clean_219/outcomes_cty_decade.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. 
+. drop *0s*
+{txt}
+{com}. // keep year cty_code totpop mfgcap mfglabor mfgout ///
+. //                      l_mfg_prod_cap l_mfg_prod_lab l_totpop l_mfg_prod_lab_g ///
+. 
+. // generate lead outcome variable
+. byso cty (year) : gen mfg_prod_lab_lead = mfg_prod_lab[_n+1]
+{txt}(5,504 missing values generated)
+
+{com}. order mfg_prod_lab_lead, after(mfg_prod_lab)
+{txt}
+{com}. byso cty (year) : gen l_mfg_prod_lab_lead = l_mfg_prod_lab[_n+1]
+{txt}(5,504 missing values generated)
+
+{com}. order l_mfg_prod_lab_lead, after(l_mfg_prod_lab)
+{txt}
+{com}. 
+. * Test for TWFE. Still need to finish cleaning up treatment variable
+. reghdfe l_mfg_prod_lab entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 167 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    20,165
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  17265{txt}){col 67}= {res}      5.08
+{txt}{col 51}Prob > F{col 67}= {res}    0.0242
+{txt}{col 51}R-squared{col 67}= {res}    0.6388
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5781
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0003
+{txt}{col 51}Root MSE{col 67}= {res}    0.4555
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~b{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1122335{col 26}{space 2} .0498014{col 37}{space 1}    2.25{col 46}{space 3}0.024{col 54}{space 4} .0146178{col 67}{space 3} .2098493
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 10.98249{col 26}{space 2} .0032353{col 37}{space 1} 3394.56{col 46}{space 3}0.000{col 54}{space 4} 10.97615{col 67}{space 3} 10.98884
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2891{col 27}{space 1}        1{col 39}{result}{space 1}     2890{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. // there is evidence of a static TWFE. Same in levels
+. 
+. reghdfe l_mfg_prod_lab_lead entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 181 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    17,792
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  14996{txt}){col 67}= {res}      7.39
+{txt}{col 51}Prob > F{col 67}= {res}    0.0066
+{txt}{col 51}R-squared{col 67}= {res}    0.6460
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5800
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0005
+{txt}{col 51}Root MSE{col 67}= {res}    0.4380
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~d{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1475197{col 26}{space 2} .0542712{col 37}{space 1}    2.72{col 46}{space 3}0.007{col 54}{space 4} .0411415{col 67}{space 3} .2538979
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 11.04735{col 26}{space 2} .0033115{col 37}{space 1} 3336.09{col 46}{space 3}0.000{col 54}{space 4} 11.04086{col 67}{space 3} 11.05384
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2787{col 27}{space 1}        1{col 39}{result}{space 1}     2786{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. // regressing the leading outcome shows even stronger results. Same in levels
+. 
+. // raw data graph with cohort verticals
+. foreach lev in levels logs {c -(}
+{txt}  2{com}.         
+.         if "`lev'" == "levels" local yvar mfg_prod_lab_lead
+{txt}  3{com}.         if "`lev'" == "logs"   local yvar l_mfg_prod_lab_lead
+{txt}  4{com}.         preserve
+{txt}  5{com}.                 collapse (mean) `yvar', by(mktg_decentry year)
+{txt}  6{com}.                 replace mktg_decentry = 99 if mktg_decentry == .
+{txt}  7{com}.                 
+.                 // plot raw data by cohort with vertical E_i
+.                 twoway (line `yvar' year if mktg_decentry == 99, lcolor(black) ) ///
+>                            (line `yvar' year if mktg_decentry == 1870, lcolor(gs10) ) ///                  
+>                            (line `yvar' year if mktg_decentry == 1880, lcolor(red) ) ///
+>                            (line `yvar' year if mktg_decentry == 1890, lcolor(gold) ) ///
+>                            (line `yvar' year if mktg_decentry == 1900, lcolor(blue) ), ///
+>                                 legend(label(1 "No shock") ///
+>                                            label(2 "1870") /// 
+>                                            label(3 "1880") /// 
+>                                            label(4 "1890") /// 
+>                                            label(5 "1900") position(3) cols(1)) ///
+>                                    xline(1870, lcolor(gs10) lpatter(dash)) ///
+>                                    xline(1880, lcolor(red) lpatter(dash)) ///
+>                                    xline(1890, lcolor(gold) lpatter(dash)) ///
+>                                    xline(1900, lcolor(blue) lpatter(dash))
+{txt}  8{com}.         restore
+{txt}  9{com}.         pause
+{txt} 10{com}. {c )-}
+{res}{txt}(10 real changes made)
+{res}{txt}pause:  
+{com}-> . BREAK
+{txt}sending Break to calling program...
+{err}{hline 2}Break{hline 2}
+{txt}{search r(1), local:r(1);}
+
+end of do-file
+
+{err}{hline 2}Break{hline 2}
+{txt}{search r(1), local:r(1);}
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/03_analysis_cty.do"
+{txt}
+{com}. /* 
+> Project: Kerosene
+> Title: Analysis script
+> Subtitle: 
+> 
+> Author: Yazen Kashlan
+> Date: 11/5/2023
+> 
+> 
+> */
+. 
+. 
+. 
+. use "${c -(}data_dir{c )-}/01_clean_219/outcomes_cty_decade.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. 
+. drop *0s*
+{txt}
+{com}. // keep year cty_code totpop mfgcap mfglabor mfgout ///
+. //                      l_mfg_prod_cap l_mfg_prod_lab l_totpop l_mfg_prod_lab_g ///
+. 
+. // generate lead outcome variable
+. byso cty (year) : gen mfg_prod_lab_lead = mfg_prod_lab[_n+1]
+{txt}(5,504 missing values generated)
+
+{com}. order mfg_prod_lab_lead, after(mfg_prod_lab)
+{txt}
+{com}. byso cty (year) : gen l_mfg_prod_lab_lead = l_mfg_prod_lab[_n+1]
+{txt}(5,504 missing values generated)
+
+{com}. order l_mfg_prod_lab_lead, after(l_mfg_prod_lab)
+{txt}
+{com}. 
+. * Test for TWFE. Still need to finish cleaning up treatment variable
+. reghdfe l_mfg_prod_lab entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 167 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    20,165
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  17265{txt}){col 67}= {res}      5.08
+{txt}{col 51}Prob > F{col 67}= {res}    0.0242
+{txt}{col 51}R-squared{col 67}= {res}    0.6388
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5781
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0003
+{txt}{col 51}Root MSE{col 67}= {res}    0.4555
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~b{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1122335{col 26}{space 2} .0498014{col 37}{space 1}    2.25{col 46}{space 3}0.024{col 54}{space 4} .0146178{col 67}{space 3} .2098493
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 10.98249{col 26}{space 2} .0032353{col 37}{space 1} 3394.56{col 46}{space 3}0.000{col 54}{space 4} 10.97615{col 67}{space 3} 10.98884
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2891{col 27}{space 1}        1{col 39}{result}{space 1}     2890{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. // there is evidence of a static TWFE. Same in levels
+. 
+. reghdfe l_mfg_prod_lab_lead entry_mktg_d, absorb(i.year i.cty_code)
+{res}{txt}(dropped 181 {browse "http://scorreia.com/research/singletons.pdf":singleton observations})
+{res}{txt}({browse "http://scorreia.com/research/hdfe.pdf":MWFE estimator} converged in 6 iterations)
+{res}
+{txt}HDFE Linear regression{col 51}Number of obs{col 67}= {res}    17,792
+{txt}Absorbing 2 HDFE groups{col 51}F({res}   1{txt},{res}  14996{txt}){col 67}= {res}      7.39
+{txt}{col 51}Prob > F{col 67}= {res}    0.0066
+{txt}{col 51}R-squared{col 67}= {res}    0.6460
+{txt}{col 51}Adj R-squared{col 67}= {res}    0.5800
+{txt}{col 51}Within R-sq.{col 67}= {res}    0.0005
+{txt}{col 51}Root MSE{col 67}= {res}    0.4380
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}l_mfg_prod~d{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+entry_mktg_d {c |}{col 14}{res}{space 2} .1475197{col 26}{space 2} .0542712{col 37}{space 1}    2.72{col 46}{space 3}0.007{col 54}{space 4} .0411415{col 67}{space 3} .2538979
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2} 11.04735{col 26}{space 2} .0033115{col 37}{space 1} 3336.09{col 46}{space 3}0.000{col 54}{space 4} 11.04086{col 67}{space 3} 11.05384
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}
+{txt}Absorbed degrees of freedom:
+{res}{col 1}{text}{hline 13}{c TT}{hline 12}{hline 12}{hline 14}{hline 1}{c TRC}
+{col 1}{text} Absorbed FE{col 14}{c |} Categories{col 27} - Redundant{col 39}  = Num. Coefs{col 54}{c |}
+{res}{col 1}{text}{hline 13}{c +}{hline 12}{hline 12}{hline 14}{hline 1}{c RT}
+{col 1}{text}        year{col 14}{c |}{space 1}        9{col 27}{space 1}        0{col 39}{result}{space 1}        9{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}    cty_code{col 14}{c |}{space 1}     2787{col 27}{space 1}        1{col 39}{result}{space 1}     2786{col 53}{text} {col 54}{c |}
+{res}{col 1}{text}{hline 13}{c BT}{hline 12}{hline 12}{hline 14}{hline 1}{c BRC}
+{res}{txt}
+{com}. // regressing the leading outcome shows even stronger results. Same in levels
+. 
+. // raw data graph with cohort verticals
+. foreach lev in levels logs {c -(}
+{txt}  2{com}.         
+.         if "`lev'" == "levels" local yvar mfg_prod_lab
+{txt}  3{com}.         if "`lev'" == "logs"   local yvar l_mfg_prod_lab
+{txt}  4{com}.         preserve
+{txt}  5{com}.                 collapse (mean) `yvar', by(mktg_decentry year)
+{txt}  6{com}.                 replace mktg_decentry = 99 if mktg_decentry == .
+{txt}  7{com}.                 
+.                 // plot raw data by cohort with vertical E_i
+.                 twoway (line `yvar' year if mktg_decentry == 99, lcolor(black) ) ///
+>                            (line `yvar' year if mktg_decentry == 1870, lcolor(gs10) ) ///                  
+>                            (line `yvar' year if mktg_decentry == 1880, lcolor(red) ) ///
+>                            (line `yvar' year if mktg_decentry == 1890, lcolor(gold) ) ///
+>                            (line `yvar' year if mktg_decentry == 1900, lcolor(blue) ), ///
+>                                 legend(label(1 "No shock") ///
+>                                            label(2 "1870") /// 
+>                                            label(3 "1880") /// 
+>                                            label(4 "1890") /// 
+>                                            label(5 "1900") position(3) cols(1)) ///
+>                                    xline(1870, lcolor(gs10) lpatter(dash)) ///
+>                                    xline(1880, lcolor(red) lpatter(dash)) ///
+>                                    xline(1890, lcolor(gold) lpatter(dash)) ///
+>                                    xline(1900, lcolor(blue) lpatter(dash))
+{txt}  8{com}.         restore
+{txt}  9{com}.         pause
+{txt} 10{com}. {c )-}
+{res}{txt}(10 real changes made)
+{res}{txt}pause:  
+{com}-> . do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. import excel "${c -(}data_dir{c )-}/00_raw/SONJ_v_US/sonjvus_appendix_d.xlsx", ///
+>         sheet("data") firstrow allstring clear
+{res}{text}(7 vars, 217 obs)
+
+{com}. 
+{txt}end of do-file
+{com}-> . BREAK
+{txt}sending Break to calling program...
+{err}{hline 2}Break{hline 2}
+{txt}{search r(1), local:r(1);}
+
+end of do-file
+
+{err}{hline 2}Break{hline 2}
+{txt}{search r(1), local:r(1);}
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. destring year concern_type acq_method year_uncertain loc_uncertain, replace
+{txt}year: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(9 missing values generated)
+{res}{txt}concern_type: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}acq_method: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(1 missing value generated)
+{res}{txt}year_uncertain: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(139 missing values generated)
+{res}{txt}loc_uncertain: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(197 missing values generated)
+{res}{txt}
+{com}. replace year_uncertain = 0 if year_uncertain == .
+{txt}(129 real changes made)
+
+{com}. replace loc_uncertain = 0 if loc_uncertain == .
+{txt}(197 real changes made)
+
+{com}. 
+. // string vars
+. ds, has(type string) 
+{txt}{col 1}concern{col 11}location
+
+{com}. foreach var in `r(varlist)'  {c -(}
+{txt}  2{com}.     replace `var' = trim(`var')
+{txt}  3{com}. {c )-}
+{txt}(81 real changes made)
+(14 real changes made)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. tab concern_type
+
+{txt}concern_typ {c |}
+          e {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}        135       62.21       62.21
+{txt}          2 {c |}{res}         58       26.73       88.94
+{txt}          3 {c |}{res}         24       11.06      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        217      100.00
+{txt}
+{com}. label define concerns 1 "Manufacturing" 2 "Marketing" 3 "Pipeline", replace
+{txt}
+{com}. label values concern_type concerns
+{txt}
+{com}. 
+. tab acq_method
+
+ {txt}acq_method {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}         60       27.78       27.78
+{txt}          2 {c |}{res}        112       51.85       79.63
+{txt}          3 {c |}{res}         44       20.37      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        216      100.00
+{txt}
+{com}. label define aqc_type 1 "Stock purchase" 2 "Property purchase" 3 "Property purchase through vehicle", replace
+{txt}
+{com}. label values acq_method aqc_type 
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. foreach var of varlist location {c -(}
+{txt}  2{com}.         replace `var' = subinstr(`var', "*", "", .)
+{txt}  3{com}.         replace `var' = subinstr(`var', "#", "", .)
+{txt}  4{com}.         replace `var' = strupper(`var')
+{txt}  5{com}.         replace `var' = strtrim(`var')
+{txt}  6{com}. {c )-}
+{txt}(0 real changes made)
+(0 real changes made)
+(217 real changes made)
+(0 real changes made)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. merge m:1 location using "${c -(}data_dir{c )-}/01_clean_219/msa_firm_ctylist.dta"
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}              28
+{txt}{col 9}from master{col 30}{res}              28{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               0{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}             189{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. sort concern_type location 
+{txt}
+{com}. 
+. 
+. gen msa_text = string(msa_code)
+{txt}
+{com}. encode msa_text, gen(msa_code_lab) label(msa_text)
+{txt}
+{com}. labellist msa_code_lab
+{res}msa_text:
+           1 . 
+           2 1120 
+           3 1280 
+           4 1600 
+           5 1640 
+           6 1680 
+           7 1840 
+           8 3760 
+           9 4920 
+          10 520 
+          11 5360 
+          12 5560 
+          13 5605 
+          14 6160 
+          15 6280 
+          16 6400 
+          17 6760 
+          18 6840 
+          19 7040 
+          20 720 
+          21 7360 
+          22 8400 
+          23 8840 
+{txt}
+{com}. 
+. // merge county lists for MSAs
+. merge m:1 msa_code using "${c -(}data_dir{c )-}/01_clean_219/msa_yr_ctylist.dta", gen(_msa)
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}             153
+{txt}{col 9}from master{col 30}{res}              92{txt}  (_msa==1)
+{col 9}from using{col 30}{res}              61{txt}  (_msa==2)
+
+{col 5}Matched{col 30}{res}             125{txt}  (_msa==3)
+{col 5}{hline 41}
+
+{com}. keep if _msa != 2
+{txt}(61 observations deleted)
+
+{com}. sort msa_code concern_type location
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. gen cty_sonj_v_us = "", after(location)
+{txt}(217 missing values generated)
+
+{com}. 
+. // single county concerns
+. replace cty_sonj_v_us = county if county != ""
+{txt}variable {bf}{res}cty_sonj_v_us{sf}{txt} was {bf}{res}str1{sf}{txt} now {bf}{res}str14{sf}
+{txt}(41 real changes made)
+
+{com}. 
+. // msa county concerns
+. // get decade for county list
+. gen decade_entry = floor(year/10)*10, after(year)
+{txt}(9 missing values generated)
+
+{com}. 
+. 
+. replace cty_sonj_v_us = yr_1860_list if inrange(decade_entry, 1860, 1869) & ///
+>                                                                                 yr_1860_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}(0 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1870_list if inrange(decade_entry, 1870, 1879) & ///
+>                                                                                 yr_1870_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}variable {bf}{res}cty_sonj_v_us{sf}{txt} was {bf}{res}str14{sf}{txt} now {bf}{res}str54{sf}
+{txt}(69 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1880_list if inrange(decade_entry, 1880, 1899) & ///
+>                                                                                 yr_1880_list != "" & /// no 1890 list
+>                                                                                 cty_sonj_v_us == "" //
+{txt}(37 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1900_list if inrange(decade_entry, 1900, 1909) & ///
+>                                                                                 yr_1900_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}(11 real changes made)
+
+{com}. 
+. sort cty_sonj_v_us msa
+{txt}
+{com}. replace cty_sonj_v_us = "CUMBERLAND-ME" if concern      == "Portland Kerosene Oil Co" ///
+>                                                                                  & location == "MAINE"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "ESSEX-NJ" if concern   == "New Jersey Oil Co." ///
+>                                                                                  & location == "NEWARK"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "DAVIDSON-TN" if concern        == "Cassetty Oil Company" ///
+>                                                                                  & location == "NASHVILLE, TN"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "FULTON-GA" if (concern == "Commercial Oil Co." | ///
+>                                                                                 concern == "Peoples Oil Co.") ///
+>                                                                                 & location == "ATLANTA"
+{txt}(2 real changes made)
+
+{com}. 
+{txt}end of do-file
+
+{com}. sort cty_sonj_v_us concern_type location
+
+. use "${c -(}data_dir{c )-}/01_clean_219/msa_firm_ctylist.dta", clear
+
+. br
+
+. use "${c -(}data_dir{c )-}/01_clean_219/msa_yr_ctylist.dta", clear
+
+. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/01_clean_entry_cty.do"
+{txt}
+{com}. /* 
+> Project: Kerosene
+> Title: Cleaning script
+> Subtitle: Standard Oil entry data
+> 
+> Author: Yazen Kashlan
+> Date: 11/2/2023
+> 
+> 
+> // Merge MSA and county info
+> // Entry of SO into each type of concern in each county per year
+> 
+>         1) sonjvus_appendix_d locations
+>         2) msa_firm_ctylist (list of firm MSAs or counties)
+>         3) msa_yr_ctylist (list of counties in each MSA-year)
+>         
+> // Generate full cty-year panel
+> // Quick view
+> // Time-to-entry (decade)
+> 
+> */
+. 
+. pause on
+{txt}
+{com}. 
+. // use "${c -(}data_dir{c )-}/01_clean_219/state_cty.dta", clear
+. 
+. 
+. // Import data
+. import excel "${c -(}data_dir{c )-}/00_raw/SONJ_v_US/sonjvus_appendix_d.xlsx", ///
+>         sheet("data") firstrow allstring clear
+{res}{text}(7 vars, 217 obs)
+
+{com}. 
+. ** clean -----------------------------------------------------------------------
+. // numeric vars
+. destring year concern_type acq_method year_uncertain loc_uncertain, replace
+{txt}year: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(9 missing values generated)
+{res}{txt}concern_type: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}acq_method: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(1 missing value generated)
+{res}{txt}year_uncertain: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(139 missing values generated)
+{res}{txt}loc_uncertain: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(197 missing values generated)
+{res}{txt}
+{com}. replace year_uncertain = 0 if year_uncertain == .
+{txt}(129 real changes made)
+
+{com}. replace loc_uncertain = 0 if loc_uncertain == .
+{txt}(197 real changes made)
+
+{com}. 
+. // string vars
+. ds, has(type string) 
+{txt}{col 1}concern{col 11}location
+
+{com}. foreach var in `r(varlist)'  {c -(}
+{txt}  2{com}.     replace `var' = trim(`var')
+{txt}  3{com}. {c )-}
+{txt}(81 real changes made)
+(14 real changes made)
+
+{com}. 
+. // Labels 
+. tab concern_type
+
+{txt}concern_typ {c |}
+          e {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}        135       62.21       62.21
+{txt}          2 {c |}{res}         58       26.73       88.94
+{txt}          3 {c |}{res}         24       11.06      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        217      100.00
+{txt}
+{com}. label define concerns 1 "Manufacturing" 2 "Marketing" 3 "Pipeline", replace
+{txt}
+{com}. label values concern_type concerns
+{txt}
+{com}. 
+. tab acq_method
+
+ {txt}acq_method {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}         60       27.78       27.78
+{txt}          2 {c |}{res}        112       51.85       79.63
+{txt}          3 {c |}{res}         44       20.37      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        216      100.00
+{txt}
+{com}. label define aqc_type 1 "Stock purchase" 2 "Property purchase" 3 "Property purchase through vehicle", replace
+{txt}
+{com}. label values acq_method aqc_type 
+{txt}
+{com}. 
+. foreach var of varlist location {c -(}
+{txt}  2{com}.         replace `var' = subinstr(`var', "*", "", .)
+{txt}  3{com}.         replace `var' = subinstr(`var', "#", "", .)
+{txt}  4{com}.         replace `var' = strupper(`var')
+{txt}  5{com}.         replace `var' = strtrim(`var')
+{txt}  6{com}. {c )-}
+{txt}(0 real changes made)
+(0 real changes made)
+(217 real changes made)
+(0 real changes made)
+
+{com}. 
+. // merge MSA and county info
+. merge m:1 location using "${c -(}data_dir{c )-}/01_clean_219/msa_firm_ctylist.dta"
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}              28
+{txt}{col 9}from master{col 30}{res}              28{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               0{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}             189{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. sort concern_type location 
+{txt}
+{com}. 
+. 
+. gen msa_text = string(msa_code)
+{txt}
+{com}. encode msa_text, gen(msa_code_lab) label(msa_text)
+{txt}
+{com}. labellist msa_code_lab
+{res}msa_text:
+           1 . 
+           2 1120 
+           3 1280 
+           4 1600 
+           5 1640 
+           6 1680 
+           7 1840 
+           8 3760 
+           9 4920 
+          10 520 
+          11 5360 
+          12 5560 
+          13 5605 
+          14 6160 
+          15 6280 
+          16 6400 
+          17 6760 
+          18 6840 
+          19 7040 
+          20 720 
+          21 7360 
+          22 8400 
+          23 8840 
+{txt}
+{com}. 
+. // merge county lists for MSAs
+. merge m:1 msa_code using "${c -(}data_dir{c )-}/01_clean_219/msa_yr_ctylist.dta", gen(_msa)
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}             153
+{txt}{col 9}from master{col 30}{res}              92{txt}  (_msa==1)
+{col 9}from using{col 30}{res}              61{txt}  (_msa==2)
+
+{col 5}Matched{col 30}{res}             125{txt}  (_msa==3)
+{col 5}{hline 41}
+
+{com}. keep if _msa != 2
+{txt}(61 observations deleted)
+
+{com}. sort msa_code concern_type location
+{txt}
+{com}. 
+. ** location --------------------------------------------------------------------
+. gen cty_sonj_v_us = "", after(location)
+{txt}(217 missing values generated)
+
+{com}. 
+. // single county concerns
+. replace cty_sonj_v_us = county if county != ""
+{txt}variable {bf}{res}cty_sonj_v_us{sf}{txt} was {bf}{res}str1{sf}{txt} now {bf}{res}str14{sf}
+{txt}(41 real changes made)
+
+{com}. 
+. // msa county concerns
+. // get decade for county list
+. gen decade_entry = floor(year/10)*10, after(year)
+{txt}(9 missing values generated)
+
+{com}. 
+. 
+. replace cty_sonj_v_us = yr_1860_list if inrange(decade_entry, 1860, 1869) & ///
+>                                                                                 yr_1860_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}(0 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1870_list if inrange(decade_entry, 1870, 1879) & ///
+>                                                                                 yr_1870_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}variable {bf}{res}cty_sonj_v_us{sf}{txt} was {bf}{res}str14{sf}{txt} now {bf}{res}str54{sf}
+{txt}(69 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1880_list if inrange(decade_entry, 1880, 1899) & ///
+>                                                                                 yr_1880_list != "" & /// no 1890 list
+>                                                                                 cty_sonj_v_us == "" //
+{txt}(37 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1900_list if inrange(decade_entry, 1900, 1909) & ///
+>                                                                                 yr_1900_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}(11 real changes made)
+
+{com}. 
+. sort cty_sonj_v_us msa
+{txt}
+{com}. replace cty_sonj_v_us = "CUMBERLAND-ME" if concern      == "Portland Kerosene Oil Co" ///
+>                                                                                  & location == "MAINE"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "ESSEX-NJ" if concern   == "New Jersey Oil Co." ///
+>                                                                                  & location == "NEWARK"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "DAVIDSON-TN" if concern        == "Cassetty Oil Company" ///
+>                                                                                  & location == "NASHVILLE, TN"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "FULTON-GA" if (concern == "Commercial Oil Co." | ///
+>                                                                                 concern == "Peoples Oil Co.") ///
+>                                                                                 & location == "ATLANTA"
+{txt}(2 real changes made)
+
+{com}. e
+
+{txt}end of do-file
+
+
+{com}. sort cty_sonj_v_us concern_type location
+
+. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. replace cty_sonj_v_us = "HENNEPIN-MN, RAMSEY-MN" if location == "MINNESOTA"
+{txt}(2 real changes made)
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//SD67330.000000"
+{txt}
+{com}. 
+. ****************************************************************
+. ** 1) get CPI data and assign 2000 correction to locals
+. 
+. use "${c -(}data_dir{c )-}/01_clean_june/cpi_1967.dta", clear
+{txt}
+{com}. 
+. local yr 1850 
+{txt}
+{com}. while `yr' <= 1940 {c -(} // mfg data go up to 1940
+{txt}  2{com}.         // extract adjustment for decade to 2020 dollars
+.         preserve
+{txt}  3{com}.                 qui keep if inlist(year, `yr', 2020)
+{txt}  4{com}. //              pause
+.                 qui local `yr'_index = `"`=cpi_1967[1]'"'
+{txt}  5{com}.                 qui local 2020_index = `"`=cpi_1967[2]'"'
+{txt}  6{com}.                 qui local `yr'_cpi_adjust = `2020_index'/``yr'_index'
+{txt}  7{com}.                 dis "2020 inflation factor for `yr' = ``yr'_cpi_adjust'"
+{txt}  8{com}.         restore
+{txt}  9{com}.         
+.         local yr = `yr' + 10 // increment decade
+{txt} 10{com}. {c )-}
+2020 inflation factor for 1850 = 31.108
+2020 inflation factor for 1860 = 28.8037037037037
+2020 inflation factor for 1870 = 20.46578947368421
+2020 inflation factor for 1880 = 26.81724137931035
+2020 inflation factor for 1890 = 28.8037037037037
+2020 inflation factor for 1900 = 31.108
+2020 inflation factor for 1910 = 27.775
+2020 inflation factor for 1920 = 12.91860465116279
+2020 inflation factor for 1930 = 15.49203187250996
+2020 inflation factor for 1940 = 18.47268408551069
+{txt}
+{com}. 
+. 
+. ****************************************************************
+. ** 2) mfg data from census ICPSR
+. /*
+> ICPSR, 1810-1930 (*: with mfg data)
+> 
+> Part 3: 1810 CENSUS (COUNTY AND STATE)
+> Part 4: 1820 CENSUS (COUNTY AND STATE)
+> Part 5: 1830 CENSUS (COUNTY AND STATE)
+> Part 6: 1840 CENSUS (COUNTY AND STATE)
+> 
+> Part 7: 1850 CENSUS (COUNTY AND STATE) *
+> Part 8: 1850 CENSUS S01 (STATE ONLY) *
+> 
+> Part 9: 1860 CENSUS (COUNTY AND STATE) *
+> Part 10: 1860 CENSUS S01 (STATE ONLY)
+> 
+> Part 11: 1870 CENSUS (COUNTY AND STATE) *
+> Part 12: 1870 CENSUS S01 (STATE ONLY)
+> Part 13: 1870 CENSUS S02 (STATE ONLY) *
+> Part 14: 1870 CENSUS S03 (STATE ONLY)
+> 
+> Part 15: 1880 CENSUS (COUNTY AND STATE) *
+> Part 16: 1880 CENSUS S01 (STATE ONLY) *
+> Part 17: 1880 CENSUS S02 (STATE ONLY) *
+> 
+> Part 18: 1890 CENSUS (COUNTY AND STATE) *
+> Part 19: 1890 CENSUS S01 (STATE ONLY)
+> 
+> Part 20: 1900 CENSUS (COUNTY AND STATE) * 
+> Part 21: 1900 CENSUS S01 (STATE ONLY)
+> 
+> Part 22: 1910 CENSUS (COUNTY AND STATE)
+> Part 23: 1910 CENSUS S01 (STATE ONLY)
+> 
+> Part 24: 1920 CENSUS (COUNTY AND STATE) * 
+> Part 25: 1920 CENSUS S01 (STATE ONLY)
+> 
+> Part 26: 1930 CENSUS I (COUNTY AND STATE) *
+> Part 27: 1930 CENSUS II (COUNTY AND STATE)
+> Part 28: 1930 CENSUS III (COUNTY AND STATE)
+> Part 29: 1930 CENSUS IV FAMILIES (COUNTY AND STATE)
+> Part 30: 1937 CENSUS OF UNEMPLOYMENT (COUNTY AND STATE)
+> Part 31: 1930 CENSUS S01 (STATE ONLY)
+> 
+> Part 32: 1940 Census I (County and State) *
+> 
+> 1950 mfg data DNE
+> */
+. 
+. 
+. 
+. 
+. /*
+> ** Explore 
+> forval i = 3/9 {c -(}
+>         use "${c -(}data_dir_icpsr{c )-}/DS000`i'/02896-000`i'-Data.dta", clear
+>         dis as error "Part: `i'"
+>         pause
+> {c )-}
+> forval i = 10/31 {c -(}
+>         use "${c -(}data_dir_icpsr{c )-}/DS00`i'/02896-00`i'-Data.dta", clear
+>         dis as error "Part: `i'"
+>         pause
+> {c )-}
+> */
+. 
+. ** Construct mfg variables
+. local parts 7 9 11 15 18 20 24 26 32
+{txt}
+{com}. foreach part in `parts' {c -(}
+{txt}  2{com}.         
+.         if strlen("`part'") == 1 local part "0`part'" // 0 prefix
+{txt}  3{com}.         dis as error "`part'"
+{txt}  4{com}. //              pause
+.         use "${c -(}data_dir_icpsr{c )-}/DS00`part'/02896-00`part'-Data.dta", clear 
+{txt}  5{com}.         
+.                  if "`part'" == "07" local year = 1850
+{txt}  6{com}.         else if "`part'" == "09" local year = 1860
+{txt}  7{com}.         else if "`part'" == "11" local year = 1870
+{txt}  8{com}.         else if "`part'" == "15" local year = 1880
+{txt}  9{com}.         else if "`part'" == "18" local year = 1890
+{txt} 10{com}.         else if "`part'" == "20" local year = 1900 // 1910 missing
+{txt} 11{com}.         else if "`part'" == "24" local year = 1920
+{txt} 12{com}.         else if "`part'" == "26" local year = 1930
+{txt} 13{com}.         else if "`part'" == "32" local year = 1940
+{txt} 14{com}. 
+.         gen year = `year'
+{txt} 15{com}.         
+.         keep year state county name totpop region1 region2 level *mfg*
+{txt} 16{com}.         order year state county name totpop region1 region2 level *mfg*
+{txt} 17{com}.         
+.         keep if level == 1 // keep county
+{txt} 18{com}.         gen id_cty = string(county)+"-"+string(state)
+{txt} 19{com}.         isid id_cty
+{txt} 20{com}.         label var id_cty "Count ID"
+{txt} 21{com}.         
+.         
+.         
+.         // Labor not measured directly in some years
+.                                                                                                                  // 1850, 7
+.         if `year' == 1860 gen mfglabor = mfglabm + mfglabf       // 1860, 9
+{txt} 22{com}.                                                                                                                  // 1870, 11
+.         if `year' == 1880 gen mfglabor = mfglbm16 + mfglbf15 // 1880, 15
+{txt} 23{com}.         if `year' == 1890 gen mfglabor = mfglbm16 + mfglbf15 // 1890, 18
+{txt} 24{com}.         if `year' == 1900 gen mfglabor = mfgavear                        // 1900, 20
+{txt} 25{com}.         if `year' == 1920 gen mfglabor = mfgavear                        // 1920, 24
+{txt} 26{com}.         if `year' == 1930 gen mfglabor = mfgavear                        // 1930, 26
+{txt} 27{com}.         if `year' == 1940 gen mfglabor = mfgavear                        // 1940, 32
+{txt} 28{com}.         
+.         dis "cpi_adjust = ``year'_cpi_adjust'"
+{txt} 29{com}.         gen cpi_adjust = ``year'_cpi_adjust'
+{txt} 30{com}.         
+. //      dis "Year = `year'"
+. // pause
+.         capture confirm variable mfgcap 
+{txt} 31{com}.         if _rc == 0 ds mfgcap mfglabor mfgout 
+{txt} 32{com}.         else            ds                mfglabor mfgout
+{txt} 33{com}.         
+.         keep year id_cty state name totpop cpi_adjust `r(varlist)'
+{txt} 34{com}.         order year id_cty state name totpop cpi_adjust `r(varlist)'
+{txt} 35{com}. //      dis "Year = `year'"
+. // pause
+.         tempfile mfg_`year'
+{txt} 36{com}.         save    `mfg_`year''
+{txt} 37{com}.         
+. {c )-}
+{err}07
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+(37 observations deleted)
+cpi_adjust = 31.108
+{col 1}mfgcap{col 11}mfglabor{col 21}mfgout
+{p 0 4 2}
+file {bf}
+/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//S_67330.00000b{rm}
+saved
+as .dta format
+{p_end}
+{err}09
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+(43 observations deleted)
+(333 missing values generated)
+cpi_adjust = 28.8037037037037
+{col 1}mfgcap{col 11}mfglabor{col 21}mfgout
+{p 0 4 2}
+file {bf}
+/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//S_67330.00000c{rm}
+saved
+as .dta format
+{p_end}
+{err}11
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+(48 observations deleted)
+cpi_adjust = 20.46578947368421
+{col 1}mfgcap{col 11}mfglabor{col 21}mfgout
+{p 0 4 2}
+file {bf}
+/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//S_67330.00000d{rm}
+saved
+as .dta format
+{p_end}
+{err}15
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+(49 observations deleted)
+(5 missing values generated)
+cpi_adjust = 26.81724137931035
+{col 1}mfgcap{col 11}mfglabor{col 21}mfgout
+{p 0 4 2}
+file {bf}
+/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//S_67330.00000e{rm}
+saved
+as .dta format
+{p_end}
+{err}18
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+(52 observations deleted)
+(141 missing values generated)
+cpi_adjust = 28.8037037037037
+{col 1}mfgcap{col 11}mfglabor{col 21}mfgout
+{p 0 4 2}
+file {bf}
+/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//S_67330.00000f{rm}
+saved
+as .dta format
+{p_end}
+{err}20
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+(55 observations deleted)
+(136 missing values generated)
+cpi_adjust = 31.108
+{col 1}mfgcap{col 11}mfglabor{col 21}mfgout
+{p 0 4 2}
+file {bf}
+/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//S_67330.00000g{rm}
+saved
+as .dta format
+{p_end}
+{err}24
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+(52 observations deleted)
+(211 missing values generated)
+cpi_adjust = 12.91860465116279
+{col 1}mfglabor{col 11}mfgout
+{p 0 4 2}
+file {bf}
+/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//S_67330.00000h{rm}
+saved
+as .dta format
+{p_end}
+{err}26
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+(52 observations deleted)
+(550 missing values generated)
+cpi_adjust = 15.49203187250996
+{col 1}mfglabor{col 11}mfgout
+{p 0 4 2}
+file {bf}
+/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//S_67330.00000i{rm}
+saved
+as .dta format
+{p_end}
+{err}32
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+(52 observations deleted)
+(371 missing values generated)
+cpi_adjust = 18.47268408551069
+{col 1}mfglabor{col 11}mfgout
+{p 0 4 2}
+file {bf}
+/var/folders/8y/24ys7yf125x3_23c8s2cqx980000gn/T//S_67330.00000j{rm}
+saved
+as .dta format
+{p_end}
+
+{com}. 
+. ** Append all years
+. use `mfg_1850', clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. foreach year in 1860 1870 1880 1890 1900 1920 1930 1940 {c -(}
+{txt}  2{com}.         append using `mfg_`year''
+{txt}  3{com}. //      pause 
+. {c )-}
+{txt}{p 0 7 2}
+(variable
+{bf:name} was {bf:str19}, now {bf:str24} to accommodate using data's values)
+{p_end}
+{p 0 7 2}
+(variable
+{bf:mfglabor} was {bf:long}, now {bf:double} to accommodate using data's values)
+{p_end}
+{p 0 7 2}
+(variable
+{bf:name} was {bf:str24}, now {bf:str31} to accommodate using data's values)
+{p_end}
+{p 0 7 2}
+(variable
+{bf:mfgout} was {bf:long}, now {bf:double} to accommodate using data's values)
+{p_end}
+{p 0 7 2}
+(variable
+{bf:mfgcap} was {bf:long}, now {bf:double} to accommodate using data's values)
+{p_end}
+{p 0 7 2}
+(variable
+{bf:id_cty} was {bf:str7}, now {bf:str9} to accommodate using data's values)
+{p_end}
+{p 0 7 2}
+(variable
+{bf:state} was {bf:byte}, now {bf:int} to accommodate using data's values)
+{p_end}
+
+{com}. 
+{txt}end of do-file
+
+{com}. br
+
+. use "${c -(}data_dir{c )-}/01_clean_219/mfg_1850_1940_icpsr_cty.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. br if strpos(cty, "-CO")>0 
+
+. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/01_clean_entry_cty.do"
+{txt}
+{com}. /* 
+> Project: Kerosene
+> Title: Cleaning script
+> Subtitle: Standard Oil entry data
+> 
+> Author: Yazen Kashlan
+> Date: 11/2/2023
+> 
+> 
+> // Merge MSA and county info
+> // Entry of SO into each type of concern in each county per year
+> 
+>         1) sonjvus_appendix_d locations
+>         2) msa_firm_ctylist (list of firm MSAs or counties)
+>         3) msa_yr_ctylist (list of counties in each MSA-year)
+>         
+> // Generate full cty-year panel
+> // Quick view
+> // Time-to-entry (decade)
+> 
+> */
+. 
+. pause on
+{txt}
+{com}. 
+. // use "${c -(}data_dir{c )-}/01_clean_219/state_cty.dta", clear
+. 
+. 
+. // Import data
+. import excel "${c -(}data_dir{c )-}/00_raw/SONJ_v_US/sonjvus_appendix_d.xlsx", ///
+>         sheet("data") firstrow allstring clear
+{res}{text}(7 vars, 217 obs)
+
+{com}. 
+. ** clean -----------------------------------------------------------------------
+. // numeric vars
+. destring year concern_type acq_method year_uncertain loc_uncertain, replace
+{txt}year: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(9 missing values generated)
+{res}{txt}concern_type: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}acq_method: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(1 missing value generated)
+{res}{txt}year_uncertain: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(139 missing values generated)
+{res}{txt}loc_uncertain: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(197 missing values generated)
+{res}{txt}
+{com}. replace year_uncertain = 0 if year_uncertain == .
+{txt}(129 real changes made)
+
+{com}. replace loc_uncertain = 0 if loc_uncertain == .
+{txt}(197 real changes made)
+
+{com}. 
+. // string vars
+. ds, has(type string) 
+{txt}{col 1}concern{col 11}location
+
+{com}. foreach var in `r(varlist)'  {c -(}
+{txt}  2{com}.     replace `var' = trim(`var')
+{txt}  3{com}. {c )-}
+{txt}(81 real changes made)
+(14 real changes made)
+
+{com}. 
+. // Labels 
+. tab concern_type
+
+{txt}concern_typ {c |}
+          e {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}        135       62.21       62.21
+{txt}          2 {c |}{res}         58       26.73       88.94
+{txt}          3 {c |}{res}         24       11.06      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        217      100.00
+{txt}
+{com}. label define concerns 1 "Manufacturing" 2 "Marketing" 3 "Pipeline", replace
+{txt}
+{com}. label values concern_type concerns
+{txt}
+{com}. 
+. tab acq_method
+
+ {txt}acq_method {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}         60       27.78       27.78
+{txt}          2 {c |}{res}        112       51.85       79.63
+{txt}          3 {c |}{res}         44       20.37      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        216      100.00
+{txt}
+{com}. label define aqc_type 1 "Stock purchase" 2 "Property purchase" 3 "Property purchase through vehicle", replace
+{txt}
+{com}. label values acq_method aqc_type 
+{txt}
+{com}. 
+. foreach var of varlist location {c -(}
+{txt}  2{com}.         replace `var' = subinstr(`var', "*", "", .)
+{txt}  3{com}.         replace `var' = subinstr(`var', "#", "", .)
+{txt}  4{com}.         replace `var' = strupper(`var')
+{txt}  5{com}.         replace `var' = strtrim(`var')
+{txt}  6{com}. {c )-}
+{txt}(0 real changes made)
+(0 real changes made)
+(217 real changes made)
+(0 real changes made)
+
+{com}. 
+. // merge MSA and county info
+. merge m:1 location using "${c -(}data_dir{c )-}/01_clean_219/msa_firm_ctylist.dta"
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}              28
+{txt}{col 9}from master{col 30}{res}              28{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               0{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}             189{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. sort concern_type location 
+{txt}
+{com}. 
+. 
+. gen msa_text = string(msa_code)
+{txt}
+{com}. encode msa_text, gen(msa_code_lab) label(msa_text)
+{txt}
+{com}. labellist msa_code_lab
+{res}msa_text:
+           1 . 
+           2 1120 
+           3 1280 
+           4 1600 
+           5 1640 
+           6 1680 
+           7 1840 
+           8 3760 
+           9 4920 
+          10 520 
+          11 5360 
+          12 5560 
+          13 5605 
+          14 6160 
+          15 6280 
+          16 6400 
+          17 6760 
+          18 6840 
+          19 7040 
+          20 720 
+          21 7360 
+          22 8400 
+          23 8840 
+{txt}
+{com}. 
+. // merge county lists for MSAs
+. merge m:1 msa_code using "${c -(}data_dir{c )-}/01_clean_219/msa_yr_ctylist.dta", gen(_msa)
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}             153
+{txt}{col 9}from master{col 30}{res}              92{txt}  (_msa==1)
+{col 9}from using{col 30}{res}              61{txt}  (_msa==2)
+
+{col 5}Matched{col 30}{res}             125{txt}  (_msa==3)
+{col 5}{hline 41}
+
+{com}. keep if _msa != 2
+{txt}(61 observations deleted)
+
+{com}. sort msa_code concern_type location
+{txt}
+{com}. 
+. ** location --------------------------------------------------------------------
+. gen cty_sonj_v_us = "", after(location)
+{txt}(217 missing values generated)
+
+{com}. 
+. // single county concerns
+. replace cty_sonj_v_us = county if county != ""
+{txt}variable {bf}{res}cty_sonj_v_us{sf}{txt} was {bf}{res}str1{sf}{txt} now {bf}{res}str14{sf}
+{txt}(41 real changes made)
+
+{com}. 
+. // msa county concerns
+. // get decade for county list
+. gen decade_entry = floor(year/10)*10, after(year)
+{txt}(9 missing values generated)
+
+{com}. 
+. 
+. replace cty_sonj_v_us = yr_1860_list if inrange(decade_entry, 1860, 1869) & ///
+>                                                                                 yr_1860_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}(0 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1870_list if inrange(decade_entry, 1870, 1879) & ///
+>                                                                                 yr_1870_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}variable {bf}{res}cty_sonj_v_us{sf}{txt} was {bf}{res}str14{sf}{txt} now {bf}{res}str54{sf}
+{txt}(69 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1880_list if inrange(decade_entry, 1880, 1899) & ///
+>                                                                                 yr_1880_list != "" & /// no 1890 list
+>                                                                                 cty_sonj_v_us == "" //
+{txt}(37 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1900_list if inrange(decade_entry, 1900, 1909) & ///
+>                                                                                 yr_1900_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}(11 real changes made)
+
+{com}. 
+. sort cty_sonj_v_us msa
+{txt}
+{com}. replace cty_sonj_v_us = "CUMBERLAND-ME" if concern      == "Portland Kerosene Oil Co" ///
+>                                                                                  & location == "MAINE"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "ESSEX-NJ" if concern   == "New Jersey Oil Co." ///
+>                                                                                  & location == "NEWARK"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "DAVIDSON-TN" if concern        == "Cassetty Oil Company" ///
+>                                                                                  & location == "NASHVILLE, TN"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "FULTON-GA" if (concern == "Commercial Oil Co." | ///
+>                                                                                 concern == "Peoples Oil Co.") ///
+>                                                                                 & location == "ATLANTA"
+{txt}(2 real changes made)
+
+{com}. 
+. replace cty_sonj_v_us = "HENNEPIN-MN, RAMSEY-MN" if location == "MINNESOTA"
+{txt}(2 real changes made)
+
+{com}. 
+. e
+
+{txt}end of do-file
+
+
+{com}. vbr
+{err}command {bf}vbr{sf} is unrecognized
+{txt}{search r(199), local:r(199);}
+
+{com}. br
+
+. sort cty_sonj_v_us concern_type location
+
+. use "${c -(}data_dir{c )-}/01_clean_219/mfg_1850_1940_icpsr_cty.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. do "/Users/yazenkashlan/Documents/GitHub/personal-code/Kerosene/01_clean_entry_cty.do"
+{txt}
+{com}. /* 
+> Project: Kerosene
+> Title: Cleaning script
+> Subtitle: Standard Oil entry data
+> 
+> Author: Yazen Kashlan
+> Date: 11/2/2023
+> 
+> 
+> // Merge MSA and county info
+> // Entry of SO into each type of concern in each county per year
+> 
+>         1) sonjvus_appendix_d locations
+>         2) msa_firm_ctylist (list of firm MSAs or counties)
+>         3) msa_yr_ctylist (list of counties in each MSA-year)
+>         
+> // Generate full cty-year panel
+> // Quick view
+> // Time-to-entry (decade)
+> 
+> */
+. 
+. pause on
+{txt}
+{com}. 
+. // use "${c -(}data_dir{c )-}/01_clean_219/state_cty.dta", clear
+. 
+. 
+. // Import data
+. import excel "${c -(}data_dir{c )-}/00_raw/SONJ_v_US/sonjvus_appendix_d.xlsx", ///
+>         sheet("data") firstrow allstring clear
+{res}{text}(7 vars, 217 obs)
+
+{com}. 
+. ** clean -----------------------------------------------------------------------
+. // numeric vars
+. destring year concern_type acq_method year_uncertain loc_uncertain, replace
+{txt}year: all characters numeric; {res}replaced {txt}as {res}int
+{txt}(9 missing values generated)
+{res}{txt}concern_type: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}acq_method: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(1 missing value generated)
+{res}{txt}year_uncertain: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(139 missing values generated)
+{res}{txt}loc_uncertain: all characters numeric; {res}replaced {txt}as {res}byte
+{txt}(197 missing values generated)
+{res}{txt}
+{com}. replace year_uncertain = 0 if year_uncertain == .
+{txt}(129 real changes made)
+
+{com}. replace loc_uncertain = 0 if loc_uncertain == .
+{txt}(197 real changes made)
+
+{com}. 
+. // string vars
+. ds, has(type string) 
+{txt}{col 1}concern{col 11}location
+
+{com}. foreach var in `r(varlist)'  {c -(}
+{txt}  2{com}.     replace `var' = trim(`var')
+{txt}  3{com}. {c )-}
+{txt}(81 real changes made)
+(14 real changes made)
+
+{com}. 
+. // Labels 
+. tab concern_type
+
+{txt}concern_typ {c |}
+          e {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}        135       62.21       62.21
+{txt}          2 {c |}{res}         58       26.73       88.94
+{txt}          3 {c |}{res}         24       11.06      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        217      100.00
+{txt}
+{com}. label define concerns 1 "Manufacturing" 2 "Marketing" 3 "Pipeline", replace
+{txt}
+{com}. label values concern_type concerns
+{txt}
+{com}. 
+. tab acq_method
+
+ {txt}acq_method {c |}      Freq.     Percent        Cum.
+{hline 12}{c +}{hline 35}
+          1 {c |}{res}         60       27.78       27.78
+{txt}          2 {c |}{res}        112       51.85       79.63
+{txt}          3 {c |}{res}         44       20.37      100.00
+{txt}{hline 12}{c +}{hline 35}
+      Total {c |}{res}        216      100.00
+{txt}
+{com}. label define aqc_type 1 "Stock purchase" 2 "Property purchase" 3 "Property purchase through vehicle", replace
+{txt}
+{com}. label values acq_method aqc_type 
+{txt}
+{com}. 
+. foreach var of varlist location {c -(}
+{txt}  2{com}.         replace `var' = subinstr(`var', "*", "", .)
+{txt}  3{com}.         replace `var' = subinstr(`var', "#", "", .)
+{txt}  4{com}.         replace `var' = strupper(`var')
+{txt}  5{com}.         replace `var' = strtrim(`var')
+{txt}  6{com}. {c )-}
+{txt}(0 real changes made)
+(0 real changes made)
+(217 real changes made)
+(0 real changes made)
+
+{com}. 
+. // merge MSA and county info
+. merge m:1 location using "${c -(}data_dir{c )-}/01_clean_219/msa_firm_ctylist.dta"
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}              28
+{txt}{col 9}from master{col 30}{res}              28{txt}  (_merge==1)
+{col 9}from using{col 30}{res}               0{txt}  (_merge==2)
+
+{col 5}Matched{col 30}{res}             189{txt}  (_merge==3)
+{col 5}{hline 41}
+
+{com}. sort concern_type location 
+{txt}
+{com}. 
+. 
+. gen msa_text = string(msa_code)
+{txt}
+{com}. encode msa_text, gen(msa_code_lab) label(msa_text)
+{txt}
+{com}. labellist msa_code_lab
+{res}msa_text:
+           1 . 
+           2 1120 
+           3 1280 
+           4 1600 
+           5 1640 
+           6 1680 
+           7 1840 
+           8 3760 
+           9 4920 
+          10 520 
+          11 5360 
+          12 5560 
+          13 5605 
+          14 6160 
+          15 6280 
+          16 6400 
+          17 6760 
+          18 6840 
+          19 7040 
+          20 720 
+          21 7360 
+          22 8400 
+          23 8840 
+{txt}
+{com}. 
+. // merge county lists for MSAs
+. merge m:1 msa_code using "${c -(}data_dir{c )-}/01_clean_219/msa_yr_ctylist.dta", gen(_msa)
+{res}
+{txt}{col 5}Result{col 33}Number of obs
+{col 5}{hline 41}
+{col 5}Not matched{col 30}{res}             153
+{txt}{col 9}from master{col 30}{res}              92{txt}  (_msa==1)
+{col 9}from using{col 30}{res}              61{txt}  (_msa==2)
+
+{col 5}Matched{col 30}{res}             125{txt}  (_msa==3)
+{col 5}{hline 41}
+
+{com}. keep if _msa != 2
+{txt}(61 observations deleted)
+
+{com}. sort msa_code concern_type location
+{txt}
+{com}. 
+. ** location --------------------------------------------------------------------
+. gen cty_sonj_v_us = "", after(location)
+{txt}(217 missing values generated)
+
+{com}. 
+. // single county concerns
+. replace cty_sonj_v_us = county if county != ""
+{txt}variable {bf}{res}cty_sonj_v_us{sf}{txt} was {bf}{res}str1{sf}{txt} now {bf}{res}str14{sf}
+{txt}(41 real changes made)
+
+{com}. 
+. // msa county concerns
+. // get decade for county list
+. gen decade_entry = floor(year/10)*10, after(year)
+{txt}(9 missing values generated)
+
+{com}. 
+. 
+. replace cty_sonj_v_us = yr_1860_list if inrange(decade_entry, 1860, 1869) & ///
+>                                                                                 yr_1860_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}(0 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1870_list if inrange(decade_entry, 1870, 1879) & ///
+>                                                                                 yr_1870_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}variable {bf}{res}cty_sonj_v_us{sf}{txt} was {bf}{res}str14{sf}{txt} now {bf}{res}str54{sf}
+{txt}(69 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1880_list if inrange(decade_entry, 1880, 1899) & ///
+>                                                                                 yr_1880_list != "" & /// no 1890 list
+>                                                                                 cty_sonj_v_us == "" //
+{txt}(37 real changes made)
+
+{com}. replace cty_sonj_v_us = yr_1900_list if inrange(decade_entry, 1900, 1909) & ///
+>                                                                                 yr_1900_list != "" & ///
+>                                                                                 cty_sonj_v_us == ""
+{txt}(11 real changes made)
+
+{com}. 
+. sort cty_sonj_v_us msa
+{txt}
+{com}. replace cty_sonj_v_us = "CUMBERLAND-ME" if concern      == "Portland Kerosene Oil Co" ///
+>                                                                                  & location == "MAINE"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "ESSEX-NJ" if concern   == "New Jersey Oil Co." ///
+>                                                                                  & location == "NEWARK"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "DAVIDSON-TN" if concern        == "Cassetty Oil Company" ///
+>                                                                                  & location == "NASHVILLE, TN"
+{txt}(1 real change made)
+
+{com}. replace cty_sonj_v_us = "FULTON-GA" if (concern == "Commercial Oil Co." | ///
+>                                                                                 concern == "Peoples Oil Co.") ///
+>                                                                                 & location == "ATLANTA"
+{txt}(2 real changes made)
+
+{com}. 
+. replace cty_sonj_v_us = "HENNEPIN-MN, RAMSEY-MN" if location == "MINNESOTA"
+{txt}(2 real changes made)
+
+{com}. 
+. e
+
+{txt}end of do-file
+
+
+{com}. sort cty_sonj_v_us concern_type location
+
+. br
+
+. use "${c -(}data_dir{c )-}/01_clean_219/mfg_1850_1940_icpsr_cty.dta", clear
+{txt}(Historical, Demographic, Economic, and Social Data: The United States, 1790-2002)
+
+{com}. br if strpos(cty, "-CO")>0 
+
+. br if strpos(cty, "-CO")>0 & year >=1880
+
+. br if strpos(cty, "-CO")>0 & year =1880
+{err}=exp not allowed
+{txt}{search r(101), local:r(101);}
+
+{com}. br if strpos(cty, "-CO")>0 & year == 1880
+
+. br if strpos(cty, "-CO")>0 & year == 1920
+
+. br if strpos(cty, "-CO")>0 & year == 1880
+
+. br if strpos(cty, "-CO")>0 & year == 1880
+
+. use "${c -(}data_dir{c )-}/01_clean_219/msa_yr_ctylist.dta", clear
+
+. br
+
+. br if strpos(msa, ", CO")_>0
+{err}unknown function ()
+{txt}{search r(133), local:r(133);}
+
+{com}. br if strpos(msa, ", CO")>0
+
+. 
