@@ -49,7 +49,6 @@ rdplot w x, ///
 	c(0.5) ///
 	masspoints(adjust) ///
 	/// bwselect(mserd) ///
-	h(`h_l' `h_r') ///
 	kernel(tri) ///
 	binselect(espr) ///
 	graph_options(legend(position(6))) ///

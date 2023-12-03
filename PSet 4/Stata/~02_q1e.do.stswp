@@ -36,14 +36,16 @@ rdplot w xp if !inlist(xp_100, 1,2,99,100) , ///
 	
 /* 1e and 1f Ans: 
 
-1e: Redifinig x as the difference shows that firms tend to be smaller if the race
+1e: Redefining x as the difference shows that firms tend to be smaller if the race
 is close. That is, larger firms have larger majorities either for or against.
 
 1f: From the exercise in q1d, it appears that there is indeed bunching 
 that causes close races. Dropping inconclusive races results in balance tests
 that fail to reject the identifying assumption of the continuity of potential 
-outcomes which we test using balance of w and x
-
+outcomes which we test using balance of w and x at the cutoff.
 
 */
+
+use "$dta_loc/pset4_trim2.dta", clear
+
 
