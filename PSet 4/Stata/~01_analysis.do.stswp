@@ -1,0 +1,18 @@
+/*
+Title: 		02_q1.do
+Purpose:	Question 1, PSet 4
+
+Outline: Question 1
+
+
+
+*/
+
+/* ---------------------------------------------------------------------------
+*/
+
+
+use "$dta_loc/pset4_data.dta", clear
+
+gen winn = votes_for>votes_against
+assert winn == win

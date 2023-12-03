@@ -1,0 +1,88 @@
+/*
+Title: 		02_q1.do
+Purpose:	Question 1, PSet 4
+
+Outline: Question 1
+
+
+
+*/
+
+
+
+use "$dta_loc/pset4_data.dta", clear
+foreach v of varlist *vote* election* {
+	char `v'[_de_col_width_] 14
+}
+
+// hist x
+sort votes_for votes_against eligible_voters
+
+/* ---------------------------------------------------------------------------
+1b Check RDD assumption, E[W|X]*/
+
+/*
+// Testing scatter and binscatter
+scatter w x
+xtile pctx = x, nq(100)
+preserve
+	collapse (mean) w, by(pctx)
+	scatter w pctx
+restore	
+*/
+
+/*
+rdrobust w x, ///
+	p(2) ///
+	c(0.5) ///
+	h(0.5) ///
+	masspoints(adjust) ///
+	bwselect(mserd) ///
+	kernel(tri)
+
+local h_l = e(h_l)
+local h_r = e(h_r)
+*/
+
+// Local linear regression
+reg w i.win##c.margin
+rdrobust w x, p(1) c(0.5) h(0.5) kernel(uniform)
+// close
+
+// Visual test
+rdplot w x, ///
+	p(2) ///
+	c(0.5) ///
+	masspoints(adjust) ///
+	/// bwselect(mserd) ///
+	h(`h_l' `h_r') ///
+	h(`h_l' `h_r') ///
+	kernel(tri) ///
+	binselect(espr) ///
+	graph_options(legend(position(6))) ///
+	ci(95) ///
+	shade 
+	
+// Statistical test
+rdperm x w, c(0.5) perm(500) // rejects equality
+cdfplot w if w < 500, by(win) // visually apparent that CDFs diverge early on
+
+
+/*
+Q: is checking whether E [Wi | Xi] is continuous at the cutoff
+be a useful placebo check for the RDD assumptions
+A: Not sure but yes seems so. I think the assumptions involve the outcome 
+not a covariate.
+
+Testing for the continuity of this expectation can be done visually using a 
+scatter plot. If a ruler can be placed across the entire graph, then 
+the continuity of E[Wi | Xi] is satisfied in a local linear model. The ruler
+analogy can be extended to a polynomial of degree p, hence the result is 
+somewhat arbitrary. The bandwidth introduces more arbitrariness. Canay and Kamat
+(2017) suggested comparing CDFs of W at either side of the cutoff. The
+result of rdperm shows that the null of equality of distributions can be 
+rejected. Visually inspecting the CDFs confirms this.
+
+*/
+
+
