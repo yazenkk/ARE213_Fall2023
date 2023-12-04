@@ -51,20 +51,25 @@ rdplot w x, ///
 	/// bwselect(mserd) ///
 	kernel(tri) ///
 	binselect(espr) ///
-	graph_options(legend(position(6))) ///
+	graph_options(legend(position(6)) ///
+				  xtitle("Running variable") ///
+				  ytitle("Eligible voters")) ///
 	ci(95) ///
 	shade 
+graph export "$do_loc/graphs/q1b_rdplot.png", ///
+	width(1200) height(900) ///
+	replace
 	
 // Statistical test
 rdperm x w, c(0.5) perm(500) // rejects equality
 cdfplot w if w < 500, by(win) // visually apparent that CDFs diverge early on
-
+graph export "$do_loc/graphs/q1b_cdfs.png", ///
+	width(1200) height(900) ///
+	replace
 
 /*
 Q: is checking whether E [Wi | Xi] is continuous at the cutoff
 be a useful placebo check for the RDD assumptions
-A: Not sure but yes seems so. I think the assumptions involve the outcome 
-not a covariate.
 
 Testing for the continuity of this expectation can be done visually using a 
 scatter plot. If a ruler can be placed across the entire graph, then 

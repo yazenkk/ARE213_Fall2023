@@ -31,6 +31,9 @@ rdplot w x, ///
 // Statistical test
 rdperm x w, c(0.5) perm(500) // fails to reject equality
 cdfplot w if w < 500, by(win) 
+graph export "$do_loc/graphs/q1d_cdfs.png", ///
+	width(1200) height(900) ///
+	replace
 // although still visually apparent that CDFs diverge early on
 
 
@@ -40,8 +43,19 @@ hist x // histogram seems ok
 
 // try rddensity
 rddensity x, c(0.45) plot kernel(triangular) all
+graph export "$do_loc/graphs/q1d_45.png", ///
+	width(1200) height(900) ///
+	replace
+
 rddensity x, c(0.5) plot kernel(triangular) all
+graph export "$do_loc/graphs/q1d_50.png", ///
+	width(1200) height(900) ///
+	replace
+
 rddensity x, c(0.55) plot kernel(triangular) all
+graph export "$do_loc/graphs/q1d_55.png", ///
+	width(1200) height(900) ///
+	replace
 
 
 /*

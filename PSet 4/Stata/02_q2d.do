@@ -46,7 +46,12 @@ label var h "Bandwidth"
 twoway (line rb_ub h, lpattern(dash) lcolor(grey)) ///
 		(line tau h, lcolor(black)) ///
 		(line rb_lb h, lpattern(dash) lcolor(grey)), ///
-		legend(position(6)) ytitle("Estimate")
+		legend(position(6)) ytitle("Estimate") ///
+		yline(0, lcolor(red) lpattern(solid))
+
+graph export "$do_loc/graphs/q2d.png", ///
+	width(1200) height(900) ///
+	replace
   
   
 /* As the bandwidth increases, the estimates become less biased in this 

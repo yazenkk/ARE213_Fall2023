@@ -32,6 +32,9 @@ rdplot w xp if !inlist(xp_100, 1,2,99,100) , ///
 	graph_options(legend(position(6))) ///
 	ci(95) ///
 	shade 
+graph export "$do_loc/graphs/q1e.png", ///
+	width(1200) height(900) ///
+	replace
 
 	
 /* 1e and 1f Ans: 
@@ -46,6 +49,7 @@ outcomes which we test using balance of w and x at the cutoff.
 
 */
 
-use "$dta_loc/pset4_trim2.dta", clear
+save "$dta_loc/pset4_trim2.dta", replace
+
 
 

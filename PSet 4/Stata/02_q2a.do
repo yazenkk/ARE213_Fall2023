@@ -10,6 +10,11 @@ use "$dta_loc/pset4_trim2.dta", clear
 
 gen y = logwage 
 
+scatter y x
+graph export "$do_loc/graphs/q2a_yx.png", ///
+	width(1200) height(900) ///
+	replace
+
 // statistically inspect ATE at c
 reg y i.win##c.margin // Local linear regression
 rdrobust y x, p(1) c(0.5) h(0.5) kernel(uniform)
@@ -25,6 +30,9 @@ rdplot y x, ///
 	graph_options(legend(position(6))) ///
 	ci(95) ///
 	shade 
+graph export "$do_loc/graphs/q2a_h50.png", ///
+	width(1200) height(900) ///
+	replace
 	
 // setting h by minimizing MSE tightens the bandwidth and exagerates the ATE
 rdrobust y x, p(1) c(0.5) kernel(uniform) 
@@ -41,7 +49,11 @@ rdplot y x, ///
 	graph_options(legend(position(6))) ///
 	ci(95) ///
 	shade 
+graph export "$do_loc/graphs/q2a_hopt.png", ///
+	width(1200) height(900) ///
+	replace
 
+/*
 // plotting xp against y is very different and sensitive to outliers
 rdplot y xp if !inlist(xp_100, 1,2,99,100), ///
 	p(2) ///
@@ -64,6 +76,7 @@ rdplot y xp, ///
 	graph_options(legend(position(6))) ///
 	ci(95) ///
 	shade 
+*/
 
 
 /* 2a Discuss:

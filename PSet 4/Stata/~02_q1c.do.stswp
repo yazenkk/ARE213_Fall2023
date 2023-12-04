@@ -15,8 +15,19 @@ hist x // histogram seems ok
 
 // try rddensity
 rddensity x, c(0.45) plot kernel(triangular) all
+graph export "$do_loc/graphs/q1c_45.png", ///
+	width(1200) height(900) ///
+	replace
+
 rddensity x, c(0.5) plot kernel(triangular) all
+graph export "$do_loc/graphs/q1c_5.png", ///
+	width(1200) height(900) ///
+	replace
+	
 rddensity x, c(0.55) plot kernel(triangular) all
+graph export "$do_loc/graphs/q1b_cdfs.png", ///
+	width(1200) height(900) ///
+	replace
 
 /*
 This algorithm compares densities below and above the cutoff using 
@@ -25,7 +36,7 @@ bandwidths calculated as follows:
 	2) minimize the MSE of the difference of the two density estimators
 	3) repeat (2) for the sum
 	3) Take the median of the three bandwidths.
-I have also  set it to use a triangular kernel to emphasize observations
+I have also set it to use a triangular kernel to emphasize observations
 closer to the cutoff. One notices that shifting the cutoff slightly around
 c=0.5 shows that indeed there appears to be manipulation at c = 0.5 but not 
 at those other points.

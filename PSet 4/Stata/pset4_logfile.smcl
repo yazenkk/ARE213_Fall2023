@@ -1,0 +1,2760 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/pset4_logfile.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res} 4 Dec 2023, 11:50:56
+{txt}
+{com}. 
+. 
+. // install programs
+. // do "$do_loc/Code/01_programs.do"
+. 
+. // analyze
+. do "$do_loc/02_q1a.do"
+{txt}
+{com}. /*
+> Title:          02_q1a.do
+> Purpose:        Question 1.a, PSet 4
+> 
+> */
+. 
+. 
+. 
+. use "$dta_loc/pset4_data.dta", clear
+{txt}
+{com}. foreach v of varlist *vote* election* {c -(}
+{txt}  2{com}.         char `v'[_de_col_width_] 14
+{txt}  3{com}. {c )-}
+{txt}
+{com}. 
+. 
+. /* ---------------------------------------------------------------------------
+> 1a Define running var, X*/
+. gen votes_tot = votes_for + votes_against
+{txt}
+{com}. gen x = votes_for/votes_tot
+{txt}
+{com}. assert win == 1 if x > 0.5
+{txt}
+{com}. gen w = eligible_voters
+{txt}
+{com}. gen margin = x-0.5
+{txt}
+{com}. 
+. 
+. save "$dta_loc/pset4_clean.dta", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Dropbox (Personal)/ARE213/Pset4/pset4_clean.dta{rm}
+saved
+{p_end}
+
+{com}. 
+{txt}end of do-file
+
+{com}. do "$do_loc/02_q1b.do"
+{txt}
+{com}. /*
+> Title:          02_q1b.do
+> Purpose:        Question 1.b, PSet 4
+> 
+> */
+. 
+. 
+. /* ---------------------------------------------------------------------------
+> 1b Check RDD assumption, E[W|X]*/
+. 
+. 
+. use "$dta_loc/pset4_clean.dta", clear
+{txt}
+{com}. 
+. 
+. // hist x
+. sort votes_for votes_against eligible_voters
+{txt}
+{com}. 
+. /*
+> // Testing scatter and binscatter
+> scatter w x
+> xtile pctx = x, nq(100)
+> preserve
+>         collapse (mean) w, by(pctx)
+>         scatter w pctx
+> restore 
+> */
+. 
+. /*
+> rdrobust w x, ///
+>         p(2) ///
+>         c(0.5) ///
+>         h(0.5) ///
+>         masspoints(adjust) ///
+>         bwselect(mserd) ///
+>         kernel(tri)
+> 
+> local h_l = e(h_l)
+> local h_r = e(h_r)
+> */
+. 
+. // Local linear regression
+. reg w i.win##c.margin
+
+{txt}      Source {c |}       SS           df       MS      Number of obs   ={res}    76,740
+{txt}{hline 13}{c +}{hline 34}   F(3, 76736)     = {res}   136.32
+{txt}       Model {c |} {res} 44643727.3         3  14881242.4   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 8.3770e+09    76,736  109167.039   {txt}R-squared       ={res}    0.0053
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.0053
+{txt}       Total {c |} {res} 8.4217e+09    76,739  109744.532   {txt}Root MSE        =   {res}  330.4
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}           w{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}1.win {c |}{col 14}{res}{space 2} -69.0819{col 26}{space 2} 4.187571{col 37}{space 1}  -16.50{col 46}{space 3}0.000{col 54}{space 4}-77.28952{col 67}{space 3}-60.87428
+{txt}{space 6}margin {c |}{col 14}{res}{space 2} 106.8179{col 26}{space 2} 13.95248{col 37}{space 1}    7.66{col 46}{space 3}0.000{col 54}{space 4} 79.47107{col 67}{space 3} 134.1646
+{txt}{space 12} {c |}
+win#c.margin {c |}
+{space 10}1  {c |}{col 14}{res}{space 2} 103.1523{col 26}{space 2} 17.93967{col 37}{space 1}    5.75{col 46}{space 3}0.000{col 54}{space 4} 67.99067{col 67}{space 3}  138.314
+{txt}{space 12} {c |}
+{space 7}_cons {c |}{col 14}{res}{space 2} 151.7831{col 26}{space 2} 2.846744{col 37}{space 1}   53.32{col 46}{space 3}0.000{col 54}{space 4} 146.2035{col 67}{space 3} 157.3627
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. rdrobust w x, p(1) c(0.5) h(0.5) kernel(uniform)
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .5}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     76740
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    41656{col 34}    35084{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    41656{col 34}    35084{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: w. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-77.577{col 33} 3.5019{col 43}-22.1532{col 52}0.000{col 60}-84.4406{col 73}-70.7136
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}3.5594{col 52}0.000{col 60} 6.68396{col 73} 23.0655
+{txt}{hline 19}{c BT}{hline 60}
+
+{com}. // close
+. 
+. // Visual test
+. rdplot w x, ///
+>         p(2) ///
+>         c(0.5) ///
+>         masspoints(adjust) ///
+>         /// bwselect(mserd) ///
+>         kernel(tri) ///
+>         binselect(espr) ///
+>         graph_options(legend(position(6)) ///
+>                                   xtitle("Running variable") ///
+>                                   ytitle("Eligible voters")) ///
+>         ci(95) ///
+>         shade 
+{res}{err}Mass points detected in the running variable.
+{res}
+RD Plot with evenly spaced number of bins using polynomial regression.
+
+{txt}{ralign 21: Cutoff c = .5}{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c{col 54}{txt}Number of obs  = {res}     76740
+{txt}{hline 22}{c +}{hline 22}{col 54}Kernel         = {res}{ralign 10:Triangular}
+{txt}{ralign 21:Number of obs}{col 22} {c |} {col 23}{res}    41656{col 37}    35084
+{txt}{ralign 21:Eff. Number of obs}{col 22} {c |} {col 23}{res}    41656{col 37}    35084
+{txt}{ralign 21:Order poly. fit (p)}{col 22} {c |} {col 23}{res}        2{col 37}        2
+{txt}{ralign 21:BW poly. fit (h)}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{ralign 21:Number of bins scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+
+Outcome: w. Running variable: x.
+{txt}{hline 22}{c TT}{hline 22}
+{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:Bins selected}{col 22} {c |} {col 23}{res}       11{col 37}       18
+{txt}{ralign 21:Average bin length}{col 22} {c |} {col 23}{res}    0.045{col 37}    0.028
+{txt}{ralign 21:Median bin length}{col 22} {c |} {col 23}{res}    0.045{col 37}    0.028
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:IMSE-optimal bins}{col 22} {c |} {col 23}{res}       11{col 37}       18
+{txt}{ralign 21:Mimicking Var. bins}{col 22} {c |} {col 23}{res}      786{col 37}      600
+{txt}{hline 22}{c +}{hline 22}
+{lalign 1:Rel. to IMSE-optimal:}{col 22} {c |} 
+{ralign 21:Implied scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+{txt}{ralign 21:WIMSE var. weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{ralign 21:WIMSE bias weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{hline 22}{c BT}{hline 22}
+
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q1b_rdplot.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q1b_rdplot.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}.         
+. // Statistical test
+. rdperm x w, c(0.5) perm(500) // rejects equality
+{res}RD Distribution Test using permutations.
+Cutoff c =        .5  {c |}   Left of c   Right of c     Number of obs   =      76740
+{hline 22}{c +}{hline 26}    Fixed q         =        462
+        Number of obs {c |}       41656        35084     Number of perms =        500
+   Eff. number of obs {c |}         462          462     Test statistic  =        CvM
+   Eff. neighbourhood {c |}   -.0090909            0 
+Running variable : {txt}    x
+{bf:Covariates}       :{txt}    w
+{hline 22}{c TT}{hline 26}
+{txt}{space 22}{c |}         {bf:P.value}
+{hline 22}{c +}{hline 26}
+               {bf:Result} {c |} {res}              0
+{hline 22}{c BT}{hline 26}
+{txt}
+{com}. cdfplot w if w < 500, by(win) // visually apparent that CDFs diverge early on
+{txt}(0 observations deleted)
+
+{com}. graph export "$do_loc/graphs/q1b_cdfs.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q1b_cdfs.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. /*
+> Q: is checking whether E [Wi | Xi] is continuous at the cutoff
+> be a useful placebo check for the RDD assumptions
+> 
+> Testing for the continuity of this expectation can be done visually using a 
+> scatter plot. If a ruler can be placed across the entire graph, then 
+> the continuity of E[Wi | Xi] is satisfied in a local linear model. The ruler
+> analogy can be extended to a polynomial of degree p, hence the result is 
+> somewhat arbitrary. The bandwidth introduces more arbitrariness. Canay and Kamat
+> (2017) suggested comparing CDFs of W at either side of the cutoff. The
+> result of rdperm shows that the null of equality of distributions can be 
+> rejected. Visually inspecting the CDFs confirms this.
+> 
+> */
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}. do "$do_loc/02_q1c.do"
+{txt}
+{com}. /*
+> Title:          02_q1c.do
+> Purpose:        Question 1.c, PSet 4
+> 
+> */
+. 
+. /* ---------------------------------------------------------------------------
+> 1c Check RDD assumption, density of Xi is continuous around c. 
+> */
+. 
+. 
+. use "$dta_loc/pset4_clean.dta", clear
+{txt}
+{com}. 
+. hist x // histogram seems ok
+{txt}(bin={res}48{txt}, start={res}0{txt}, width={res}.02083333{txt})
+{res}{txt}
+{com}. 
+. // try rddensity
+. rddensity x, c(0.45) plot kernel(triangular) all
+{res}Computing data-driven bandwidth selectors.
+
+Point estimates and standard errors have been adjusted for repeated observations.
+(Use option {it:nomasspoints} to suppress this adjustment.)
+
+RD Manipulation test using local polynomial density estimation.
+
+{txt}{ralign 9: c = }{res}    0.450{col 19} {c |}{col 22}{txt}Left of c{col 33}Right of c{col 53}Number of obs = {res}       76740
+{txt}{hline 19}{c +}{hline 22}{col 53}Model         = {res}{ralign 12:unrestricted}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    35726{col 34}    41014{col 53}{txt}BW method     = {res}{ralign 12:comb}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     8397{col 34}     7756{col 53}{txt}Kernel        = {res}{ralign 12:triangular}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        2{col 34}        2{col 53}{txt}VCE method    = {res}{ralign 12:jackknife}
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        3{col 34}        3
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.059{col 34}    0.064
+
+Running variable: x.
+{txt}{hline 19}{c TT}{hline 22}
+{ralign 18:Method}{col 19} {c |} {col 23}    T{col 38}P>|T|
+{hline 19}{c +}{hline 22}
+{ralign 18:Conventional}{col 19} {c |} {col 21}{res}  -0.7890{col 34}   0.4301
+{txt}{ralign 18:Robust}{col 19} {c |} {col 21}{res}  -0.9183{col 34}   0.3584
+{txt}{hline 19}{c BT}{hline 22}
+
+{res}P-values of binomial tests.{txt} (H0: prob = .5)
+{hline 19}{c TT}{hline 22}{c TT}{hline 10}
+{ralign 18: Window Length / 2}{col 20}{c |}{ralign 9: <c}{col 33}{ralign 9: >=c}{col 43}{c |}{col 49}P>|T|
+{hline 19}{c +}{hline 22}{c +}{hline 10}
+{res}{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{txt}{hline 19}{c BT}{hline 22}{c BT}{hline 10}
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q1c_45.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q1c_45.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. rddensity x, c(0.5) plot kernel(triangular) all
+{res}Computing data-driven bandwidth selectors.
+
+Point estimates and standard errors have been adjusted for repeated observations.
+(Use option {it:nomasspoints} to suppress this adjustment.)
+
+RD Manipulation test using local polynomial density estimation.
+
+{txt}{ralign 9: c = }{res}    0.500{col 19} {c |}{col 22}{txt}Left of c{col 33}Right of c{col 53}Number of obs = {res}       76740
+{txt}{hline 19}{c +}{hline 22}{col 53}Model         = {res}{ralign 12:unrestricted}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    41656{col 34}    35084{col 53}{txt}BW method     = {res}{ralign 12:comb}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     6592{col 34}     4859{col 53}{txt}Kernel        = {res}{ralign 12:triangular}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        2{col 34}        2{col 53}{txt}VCE method    = {res}{ralign 12:jackknife}
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        3{col 34}        3
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.055{col 34}    0.041
+
+Running variable: x.
+{txt}{hline 19}{c TT}{hline 22}
+{ralign 18:Method}{col 19} {c |} {col 23}    T{col 38}P>|T|
+{hline 19}{c +}{hline 22}
+{ralign 18:Conventional}{col 19} {c |} {col 21}{res} -13.3528{col 34}   0.0000
+{txt}{ralign 18:Robust}{col 19} {c |} {col 21}{res} -10.9449{col 34}   0.0000
+{txt}{hline 19}{c BT}{hline 22}
+
+{res}P-values of binomial tests.{txt} (H0: prob = .5)
+{hline 19}{c TT}{hline 22}{c TT}{hline 10}
+{ralign 18: Window Length / 2}{col 20}{c |}{ralign 9: <c}{col 33}{ralign 9: >=c}{col 43}{c |}{col 49}P>|T|
+{hline 19}{c +}{hline 22}{c +}{hline 10}
+{res}{col 10}    0.000{col 20}{c |}        0{col 33}      956{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}      956{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}      956{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}      956{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}      956{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}      956{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}      956{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}      956{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}      956{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}      956{col 43}{c |}{col 45}   0.0000
+{txt}{hline 19}{c BT}{hline 22}{c BT}{hline 10}
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q1c_50.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q1c_50.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}.         
+. rddensity x, c(0.55) plot kernel(triangular) all
+{res}Computing data-driven bandwidth selectors.
+
+Point estimates and standard errors have been adjusted for repeated observations.
+(Use option {it:nomasspoints} to suppress this adjustment.)
+
+RD Manipulation test using local polynomial density estimation.
+
+{txt}{ralign 9: c = }{res}    0.550{col 19} {c |}{col 22}{txt}Left of c{col 33}Right of c{col 53}Number of obs = {res}       76740
+{txt}{hline 19}{c +}{hline 22}{col 53}Model         = {res}{ralign 12:unrestricted}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    47372{col 34}    29368{col 53}{txt}BW method     = {res}{ralign 12:comb}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     6524{col 34}     6763{col 53}{txt}Kernel        = {res}{ralign 12:triangular}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        2{col 34}        2{col 53}{txt}VCE method    = {res}{ralign 12:jackknife}
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        3{col 34}        3
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.062{col 34}    0.065
+
+Running variable: x.
+{txt}{hline 19}{c TT}{hline 22}
+{ralign 18:Method}{col 19} {c |} {col 23}    T{col 38}P>|T|
+{hline 19}{c +}{hline 22}
+{ralign 18:Conventional}{col 19} {c |} {col 21}{res}  -0.4940{col 34}   0.6213
+{txt}{ralign 18:Robust}{col 19} {c |} {col 21}{res}   2.3461{col 34}   0.0190
+{txt}{hline 19}{c BT}{hline 22}
+
+{res}P-values of binomial tests.{txt} (H0: prob = .5)
+{hline 19}{c TT}{hline 22}{c TT}{hline 10}
+{ralign 18: Window Length / 2}{col 20}{c |}{ralign 9: <c}{col 33}{ralign 9: >=c}{col 43}{c |}{col 49}P>|T|
+{hline 19}{c +}{hline 22}{c +}{hline 10}
+{res}{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{txt}{hline 19}{c BT}{hline 22}{c BT}{hline 10}
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q1c_55.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q1c_55.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. /*
+> This algorithm compares densities below and above the cutoff using 
+> bandwidths calculated as follows:
+>         1) minimize the MSE of each density estimator to the L and R separately
+>         2) minimize the MSE of the difference of the two density estimators
+>         3) repeat (2) for the sum
+>         3) Take the median of the three bandwidths.
+> I have also set it to use a triangular kernel to emphasize observations
+> closer to the cutoff. One notices that shifting the cutoff slightly around
+> c=0.5 shows that indeed there appears to be manipulation at c = 0.5 but not 
+> at those other points.
+> */
+. 
+. 
+{txt}end of do-file
+
+{com}. do "$do_loc/02_q1d.do"
+{txt}
+{com}. /*
+> Title:          02_q1d.do
+> Purpose:        Question 1.d, PSet 4
+> 
+> */
+. 
+. 
+. /* ---------------------------------------------------------------------------
+> 1d Drop inconclusive races and repeat q1b and c 
+> */
+. 
+. use "$dta_loc/pset4_clean.dta", clear
+{txt}
+{com}. 
+. drop if x == 0.5
+{txt}(956 observations deleted)
+
+{com}. 
+. 
+. 
+. // repeat 1b --------------------------------------------------------
+. // Visual test
+. rdplot w x, ///
+>         p(2) ///
+>         c(0.5) ///
+>         masspoints(adjust) ///
+>         /// bwselect(mserd) ///
+>         kernel(tri) ///
+>         binselect(espr) ///
+>         graph_options(legend(position(6))) ///
+>         ci(95) ///
+>         shade 
+{res}{err}Mass points detected in the running variable.
+{res}
+RD Plot with evenly spaced number of bins using polynomial regression.
+
+{txt}{ralign 21: Cutoff c = .5}{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c{col 54}{txt}Number of obs  = {res}     75784
+{txt}{hline 22}{c +}{hline 22}{col 54}Kernel         = {res}{ralign 10:Triangular}
+{txt}{ralign 21:Number of obs}{col 22} {c |} {col 23}{res}    41656{col 37}    34128
+{txt}{ralign 21:Eff. Number of obs}{col 22} {c |} {col 23}{res}    41656{col 37}    34128
+{txt}{ralign 21:Order poly. fit (p)}{col 22} {c |} {col 23}{res}        2{col 37}        2
+{txt}{ralign 21:BW poly. fit (h)}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{ralign 21:Number of bins scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+
+Outcome: w. Running variable: x.
+{txt}{hline 22}{c TT}{hline 22}
+{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:Bins selected}{col 22} {c |} {col 23}{res}       11{col 37}       20
+{txt}{ralign 21:Average bin length}{col 22} {c |} {col 23}{res}    0.045{col 37}    0.025
+{txt}{ralign 21:Median bin length}{col 22} {c |} {col 23}{res}    0.045{col 37}    0.025
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:IMSE-optimal bins}{col 22} {c |} {col 23}{res}       11{col 37}       20
+{txt}{ralign 21:Mimicking Var. bins}{col 22} {c |} {col 23}{res}      778{col 37}      609
+{txt}{hline 22}{c +}{hline 22}
+{lalign 1:Rel. to IMSE-optimal:}{col 22} {c |} 
+{ralign 21:Implied scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+{txt}{ralign 21:WIMSE var. weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{ralign 21:WIMSE bias weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{hline 22}{c BT}{hline 22}
+
+{res}{txt}
+{com}. 
+. // Statistical test
+. rdperm x w, c(0.5) perm(500) // fails to reject equality
+{res}RD Distribution Test using permutations.
+Cutoff c =        .5  {c |}   Left of c   Right of c     Number of obs   =      75784
+{hline 22}{c +}{hline 26}    Fixed q         =        383
+        Number of obs {c |}       41656        34128     Number of perms =        500
+   Eff. number of obs {c |}         383          383     Test statistic  =        CvM
+   Eff. neighbourhood {c |}  -.00819671    .00887573 
+Running variable : {txt}    x
+{bf:Covariates}       :{txt}    w
+{hline 22}{c TT}{hline 26}
+{txt}{space 22}{c |}         {bf:P.value}
+{hline 22}{c +}{hline 26}
+               {bf:Result} {c |} {res}           .186
+{hline 22}{c BT}{hline 26}
+{txt}
+{com}. cdfplot w if w < 500, by(win) 
+{txt}(0 observations deleted)
+
+{com}. graph export "$do_loc/graphs/q1d_cdfs.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q1d_cdfs.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. // although still visually apparent that CDFs diverge early on
+. 
+. 
+. 
+. // repeat 1c --------------------------------------------------------
+. hist x // histogram seems ok
+{txt}(bin={res}48{txt}, start={res}0{txt}, width={res}.02083333{txt})
+{res}{txt}
+{com}. 
+. // try rddensity
+. rddensity x, c(0.45) plot kernel(triangular) all
+{res}Computing data-driven bandwidth selectors.
+
+Point estimates and standard errors have been adjusted for repeated observations.
+(Use option {it:nomasspoints} to suppress this adjustment.)
+
+RD Manipulation test using local polynomial density estimation.
+
+{txt}{ralign 9: c = }{res}    0.450{col 19} {c |}{col 22}{txt}Left of c{col 33}Right of c{col 53}Number of obs = {res}       75784
+{txt}{hline 19}{c +}{hline 22}{col 53}Model         = {res}{ralign 12:unrestricted}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    35726{col 34}    40058{col 53}{txt}BW method     = {res}{ralign 12:comb}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     8399{col 34}     8200{col 53}{txt}Kernel        = {res}{ralign 12:triangular}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        2{col 34}        2{col 53}{txt}VCE method    = {res}{ralign 12:jackknife}
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        3{col 34}        3
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.059{col 34}    0.076
+
+Running variable: x.
+{txt}{hline 19}{c TT}{hline 22}
+{ralign 18:Method}{col 19} {c |} {col 23}    T{col 38}P>|T|
+{hline 19}{c +}{hline 22}
+{ralign 18:Conventional}{col 19} {c |} {col 21}{res}   4.5365{col 34}   0.0000
+{txt}{ralign 18:Robust}{col 19} {c |} {col 21}{res}   0.3655{col 34}   0.7148
+{txt}{hline 19}{c BT}{hline 22}
+
+{res}P-values of binomial tests.{txt} (H0: prob = .5)
+{hline 19}{c TT}{hline 22}{c TT}{hline 10}
+{ralign 18: Window Length / 2}{col 20}{c |}{ralign 9: <c}{col 33}{ralign 9: >=c}{col 43}{c |}{col 49}P>|T|
+{hline 19}{c +}{hline 22}{c +}{hline 10}
+{res}{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}       89{col 33}        0{col 43}{c |}{col 45}   0.0000
+{txt}{hline 19}{c BT}{hline 22}{c BT}{hline 10}
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q1d_45.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q1d_45.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. rddensity x, c(0.5) plot kernel(triangular) all
+{res}Computing data-driven bandwidth selectors.
+
+Point estimates and standard errors have been adjusted for repeated observations.
+(Use option {it:nomasspoints} to suppress this adjustment.)
+
+RD Manipulation test using local polynomial density estimation.
+
+{txt}{ralign 9: c = }{res}    0.500{col 19} {c |}{col 22}{txt}Left of c{col 33}Right of c{col 53}Number of obs = {res}       75784
+{txt}{hline 19}{c +}{hline 22}{col 53}Model         = {res}{ralign 12:unrestricted}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    41656{col 34}    34128{col 53}{txt}BW method     = {res}{ralign 12:comb}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     6591{col 34}     5156{col 53}{txt}Kernel        = {res}{ralign 12:triangular}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        2{col 34}        2{col 53}{txt}VCE method    = {res}{ralign 12:jackknife}
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        3{col 34}        3
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.055{col 34}    0.053
+
+Running variable: x.
+{txt}{hline 19}{c TT}{hline 22}
+{ralign 18:Method}{col 19} {c |} {col 23}    T{col 38}P>|T|
+{hline 19}{c +}{hline 22}
+{ralign 18:Conventional}{col 19} {c |} {col 21}{res}  -3.8780{col 34}   0.0001
+{txt}{ralign 18:Robust}{col 19} {c |} {col 21}{res}  -3.4202{col 34}   0.0006
+{txt}{hline 19}{c BT}{hline 22}
+
+{res}P-values of binomial tests.{txt} (H0: prob = .5)
+{hline 19}{c TT}{hline 22}{c TT}{hline 10}
+{ralign 18: Window Length / 2}{col 20}{c |}{ralign 9: <c}{col 33}{ralign 9: >=c}{col 43}{c |}{col 49}P>|T|
+{hline 19}{c +}{hline 22}{c +}{hline 10}
+{res}{col 10}    0.002{col 20}{c |}       11{col 33}        9{col 43}{c |}{col 45}   0.8238
+{col 10}    0.003{col 20}{c |}       62{col 33}       45{col 43}{c |}{col 45}   0.1215
+{col 10}    0.005{col 20}{c |}      140{col 33}      120{col 43}{c |}{col 45}   0.2386
+{col 10}    0.007{col 20}{c |}      269{col 33}      237{col 43}{c |}{col 45}   0.1681
+{col 10}    0.008{col 20}{c |}      404{col 33}      345{col 43}{c |}{col 45}   0.0340
+{col 10}    0.010{col 20}{c |}      575{col 33}      484{col 43}{c |}{col 45}   0.0057
+{col 10}    0.012{col 20}{c |}      808{col 33}      649{col 43}{c |}{col 45}   0.0000
+{col 10}    0.013{col 20}{c |}     1008{col 33}      795{col 43}{c |}{col 45}   0.0000
+{col 10}    0.015{col 20}{c |}     1236{col 33}      976{col 43}{c |}{col 45}   0.0000
+{col 10}    0.017{col 20}{c |}     1544{col 33}     1200{col 43}{c |}{col 45}   0.0000
+{txt}{hline 19}{c BT}{hline 22}{c BT}{hline 10}
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q1d_50.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q1d_50.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. rddensity x, c(0.55) plot kernel(triangular) all
+{res}Computing data-driven bandwidth selectors.
+
+Point estimates and standard errors have been adjusted for repeated observations.
+(Use option {it:nomasspoints} to suppress this adjustment.)
+
+RD Manipulation test using local polynomial density estimation.
+
+{txt}{ralign 9: c = }{res}    0.550{col 19} {c |}{col 22}{txt}Left of c{col 33}Right of c{col 53}Number of obs = {res}       75784
+{txt}{hline 19}{c +}{hline 22}{col 53}Model         = {res}{ralign 12:unrestricted}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    46416{col 34}    29368{col 53}{txt}BW method     = {res}{ralign 12:comb}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     5638{col 34}     6763{col 53}{txt}Kernel        = {res}{ralign 12:triangular}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        2{col 34}        2{col 53}{txt}VCE method    = {res}{ralign 12:jackknife}
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        3{col 34}        3
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.062{col 34}    0.065
+
+Running variable: x.
+{txt}{hline 19}{c TT}{hline 22}
+{ralign 18:Method}{col 19} {c |} {col 23}    T{col 38}P>|T|
+{hline 19}{c +}{hline 22}
+{ralign 18:Conventional}{col 19} {c |} {col 21}{res}  -2.0580{col 34}   0.0396
+{txt}{ralign 18:Robust}{col 19} {c |} {col 21}{res}   5.0569{col 34}   0.0000
+{txt}{hline 19}{c BT}{hline 22}
+
+{res}P-values of binomial tests.{txt} (H0: prob = .5)
+{hline 19}{c TT}{hline 22}{c TT}{hline 10}
+{ralign 18: Window Length / 2}{col 20}{c |}{ralign 9: <c}{col 33}{ralign 9: >=c}{col 43}{c |}{col 49}P>|T|
+{hline 19}{c +}{hline 22}{c +}{hline 10}
+{res}{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{col 10}    0.000{col 20}{c |}        0{col 33}       66{col 43}{c |}{col 45}   0.0000
+{txt}{hline 19}{c BT}{hline 22}{c BT}{hline 10}
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q1d_55.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q1d_55.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. 
+. /*
+> Ans: Explain.
+> Dropping observations right at the cutoff leads us to fail to reject the 
+> null hypothesis that the densities are not continuous at the cutoff.
+> 
+> What occurs is that there was no bunching over 0.5. Rather, many races end up 
+> tied. Dropping such inconclusive races shows that even though there are 
+> relatively fewer observations right before the cutoff, there also appear to be 
+> a relatively lower observations from conclusive races right above the cutoff.
+> So even though there is a visual dip in the estimated density plot, there is
+> no discontinuity.
+> 
+> */
+. 
+. save "$dta_loc/pset4_trim.dta", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Dropbox (Personal)/ARE213/Pset4/pset4_trim.dta{rm}
+saved
+{p_end}
+
+{com}. 
+. 
+. 
+{txt}end of do-file
+
+{com}. do "$do_loc/02_q1e.do"
+{txt}
+{com}. /*
+> Title:          02_q1e.do
+> Purpose:        Question 1.e, PSet 4
+> 
+> */
+. 
+. 
+. 
+. /* ---------------------------------------------------------------------------
+> 1d Redefine x and 
+> */
+. use "$dta_loc/pset4_trim.dta", clear
+{txt}
+{com}. gen xp = votes_for - votes_against, after(x)
+{txt}
+{com}. sort xp
+{txt}
+{com}. 
+. // cdfplot xp
+. 
+. xtile xp_100 = xp, nq(100)
+{txt}
+{com}. // scatter xp_100 xp
+. // drop if inlist(xp_100, 1,2,99,100)
+. 
+. // Test for continuity of mean firm size around the cutoff.
+. // Visual test
+. rdplot w xp if !inlist(xp_100, 1,2,99,100) , ///
+>         p(2) ///
+>         c(0) ///
+>         masspoints(adjust) ///
+>         bwselect(mserd) ///
+>         h(`h_l' `h_r') ///
+>         kernel(tri) ///
+>         binselect(espr) ///
+>         graph_options(legend(position(6))) ///
+>         ci(95) ///
+>         shade 
+{res}{err}Mass points detected in the running variable.
+{res}
+RD Plot with evenly spaced number of bins using polynomial regression.
+
+{txt}{ralign 21: Cutoff c = 0}{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c{col 54}{txt}Number of obs  = {res}     72756
+{txt}{hline 22}{c +}{hline 22}{col 54}Kernel         = {res}{ralign 10:Triangular}
+{txt}{ralign 21:Number of obs}{col 22} {c |} {col 23}{res}    40138{col 37}    32618
+{txt}{ralign 21:Eff. Number of obs}{col 22} {c |} {col 23}{res}    40138{col 37}    32618
+{txt}{ralign 21:Order poly. fit (p)}{col 22} {c |} {col 23}{res}        2{col 37}        2
+{txt}{ralign 21:BW poly. fit (h)}{col 22} {c |} {col 23}{res}  159.000{col 37}  148.000
+{txt}{ralign 21:Number of bins scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+
+Outcome: w. Running variable: xp.
+{txt}{hline 22}{c TT}{hline 22}
+{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:Bins selected}{col 22} {c |} {col 23}{res}       30{col 37}       16
+{txt}{ralign 21:Average bin length}{col 22} {c |} {col 23}{res}    5.300{col 37}    9.250
+{txt}{ralign 21:Median bin length}{col 22} {c |} {col 23}{res}    5.300{col 37}    9.250
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:IMSE-optimal bins}{col 22} {c |} {col 23}{res}       30{col 37}       16
+{txt}{ralign 21:Mimicking Var. bins}{col 22} {c |} {col 23}{res}      346{col 37}      137
+{txt}{hline 22}{c +}{hline 22}
+{lalign 1:Rel. to IMSE-optimal:}{col 22} {c |} 
+{ralign 21:Implied scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+{txt}{ralign 21:WIMSE var. weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{ralign 21:WIMSE bias weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{hline 22}{c BT}{hline 22}
+
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q1e.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q1e.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+.         
+. /* 1e and 1f Ans: 
+> 
+> 1e: Redefining x as the difference shows that firms tend to be smaller if the race
+> is close. That is, larger firms have larger majorities either for or against.
+> 
+> 1f: From the exercise in q1d, it appears that there is indeed bunching 
+> that causes close races. Dropping inconclusive races results in balance tests
+> that fail to reject the identifying assumption of the continuity of potential 
+> outcomes which we test using balance of w and x at the cutoff.
+> 
+> */
+. 
+. save "$dta_loc/pset4_trim2.dta", replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Dropbox (Personal)/ARE213/Pset4/pset4_trim2.dta{rm}
+saved
+{p_end}
+
+{com}. 
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}. do "$do_loc/02_q2a.do"
+{txt}
+{com}. /*
+> Title:          02_q2a.do
+> Purpose:        Question 2.a, PSet 4
+> 
+> */
+. 
+. 
+. 
+. use "$dta_loc/pset4_trim2.dta", clear
+{txt}
+{com}. 
+. gen y = logwage 
+{txt}
+{com}. 
+. scatter y x
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q2a_yx.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q2a_yx.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. // statistically inspect ATE at c
+. reg y i.win##c.margin // Local linear regression
+
+{txt}      Source {c |}       SS           df       MS      Number of obs   ={res}    75,784
+{txt}{hline 13}{c +}{hline 34}   F(3, 75780)     = {res}   435.10
+{txt}       Model {c |} {res} 1098.54679         3  366.182262   {txt}Prob > F        ={res}    0.0000
+{txt}    Residual {c |} {res} 63776.1907    75,780  .841596605   {txt}R-squared       ={res}    0.0169
+{txt}{hline 13}{c +}{hline 34}   Adj R-squared   ={res}    0.0169
+{txt}       Total {c |} {res} 64874.7375    75,783  .856059242   {txt}Root MSE        =   {res} .91739
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}           y{col 14}{c |} Coefficient{col 26}  Std. err.{col 38}      t{col 46}   P>|t|{col 54}     [95% con{col 67}f. interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 7}1.win {c |}{col 14}{res}{space 2} .1551971{col 26}{space 2} .0118305{col 37}{space 1}   13.12{col 46}{space 3}0.000{col 54}{space 4} .1320094{col 67}{space 3} .1783848
+{txt}{space 6}margin {c |}{col 14}{res}{space 2} .1714447{col 26}{space 2} .0397388{col 37}{space 1}    4.31{col 46}{space 3}0.000{col 54}{space 4} .0935568{col 67}{space 3} .2493326
+{txt}{space 12} {c |}
+win#c.margin {c |}
+{space 10}1  {c |}{col 14}{res}{space 2} .0565245{col 26}{space 2} .0505913{col 37}{space 1}    1.12{col 46}{space 3}0.264{col 54}{space 4}-.0426343{col 67}{space 3} .1556833
+{txt}{space 12} {c |}
+{space 7}_cons {c |}{col 14}{res}{space 2} 11.34204{col 26}{space 2} .0082005{col 37}{space 1} 1383.09{col 46}{space 3}0.000{col 54}{space 4} 11.32597{col 67}{space 3} 11.35812
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. rdrobust y x, p(1) c(0.5) h(0.5) kernel(uniform)
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .5}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     75784
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    41656{col 34}    34128{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    41656{col 34}    34128{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}  .1552{col 33} .01161{col 43}13.3654{col 52}0.000{col 60} .132438{col 73} .177956
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}8.7974{col 52}0.000{col 60} .118795{col 73}   .1869
+{txt}{hline 19}{c BT}{hline 60}
+
+{com}. 
+. // visually inspect ATE at c
+. rdplot y x, ///
+>         p(1) ///
+>         c(0.5) ///
+>         masspoints(adjust) ///
+>         /// bwselect(mserd) ///
+>         kernel(tri) ///
+>         binselect(espr) ///
+>         graph_options(legend(position(6))) ///
+>         ci(95) ///
+>         shade 
+{res}{err}Mass points detected in the running variable.
+{res}
+RD Plot with evenly spaced number of bins using polynomial regression.
+
+{txt}{ralign 21: Cutoff c = .5}{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c{col 54}{txt}Number of obs  = {res}     75784
+{txt}{hline 22}{c +}{hline 22}{col 54}Kernel         = {res}{ralign 10:Triangular}
+{txt}{ralign 21:Number of obs}{col 22} {c |} {col 23}{res}    41656{col 37}    34128
+{txt}{ralign 21:Eff. Number of obs}{col 22} {c |} {col 23}{res}    41656{col 37}    34128
+{txt}{ralign 21:Order poly. fit (p)}{col 22} {c |} {col 23}{res}        1{col 37}        1
+{txt}{ralign 21:BW poly. fit (h)}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{ralign 21:Number of bins scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 22}{c TT}{hline 22}
+{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:Bins selected}{col 22} {c |} {col 23}{res}        6{col 37}        6
+{txt}{ralign 21:Average bin length}{col 22} {c |} {col 23}{res}    0.083{col 37}    0.083
+{txt}{ralign 21:Median bin length}{col 22} {c |} {col 23}{res}    0.083{col 37}    0.083
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:IMSE-optimal bins}{col 22} {c |} {col 23}{res}        6{col 37}        6
+{txt}{ralign 21:Mimicking Var. bins}{col 22} {c |} {col 23}{res}      604{col 37}      599
+{txt}{hline 22}{c +}{hline 22}
+{lalign 1:Rel. to IMSE-optimal:}{col 22} {c |} 
+{ralign 21:Implied scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+{txt}{ralign 21:WIMSE var. weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{ralign 21:WIMSE bias weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{hline 22}{c BT}{hline 22}
+
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q2a_h50.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q2a_h50.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}.         
+. // setting h by minimizing MSE tightens the bandwidth and exagerates the ATE
+. rdrobust y x, p(1) c(0.5) kernel(uniform) 
+{res}{err}Mass points detected in the running variable.
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .5}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     75784
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:mserd}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    41656{col 34}    34128{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    14499{col 34}    11060{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.110{col 34}    0.110
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.206{col 34}    0.206
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    0.533{col 34}    0.533
+{txt}{ralign 18:Unique obs}{col 19} {c |} {col 21}{res}     7352{col 34}     5274
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .17225{col 33} .02428{col 43}7.0948{col 52}0.000{col 60} .124668{col 73} .219839
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}6.0272{col 52}0.000{col 60} .117361{col 73} .230472
+{txt}{hline 19}{c BT}{hline 60}
+Estimates adjusted for mass points in the running variable.
+
+{com}. local h_l `e(h_l)'
+{txt}
+{com}. local h_r `e(h_r)'
+{txt}
+{com}. rdplot y x, ///
+>         p(1) ///
+>         c(0.5) ///
+>         masspoints(adjust) ///
+>         /// bwselect(mserd) ///
+>         h(`h_l' `h_r') ///
+>         kernel(tri) ///
+>         binselect(espr) ///
+>         graph_options(legend(position(6))) ///
+>         ci(95) ///
+>         shade 
+{res}{err}Mass points detected in the running variable.
+{res}
+RD Plot with evenly spaced number of bins using polynomial regression.
+
+{txt}{ralign 21: Cutoff c = .5}{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c{col 54}{txt}Number of obs  = {res}     75784
+{txt}{hline 22}{c +}{hline 22}{col 54}Kernel         = {res}{ralign 10:Triangular}
+{txt}{ralign 21:Number of obs}{col 22} {c |} {col 23}{res}    41656{col 37}    34128
+{txt}{ralign 21:Eff. Number of obs}{col 22} {c |} {col 23}{res}    14499{col 37}    11060
+{txt}{ralign 21:Order poly. fit (p)}{col 22} {c |} {col 23}{res}        1{col 37}        1
+{txt}{ralign 21:BW poly. fit (h)}{col 22} {c |} {col 23}{res}    0.110{col 37}    0.110
+{txt}{ralign 21:Number of bins scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 22}{c TT}{hline 22}
+{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:Bins selected}{col 22} {c |} {col 23}{res}        6{col 37}        6
+{txt}{ralign 21:Average bin length}{col 22} {c |} {col 23}{res}    0.083{col 37}    0.083
+{txt}{ralign 21:Median bin length}{col 22} {c |} {col 23}{res}    0.083{col 37}    0.083
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:IMSE-optimal bins}{col 22} {c |} {col 23}{res}        6{col 37}        6
+{txt}{ralign 21:Mimicking Var. bins}{col 22} {c |} {col 23}{res}      604{col 37}      599
+{txt}{hline 22}{c +}{hline 22}
+{lalign 1:Rel. to IMSE-optimal:}{col 22} {c |} 
+{ralign 21:Implied scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+{txt}{ralign 21:WIMSE var. weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{ralign 21:WIMSE bias weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{hline 22}{c BT}{hline 22}
+
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q2a_hopt.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q2a_hopt.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}. 
+. /*
+> // plotting xp against y is very different and sensitive to outliers
+> rdplot y xp if !inlist(xp_100, 1,2,99,100), ///
+>         p(2) ///
+>         c(0.5) ///
+>         masspoints(adjust) ///
+>         /// bwselect(mserd) ///
+>         kernel(tri) ///
+>         binselect(espr) ///
+>         graph_options(legend(position(6))) ///
+>         ci(95) ///
+>         shade 
+>         
+> rdplot y xp, ///
+>         p(2) ///
+>         c(0.5) ///
+>         masspoints(adjust) ///
+>         /// bwselect(mserd) ///
+>         kernel(tri) ///
+>         binselect(espr) ///
+>         graph_options(legend(position(6))) ///
+>         ci(95) ///
+>         shade 
+> */
+. 
+. 
+. /* 2a Discuss:
+> 
+> Upon visual inspection, the outcome appears to follow a local linear trend
+> on both sides of the cutoff. I therefore implement a local linear regression
+> using the full range of the running variable as a bandwidth. I also use a
+> uniform kernel but a triangular one does not change the results by much. My
+> approach is thus equivalent to a specification where the treatment and the 
+> margin (running variable less cutoff) are fully interacted. A local linear
+> specification is not always the most informative because the conditional 
+> expectation of Y given X can have some curvature. In our case, it apparently
+> does not.
+> 
+> The effect is a statistically significant positive number.
+> 
+> 2c: see discussion above.
+> 
+> */
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}. do "$do_loc/02_q2b.do"
+{txt}
+{com}. /*
+> Title:          02_q2b.do
+> Purpose:        Question 2.b, PSet 4
+> 
+> */
+. 
+. /*
+> What's the estimand? The estimand is \hat{c -(}tau{c )-}, the same one as in slide 15. 
+> Larger or smaller firms? As we showed in q 1
+> 
+> */
+. 
+. use "$dta_loc/pset4_trim2.dta", clear
+{txt}
+{com}. 
+. gen y = logwage 
+{txt}
+{com}. 
+. rdrobust y x, p(1) c(0.5) kernel(uniform) 
+{res}{err}Mass points detected in the running variable.
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .5}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     75784
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:mserd}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    41656{col 34}    34128{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    14499{col 34}    11060{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.110{col 34}    0.110
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.206{col 34}    0.206
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    0.533{col 34}    0.533
+{txt}{ralign 18:Unique obs}{col 19} {c |} {col 21}{res}     7352{col 34}     5274
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .17225{col 33} .02428{col 43}7.0948{col 52}0.000{col 60} .124668{col 73} .219839
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}6.0272{col 52}0.000{col 60} .117361{col 73} .230472
+{txt}{hline 19}{c BT}{hline 60}
+Estimates adjusted for mass points in the running variable.
+
+{com}. local h_l `e(h_l)'
+{txt}
+{com}. local h_r `e(h_r)'
+{txt}
+{com}. rdplot y x, ///
+>         p(1) ///
+>         c(0.5) ///
+>         masspoints(adjust) ///
+>         /// bwselect(mserd) ///
+>         h(`h_l' `h_r') ///
+>         kernel(tri) ///
+>         binselect(espr) ///
+>         graph_options(legend(position(6))) ///
+>         ci(95) ///
+>         shade 
+{res}{err}Mass points detected in the running variable.
+{res}
+RD Plot with evenly spaced number of bins using polynomial regression.
+
+{txt}{ralign 21: Cutoff c = .5}{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c{col 54}{txt}Number of obs  = {res}     75784
+{txt}{hline 22}{c +}{hline 22}{col 54}Kernel         = {res}{ralign 10:Triangular}
+{txt}{ralign 21:Number of obs}{col 22} {c |} {col 23}{res}    41656{col 37}    34128
+{txt}{ralign 21:Eff. Number of obs}{col 22} {c |} {col 23}{res}    14499{col 37}    11060
+{txt}{ralign 21:Order poly. fit (p)}{col 22} {c |} {col 23}{res}        1{col 37}        1
+{txt}{ralign 21:BW poly. fit (h)}{col 22} {c |} {col 23}{res}    0.110{col 37}    0.110
+{txt}{ralign 21:Number of bins scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 22}{c TT}{hline 22}
+{col 22} {c |} {col 23}Left of {res}c{col 36}{txt}Right of {res}c
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:Bins selected}{col 22} {c |} {col 23}{res}        6{col 37}        6
+{txt}{ralign 21:Average bin length}{col 22} {c |} {col 23}{res}    0.083{col 37}    0.083
+{txt}{ralign 21:Median bin length}{col 22} {c |} {col 23}{res}    0.083{col 37}    0.083
+{txt}{hline 22}{c +}{hline 22}
+{ralign 21:IMSE-optimal bins}{col 22} {c |} {col 23}{res}        6{col 37}        6
+{txt}{ralign 21:Mimicking Var. bins}{col 22} {c |} {col 23}{res}      604{col 37}      599
+{txt}{hline 22}{c +}{hline 22}
+{lalign 1:Rel. to IMSE-optimal:}{col 22} {c |} 
+{ralign 21:Implied scale}{col 22} {c |} {col 23}{res}    1.000{col 37}    1.000
+{txt}{ralign 21:WIMSE var. weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{ralign 21:WIMSE bias weight}{col 22} {c |} {col 23}{res}    0.500{col 37}    0.500
+{txt}{hline 22}{c BT}{hline 22}
+
+{res}{txt}
+{com}. 
+. // around the cutoff, firms are not larger
+. gen localtobw = inrange(x, 0.5-`h_l', 0.5+`h_r')
+{txt}
+{com}. ttest w, by(localtobw)
+
+{txt}Two-sample t test with equal variances
+{hline 9}{c TT}{hline 68}
+   Group{col 10}{c |}{col 16}Obs{col 27}Mean{col 35}Std. err.{col 47}Std. dev.{col 59}[95% conf. interval]
+{hline 9}{c +}{hline 68}
+       0 {c |}{res}{col 12} 50,225{col 22} 131.7441{col 34} 1.663188{col 46}  372.736{col 58} 128.4842{col 70}  135.004
+       {txt}1 {c |}{res}{col 12} 25,559{col 22} 134.3151{col 34} 1.482614{col 46} 237.0283{col 58} 131.4091{col 70} 137.2211
+{txt}{hline 9}{c +}{hline 68}
+Combined {c |}{res}{col 12} 75,784{col 22} 132.6112{col 34} 1.210376{col 46}  333.203{col 58} 130.2389{col 70} 134.9835
+{txt}{hline 9}{c +}{hline 68}
+    diff {c |}{res}{col 22}-2.571003{col 34} 2.560152{col 58}-7.588889{col 70} 2.446883
+{txt}{hline 9}{c BT}{hline 68}
+    diff = mean({res}0{txt}) - mean({res}1{txt})                                      t = {res} -1.0042
+{txt}H0: diff = 0                                     Degrees of freedom = {res}   75782
+
+    {txt}Ha: diff < 0                 Ha: diff != 0                 Ha: diff > 0
+ Pr(T < t) = {res}0.1576         {txt}Pr(|T| > |t|) = {res}0.3153          {txt}Pr(T > t) = {res}0.8424
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. do "$do_loc/02_q2d.do"
+{txt}
+{com}. /*
+> Title:          02_q2d.do
+> Purpose:        Question 2.d, PSet 4
+> 
+> */
+. 
+. 
+. 
+. use "$dta_loc/pset4_trim2.dta", clear
+{txt}
+{com}. 
+. gen y = logwage 
+{txt}
+{com}. 
+. local h_max = 50
+{txt}
+{com}. local step = 50
+{txt}
+{com}. forval i = 1(`=`h_max'/`step'')`h_max' {c -(}
+{txt}  2{com}.         dis "rdrobust with h(`i'/100)"
+{txt}  3{com}.         qui rdrobust y x, p(1) c(0.5) h(`i'/100) kernel(uniform) 
+{txt}  4{com}.         
+.         // get stats
+.         local tau_`i' = `e(tau_cl)'
+{txt}  5{com}.         local z_bc = e(tau_bc) / e(se_tau_rb)
+{txt}  6{com}.         local bc_lb_`i' = e(tau_bc) - invnormal(0.975)*e(se_tau_rb)
+{txt}  7{com}.         local bc_ub_`i' = e(tau_bc) + invnormal(0.975)*e(se_tau_rb)
+{txt}  8{com}. {c )-}
+rdrobust with h(1/100)
+rdrobust with h(2/100)
+rdrobust with h(3/100)
+rdrobust with h(4/100)
+rdrobust with h(5/100)
+rdrobust with h(6/100)
+rdrobust with h(7/100)
+rdrobust with h(8/100)
+rdrobust with h(9/100)
+rdrobust with h(10/100)
+rdrobust with h(11/100)
+rdrobust with h(12/100)
+rdrobust with h(13/100)
+rdrobust with h(14/100)
+rdrobust with h(15/100)
+rdrobust with h(16/100)
+rdrobust with h(17/100)
+rdrobust with h(18/100)
+rdrobust with h(19/100)
+rdrobust with h(20/100)
+rdrobust with h(21/100)
+rdrobust with h(22/100)
+rdrobust with h(23/100)
+rdrobust with h(24/100)
+rdrobust with h(25/100)
+rdrobust with h(26/100)
+rdrobust with h(27/100)
+rdrobust with h(28/100)
+rdrobust with h(29/100)
+rdrobust with h(30/100)
+rdrobust with h(31/100)
+rdrobust with h(32/100)
+rdrobust with h(33/100)
+rdrobust with h(34/100)
+rdrobust with h(35/100)
+rdrobust with h(36/100)
+rdrobust with h(37/100)
+rdrobust with h(38/100)
+rdrobust with h(39/100)
+rdrobust with h(40/100)
+rdrobust with h(41/100)
+rdrobust with h(42/100)
+rdrobust with h(43/100)
+rdrobust with h(44/100)
+rdrobust with h(45/100)
+rdrobust with h(46/100)
+rdrobust with h(47/100)
+rdrobust with h(48/100)
+rdrobust with h(49/100)
+rdrobust with h(50/100)
+{txt}
+{com}. 
+. 
+. // plot estimates and SEs against bandwidth
+. clear 
+{txt}
+{com}. set obs `step'
+{txt}{p}
+Number of observations ({bf:_N}) was 0,
+now 50.
+{p_end}
+
+{com}. gen h = .
+{txt}(50 missing values generated)
+
+{com}. gen tau = .
+{txt}(50 missing values generated)
+
+{com}. gen rb_lb = .
+{txt}(50 missing values generated)
+
+{com}. gen rb_ub = .
+{txt}(50 missing values generated)
+
+{com}. 
+. forval i = 1/`=_N' {c -(}
+{txt}  2{com}.         replace h     = `i'/`h_max' in `i'
+{txt}  3{com}.         replace tau   = `tau_`i''   in `i'
+{txt}  4{com}.         replace rb_lb = `bc_lb_`i'' in `i'
+{txt}  5{com}.         replace rb_ub = `bc_ub_`i'' in `i'
+{txt}  6{com}. {c )-}
+{txt}(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+
+{com}. 
+. label var rb_ub "Bias-corrected upper bound (95% CI)"
+{txt}
+{com}. label var tau   "Conventional local-polynomial RD estimate"
+{txt}
+{com}. label var rb_lb "Bias-corrected lower bound (95% CI)"
+{txt}
+{com}. label var h "Bandwidth"
+{txt}
+{com}. twoway (line rb_ub h, lpattern(dash) lcolor(grey)) ///
+>                 (line tau h, lcolor(black)) ///
+>                 (line rb_lb h, lpattern(dash) lcolor(grey)), ///
+>                 legend(position(6)) ytitle("Estimate") ///
+>                 yline(0, lcolor(red) lpattern(solid))
+{p 0 4 2}
+{txt}(note:  named style
+grey not found in class
+color,  default attributes used)
+{p_end}
+{p 0 4 2}
+{txt}(note:  named style
+grey not found in class
+color,  default attributes used)
+{p_end}
+{p 0 4 2}
+{txt}(note:  named style
+grey not found in class
+color,  default attributes used)
+{p_end}
+{p 0 4 2}
+{txt}(note:  named style
+grey not found in class
+color,  default attributes used)
+{p_end}
+{res}{txt}
+{com}. 
+. graph export "$do_loc/graphs/q2d.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q2d.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}.   
+.   
+. /* As the bandwidth increases, the estimates become less biased in this 
+> local linear setting.
+> */
+. 
+. 
+{txt}end of do-file
+
+{com}. do "$do_loc/02_q2e.do"
+{txt}
+{com}. /*
+> Title:          02_q2e.do
+> Purpose:        Question 2.e, PSet 4
+> 
+> */
+. /*
+> 2.E Alter the cutoff.
+> 
+> */
+. 
+. use "$dta_loc/pset4_trim2.dta", clear
+{txt}
+{com}. 
+. gen y = logwage 
+{txt}
+{com}. 
+. local c_range 30(10)70
+{txt}
+{com}. 
+. forval i = 1/41 {c -(}
+{txt}  2{com}.         local c = 29+`i' // c= 30(1)70
+{txt}  3{com}.         
+.         gen margin_`c' = x - `c'/100
+{txt}  4{com}.         gen win_`c'    = x > `c'/100
+{txt}  5{com}. {c )-}
+{txt}
+{com}. 
+. // Local linear regression
+. /*
+> forval i = 1/41 {c -(}
+>         local c = 29+`i' // c= 30(1)70
+>         if      `c' <  50 reg y i.win_`c'##c.margin_`c' if x < 0.5 
+>         else if `c' == 50 reg y i.win_`c'##c.margin_`c'
+>         else if `c' >  50 reg y i.win_`c'##c.margin_`c' if x > 0.5 
+> {c )-}
+> */
+. 
+. local rdopts ""
+{txt}
+{com}. forval i = 1/41 {c -(}
+{txt}  2{com}.         
+.         // get c
+.         local c = 29+`i' // c= 30(1)70
+{txt}  3{com}.         local c_reg = `c'/100
+{txt}  4{com}.         
+.         if      `c' <  50 rdrobust y x if x < 0.5, c(`c_reg') p(1) h(50/100) kernel(uniform)
+{txt}  5{com}.         else if `c' == 50 rdrobust y x,                     c(`c_reg') p(1) h(50/100) kernel(uniform)
+{txt}  6{com}.         else if `c' >  50 rdrobust y x if x > 0.5, c(`c_reg') p(1) h(50/100) kernel(uniform)
+{txt}  7{com}.         
+.         // get stats
+.         local tau_`c' = `e(tau_cl)'
+{txt}  8{com}.         dis "tau_`c' = `tau_`c''"
+{txt}  9{com}.         local z_bc = e(tau_bc) / e(se_tau_rb)
+{txt} 10{com}.         local bc_lb_`c' = e(tau_bc) - invnormal(0.975)*e(se_tau_rb)
+{txt} 11{com}.         local bc_ub_`c' = e(tau_bc) + invnormal(0.975)*e(se_tau_rb)
+{txt} 12{com}. {c )-}
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .3}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    15195{col 34}    26461{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    15195{col 34}    26461{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01502{col 33} .01845{col 43}0.8140{col 52}0.416{col 60}-.021149{col 73} .051192
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.1407{col 52}0.888{col 60}-.056689{col 73} .049096
+{txt}{hline 19}{c BT}{hline 60}
+tau_30 = .015021428558839
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .31}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    16406{col 34}    25250{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    16406{col 34}    25250{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .00878{col 33} .01824{col 43}0.4810{col 52}0.631{col 60}-.026983{col 73} .044535
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.5599{col 52}0.576{col 60}-.067179{col 73} .037325
+{txt}{hline 19}{c BT}{hline 60}
+tau_31 = .0087761259873247
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .32}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    17674{col 34}    23982{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    17674{col 34}    23982{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01224{col 33}  .0181{col 43}0.6764{col 52}0.499{col 60}-.023234{col 73} .047722
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.1910{col 52}0.849{col 60}-.056797{col 73} .046711
+{txt}{hline 19}{c BT}{hline 60}
+tau_32 = .0122437935695849
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .33}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    18859{col 34}    22797{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    18859{col 34}    22797{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .02172{col 33} .01802{col 43}1.2052{col 52}0.228{col 60}-.013602{col 73} .057044
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.6917{col 52}0.489{col 60}  -.0333{col 73} .069627
+{txt}{hline 19}{c BT}{hline 60}
+tau_33 = .0217211098977259
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .34}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    20061{col 34}    21595{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    20061{col 34}    21595{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01245{col 33}   .018{col 43}0.6914{col 52}0.489{col 60}-.022836{col 73} .047727
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.1006{col 52}0.920{col 60}-.048578{col 73} .053833
+{txt}{hline 19}{c BT}{hline 60}
+tau_34 = .0124454009049089
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .35}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    21507{col 34}    20149{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    21507{col 34}    20149{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01003{col 33} .01816{col 43}0.5525{col 52}0.581{col 60}-.025558{col 73} .045622
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.1085{col 52}0.914{col 60}-.049084{col 73} .054836
+{txt}{hline 19}{c BT}{hline 60}
+tau_35 = .0100319166975602
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .36}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    22802{col 34}    18854{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    22802{col 34}    18854{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01462{col 33} .01828{col 43}0.8000{col 52}0.424{col 60}  -.0212{col 73} .050444
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.6753{col 52}0.499{col 60} -.03406{col 73} .069868
+{txt}{hline 19}{c BT}{hline 60}
+tau_36 = .0146219233892815
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .37}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    24211{col 34}    17445{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    24211{col 34}    17445{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.00777{col 33} .01851{col 43}-0.4198{col 52}0.675{col 60} -.04406{col 73} .028515
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.9555{col 52}0.339{col 60}-.078265{col 73} .026964
+{txt}{hline 19}{c BT}{hline 60}
+tau_37 = -.0077726241658844
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .38}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    25775{col 34}    15881{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    25775{col 34}    15881{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.01689{col 33} .01906{col 43}-0.8863{col 52}0.375{col 60}-.054254{col 73} .020466
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-1.6830{col 52}0.092{col 60}-.102506{col 73} .007793
+{txt}{hline 19}{c BT}{hline 60}
+tau_38 = -.0168941355655257
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .39}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    27154{col 34}    14502{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    27154{col 34}    14502{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .00011{col 33} .01954{col 43}0.0058{col 52}0.995{col 60}-.038175{col 73} .038403
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.3402{col 52}0.734{col 60}-.066784{col 73} .047028
+{txt}{hline 19}{c BT}{hline 60}
+tau_39 = .0001140979514993
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .4}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    28253{col 34}    13403{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    28253{col 34}    13403{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.01523{col 33}  .0195{col 43}-0.7812{col 52}0.435{col 60}-.053441{col 73} .022982
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-1.4866{col 52}0.137{col 60}-.095815{col 73} .013159
+{txt}{hline 19}{c BT}{hline 60}
+tau_40 = -.0152294819179382
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .41}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    29990{col 34}    11666{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    29990{col 34}    11666{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.01446{col 33} .02069{col 43}-0.6986{col 52}0.485{col 60}-.055012{col 73} .026099
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-1.6120{col 52}0.107{col 60}-.108443{col 73} .010563
+{txt}{hline 19}{c BT}{hline 60}
+tau_41 = -.0144561424662797
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .42}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    31455{col 34}    10201{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    31455{col 34}    10201{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.00157{col 33}  .0219{col 43}-0.0715{col 52}0.943{col 60} -.04449{col 73} .041358
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.8279{col 52}0.408{col 60}-.089807{col 73} .036469
+{txt}{hline 19}{c BT}{hline 60}
+tau_42 = -.0015662699972339
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .43}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    32904{col 34}     8752{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    32904{col 34}     8752{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .00041{col 33}  .0236{col 43}0.0176{col 52}0.986{col 60}-.045843{col 73} .046671
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.6693{col 52}0.503{col 60}-.094178{col 73}  .04623
+{txt}{hline 19}{c BT}{hline 60}
+tau_43 = .0004143517504502
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .44}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    34314{col 34}     7342{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    34314{col 34}     7342{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .00958{col 33}  .0252{col 43}0.3801{col 52}0.704{col 60} -.03982{col 73} .058982
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.1102{col 52}0.912{col 60}  -.0696{col 73} .077894
+{txt}{hline 19}{c BT}{hline 60}
+tau_44 = .0095809283334063
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .45}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    35726{col 34}     5930{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    35726{col 34}     5930{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .02032{col 33}  .0279{col 43}0.7283{col 52}0.466{col 60}-.034359{col 73} .074992
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}1.2153{col 52}0.224{col 60}-.031722{col 73} .135257
+{txt}{hline 19}{c BT}{hline 60}
+tau_45 = .0203162987549561
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .46}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    36962{col 34}     4694{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    36962{col 34}     4694{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.03429{col 33} .03026{col 43}-1.1333{col 52}0.257{col 60}-.093603{col 73} .025016
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-1.3311{col 52}0.183{col 60}-.141402{col 73}  .02702
+{txt}{hline 19}{c BT}{hline 60}
+tau_46 = -.0342936662187014
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .47}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    38420{col 34}     3236{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    38420{col 34}     3236{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01087{col 33}  .0372{col 43}0.2923{col 52}0.770{col 60}-.062032{col 73} .083775
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}1.3783{col 52}0.168{col 60}-.031512{col 73} .180843
+{txt}{hline 19}{c BT}{hline 60}
+tau_47 = .0108714762746409
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .48}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    39677{col 34}     1979{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    39677{col 34}     1979{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.08226{col 33} .04421{col 43}-1.8606{col 52}0.063{col 60}-.168909{col 73} .004393
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-1.4809{col 52}0.139{col 60}-.239282{col 73} .033311
+{txt}{hline 19}{c BT}{hline 60}
+tau_48 = -.0822580530512731
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .49}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     41656
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    41088{col 34}      568{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    41088{col 34}      568{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .03427{col 33} .08067{col 43}0.4248{col 52}0.671{col 60}-.123841{col 73} .192383
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.8097{col 52}0.418{col 60}-.141107{col 73}  .33976
+{txt}{hline 19}{c BT}{hline 60}
+tau_49 = .0342712501831883
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .5}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     75784
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    41656{col 34}    34128{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    41656{col 34}    34128{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}  .1552{col 33} .01161{col 43}13.3654{col 52}0.000{col 60} .132438{col 73} .177956
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}8.7974{col 52}0.000{col 60} .118795{col 73}   .1869
+{txt}{hline 19}{c BT}{hline 60}
+tau_50 = .155197106007666
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .51}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}      482{col 34}    33646{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}      482{col 34}    33646{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.01941{col 33} .06182{col 43}-0.3141{col 52}0.753{col 60}-.140574{col 73} .101744
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.5866{col 52}0.557{col 60}-.215795{col 73} .116378
+{txt}{hline 19}{c BT}{hline 60}
+tau_51 = -.0194146579748917
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .52}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}     1666{col 34}    32462{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     1666{col 34}    32462{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.04578{col 33} .03491{col 43}-1.3116{col 52}0.190{col 60}-.114198{col 73} .022631
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.8126{col 52}0.416{col 60}-.131196{col 73} .054293
+{txt}{hline 19}{c BT}{hline 60}
+tau_52 = -.0457833334740378
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .53}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}     2632{col 34}    31496{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     2632{col 34}    31496{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.01349{col 33} .03108{col 43}-0.4340{col 52}0.664{col 60}-.074413{col 73} .047435
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.3319{col 52}0.740{col 60}-.103083{col 73} .073228
+{txt}{hline 19}{c BT}{hline 60}
+tau_53 = -.0134892261037152
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .54}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}     3769{col 34}    30359{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     3769{col 34}    30359{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01915{col 33} .02587{col 43}0.7401{col 52}0.459{col 60}-.031555{col 73} .069846
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}1.0729{col 52}0.283{col 60}-.033464{col 73} .114405
+{txt}{hline 19}{c BT}{hline 60}
+tau_54 = .0191453971836175
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .55}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}     4760{col 34}    29368{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     4760{col 34}    29368{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01545{col 33} .02415{col 43}0.6395{col 52}0.522{col 60}-.031895{col 73} .062789
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.5433{col 52}0.587{col 60}-.051888{col 73} .091689
+{txt}{hline 19}{c BT}{hline 60}
+tau_55 = .0154470996587825
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .5600000000000001}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}     5868{col 34}    28260{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     5868{col 34}    28260{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .00461{col 33} .02197{col 43}0.2097{col 52}0.834{col 60}-.038451{col 73} .047664
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.5253{col 52}0.599{col 60}-.082074{col 73} .047381
+{txt}{hline 19}{c BT}{hline 60}
+tau_56 = .0046067195915391
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .57}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}     6972{col 34}    27156{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     6972{col 34}    27156{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res}-.00931{col 33} .02072{col 43}-0.4492{col 52}0.653{col 60}-.049921{col 73} .031305
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-1.4678{col 52}0.142{col 60}-.106717{col 73} .015322
+{txt}{hline 19}{c BT}{hline 60}
+tau_57 = -.0093076136005159
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .58}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}     8095{col 34}    26033{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     8095{col 34}    26033{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .02369{col 33} .01955{col 43}1.2121{col 52}0.225{col 60}-.014619{col 73} .062006
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}1.0032{col 52}0.316{col 60}-.027958{col 73} .086587
+{txt}{hline 19}{c BT}{hline 60}
+tau_58 = .0236935265799367
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .59}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}     9067{col 34}    25061{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     9067{col 34}    25061{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .03116{col 33} .01912{col 43}1.6299{col 52}0.103{col 60}-.006312{col 73} .068641
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}1.4291{col 52}0.153{col 60}-.015403{col 73} .098337
+{txt}{hline 19}{c BT}{hline 60}
+tau_59 = .0311646223006825
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .6}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}     9868{col 34}    24260{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}     9868{col 34}    24260{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .03126{col 33} .01894{col 43}1.6509{col 52}0.099{col 60}-.005854{col 73} .068377
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}1.1919{col 52}0.233{col 60}-.022494{col 73} .092316
+{txt}{hline 19}{c BT}{hline 60}
+tau_60 = .0312615341529892
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .61}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    11060{col 34}    23068{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    11060{col 34}    23068{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .02702{col 33} .01788{col 43}1.5115{col 52}0.131{col 60}-.008017{col 73} .062065
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}1.0029{col 52}0.316{col 60}-.025451{col 73} .078789
+{txt}{hline 19}{c BT}{hline 60}
+tau_61 = .0270239747992704
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .62}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    12020{col 34}    22108{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    12020{col 34}    22108{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01711{col 33} .01757{col 43}0.9742{col 52}0.330{col 60}-.017316{col 73}  .05154
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.2231{col 52}0.823{col 60}-.045703{col 73} .057442
+{txt}{hline 19}{c BT}{hline 60}
+tau_62 = .0171116405654494
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .63}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    12981{col 34}    21147{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    12981{col 34}    21147{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01478{col 33} .01718{col 43}0.8607{col 52}0.389{col 60}-.018882{col 73} .048451
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.2014{col 52}0.840{col 60} -.04477{col 73} .055024
+{txt}{hline 19}{c BT}{hline 60}
+tau_63 = .0147847834244317
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .64}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    13819{col 34}    20309{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    13819{col 34}    20309{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01531{col 33} .01712{col 43}0.8946{col 52}0.371{col 60}-.018238{col 73} .048865
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.3826{col 52}0.702{col 60} -.04043{col 73} .060045
+{txt}{hline 19}{c BT}{hline 60}
+tau_64 = .0153138155797485
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .65}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    14679{col 34}    19449{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    14679{col 34}    19449{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .02027{col 33} .01713{col 43}1.1833{col 52}0.237{col 60}-.013306{col 73} .053847
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.8962{col 52}0.370{col 60}-.027532{col 73} .073919
+{txt}{hline 19}{c BT}{hline 60}
+tau_65 = .0202708768525568
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .66}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    15489{col 34}    18639{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    15489{col 34}    18639{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .00671{col 33} .01717{col 43}0.3907{col 52}0.696{col 60}-.026948{col 73} .040366
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.1697{col 52}0.865{col 60}-.055517{col 73}  .04667
+{txt}{hline 19}{c BT}{hline 60}
+tau_66 = .0067088055904883
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .67}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    16212{col 34}    17916{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    16212{col 34}    17916{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .00166{col 33} .01732{col 43}0.0957{col 52}0.924{col 60}-.032289{col 73} .035605
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}-0.4357{col 52}0.663{col 60}-.063507{col 73} .040408
+{txt}{hline 19}{c BT}{hline 60}
+tau_67 = .001657936994885
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .68}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    16905{col 34}    17223{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    16905{col 34}    17223{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .01096{col 33} .01746{col 43}0.6278{col 52}0.530{col 60}-.023262{col 73} .045187
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.5266{col 52}0.598{col 60}-.038432{col 73} .066672
+{txt}{hline 19}{c BT}{hline 60}
+tau_68 = .0109626271500858
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .6899999999999999}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    17638{col 34}    16490{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    17638{col 34}    16490{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .00599{col 33} .01755{col 43}0.3411{col 52}0.733{col 60}-.028415{col 73} .040391
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.2943{col 52}0.769{col 60}-.044674{col 73} .060463
+{txt}{hline 19}{c BT}{hline 60}
+tau_69 = .0059880332223443
+{res}
+Sharp RD estimates using local polynomial regression.
+
+{txt}{ralign 18: Cutoff c = .7}{col 19} {c |} {col 21}Left of {res}c{col 33}{txt}Right of {res}c{col 55}{txt}Number of obs = {res}     34128
+{txt}{hline 19}{c +}{hline 22}{col 55}BW type       = {res}{ralign 10:Manual}
+{txt}{ralign 18:Number of obs}{col 19} {c |} {col 21}{res}    18315{col 34}    15813{col 55}{txt}Kernel        = {res}{ralign 10:Uniform}
+{txt}{ralign 18:Eff. Number of obs}{col 19} {c |} {col 21}{res}    18315{col 34}    15813{col 55}{txt}VCE method    = {res}{ralign 10:NN}
+{txt}{ralign 18:Order est. (p)}{col 19} {c |} {col 21}{res}        1{col 34}        1
+{txt}{ralign 18:Order bias (q)}{col 19} {c |} {col 21}{res}        2{col 34}        2
+{txt}{ralign 18:BW est. (h)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:BW bias (b)}{col 19} {c |} {col 21}{res}    0.500{col 34}    0.500
+{txt}{ralign 18:rho (h/b)}{col 19} {c |} {col 21}{res}    1.000{col 34}    1.000
+
+Outcome: y. Running variable: x.
+{txt}{hline 19}{c TT}{hline 60}
+{ralign 18:Method}{col 19} {c |} {col 24}Coef.{col 33}Std. Err.{col 46}z{col 52}P>|z|{col 61}[95% Conf. Interval]
+{hline 19}{c +}{hline 60}
+{ralign 18:Conventional}{col 19} {c |} {col 22}{res} .00137{col 33} .01773{col 43}0.0773{col 52}0.938{col 60}-.033371{col 73} .036112
+{txt}{ralign 18:Robust}{col 19} {c |} {col 22}{res}    -{col 33}    -{col 43}0.0731{col 52}0.942{col 60}-.051141{col 73} .055102
+{txt}{hline 19}{c BT}{hline 60}
+tau_70 = .0013703275602168
+
+{com}. 
+. 
+. clear 
+{txt}
+{com}. set obs 41
+{txt}{p}
+Number of observations ({bf:_N}) was 0,
+now 41.
+{p_end}
+
+{com}. gen c = .
+{txt}(41 missing values generated)
+
+{com}. gen tau = .
+{txt}(41 missing values generated)
+
+{com}. gen rb_lb = .
+{txt}(41 missing values generated)
+
+{com}. gen rb_ub = .
+{txt}(41 missing values generated)
+
+{com}. 
+. forval i = 1/`=_N' {c -(}
+{txt}  2{com}.         local c = 29+`i' // c= 30(1)70
+{txt}  3{com}.         replace c     = `c' in `i'
+{txt}  4{com}.         replace tau   = `tau_`c''   in `i'
+{txt}  5{com}.         replace rb_lb = `bc_lb_`c'' in `i'
+{txt}  6{com}.         replace rb_ub = `bc_ub_`c'' in `i'
+{txt}  7{com}. {c )-}
+{txt}(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+(1 real change made)
+
+{com}. 
+. label var rb_ub "Bias-corrected upper bound (95% CI)"
+{txt}
+{com}. label var tau   "Conventional local-polynomial RD estimate"
+{txt}
+{com}. label var rb_lb "Bias-corrected lower bound (95% CI)"
+{txt}
+{com}. label var c "Cutoff"
+{txt}
+{com}. twoway (line rb_ub c, lpattern(dash) lcolor(grey)) ///
+>                 (line tau c, lcolor(black)) ///
+>                 (line rb_lb c, lpattern(dash) lcolor(grey)), ///
+>                 legend(position(6)) ytitle("Estimate") ///
+>                 yline(0, lcolor(red) lpattern(solid))
+{p 0 4 2}
+{txt}(note:  named style
+grey not found in class
+color,  default attributes used)
+{p_end}
+{p 0 4 2}
+{txt}(note:  named style
+grey not found in class
+color,  default attributes used)
+{p_end}
+{p 0 4 2}
+{txt}(note:  named style
+grey not found in class
+color,  default attributes used)
+{p_end}
+{p 0 4 2}
+{txt}(note:  named style
+grey not found in class
+color,  default attributes used)
+{p_end}
+{res}{txt}
+{com}. graph export "$do_loc/graphs/q2e.png", ///
+>         width(1200) height(900) ///
+>         replace
+{txt}{p 0 4 2}
+file {bf}
+C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/graphs/q2e.png{rm}
+saved as
+PNG
+format
+{p_end}
+
+{com}.   
+. 
+. 
+. 
+{txt}end of do-file
+
+{com}. 
+. 
+. 
+. log close
+      {txt}name:  {res}<unnamed>
+       {txt}log:  {res}C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata/pset4_logfile.smcl
+  {txt}log type:  {res}smcl
+ {txt}closed on:  {res} 4 Dec 2023, 11:53:26
+{txt}{.-}
+{smcl}
+{txt}{sf}{ul off}

@@ -25,29 +25,30 @@ set linesize 255
 
 
 if "`c(username)'" == "yfkas" {
-	global do_loc  "C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 3/Stata"
+	global do_loc  "C:/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 4/Stata"
 	global dta_loc "C:/Users/yfkas/Dropbox (Personal)/ARE213/Pset4"
 }
-if "`c(username)'" == "yfkashlan" {
-	global do_loc  "//Client/C$/Users/yfkas/Documents/GitHub/ARE213_Fall2023/PSet 3/Stata"
-	global dta_loc "//Client/C$/Users/yfkas/Dropbox (Personal)/ARE213/Pset3/data"
-}
-if "`c(username)'" == "yazenkashlan" {
-	global do_loc  "/Users/yazenkashlan/Documents/GitHub/ARE213_Fall2023/PSet 3/Stata"
-	global dta_loc "/Users/yazenkashlan/Library/CloudStorage/Dropbox/ARE213/Pset3/data"
-}
 
-// log using "$do_loc/pset4_logfile.smcl", replace smcl
+log using "$do_loc/pset4_logfile.smcl", replace smcl
 
 
 // install programs
 // do "$do_loc/Code/01_programs.do"
 
 // analyze
+do "$do_loc/02_q1a.do"
+do "$do_loc/02_q1b.do"
+do "$do_loc/02_q1c.do"
+do "$do_loc/02_q1d.do"
+do "$do_loc/02_q1e.do"
+do "$do_loc/02_q2a.do"
+do "$do_loc/02_q2b.do"
+do "$do_loc/02_q2d.do"
+do "$do_loc/02_q2e.do"
 
 
 
-// log close
-// translate "$do_loc/pset3_logfile.smcl" "$do_loc/pset4_logfile.pdf", replace
+log close
+translate "$do_loc/pset4_logfile.smcl" "$do_loc/pset4_logfile.pdf", replace
 
 

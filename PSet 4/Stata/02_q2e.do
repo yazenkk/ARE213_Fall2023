@@ -75,6 +75,9 @@ twoway (line rb_ub c, lpattern(dash) lcolor(grey)) ///
 		(line rb_lb c, lpattern(dash) lcolor(grey)), ///
 		legend(position(6)) ytitle("Estimate") ///
 		yline(0, lcolor(red) lpattern(solid))
+graph export "$do_loc/graphs/q2e.png", ///
+	width(1200) height(900) ///
+	replace
   
 
 

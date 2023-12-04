@@ -25,13 +25,16 @@ rdplot w xp if !inlist(xp_100, 1,2,99,100) , ///
 	p(2) ///
 	c(0) ///
 	masspoints(adjust) ///
-	/// bwselect(mserd) ///
+	bwselect(mserd) ///
 	h(`h_l' `h_r') ///
 	kernel(tri) ///
 	binselect(espr) ///
 	graph_options(legend(position(6))) ///
 	ci(95) ///
 	shade 
+graph export "$do_loc/graphs/q1e.png", ///
+	width(1200) height(900) ///
+	replace
 
 	
 /* 1e and 1f Ans: 
