@@ -107,18 +107,20 @@ forval s = 1/`S' {
 // collect simulation results
 clear
 set obs `S' 
-gen s = .
-gen tau_cl = .
-gen tau_bc = .
-gen se_tau_cl = .
-gen se_tau_bc = .
-gen bias_cl = .
-gen bias_bc = .
+qui{
+	gen s = .
+	gen tau_cl = .
+	gen tau_bc = .
+	gen se_tau_cl = .
+	gen se_tau_bc = .
+	gen bias_cl = .
+	gen bias_bc = .
 
-forval i = 1/`=_N' {
-	replace s = `i' in `i'
-	foreach var in tau_cl tau_bc se_tau_cl se_tau_bc bias_cl bias_bc {
-		replace `var' = ``var'_`i'' in `i'
+	forval i = 1/`=_N' {
+		replace s = `i' in `i'
+		foreach var in tau_cl tau_bc se_tau_cl se_tau_bc bias_cl bias_bc {
+			replace `var' = ``var'_`i'' in `i'
+		}
 	}
 }
 

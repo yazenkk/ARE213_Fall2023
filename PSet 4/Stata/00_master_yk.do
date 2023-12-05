@@ -53,6 +53,7 @@ log using "$do_loc/pset4_logfile_q3.smcl", replace smcl
 
 // analyze
 do "$do_loc/02_q3.do"
+do "$do_loc/02_q3_plot.do"
 
 log close
 translate "$do_loc/pset4_logfile_q3.smcl" "$do_loc/pset4_logfile_q3.pdf", replace
