@@ -29,11 +29,11 @@ if "`c(username)'" == "yfkas" {
 	global dta_loc "C:/Users/yfkas/Dropbox (Personal)/ARE213/Pset4"
 }
 
-log using "$do_loc/pset4_logfile.smcl", replace smcl
-
 
 // install programs
 // do "$do_loc/Code/01_programs.do"
+
+log using "$do_loc/pset4_logfile.smcl", replace smcl
 
 // analyze
 do "$do_loc/02_q1a.do"
@@ -46,9 +46,15 @@ do "$do_loc/02_q2b.do"
 do "$do_loc/02_q2d.do"
 do "$do_loc/02_q2e.do"
 
-
-
 log close
 translate "$do_loc/pset4_logfile.smcl" "$do_loc/pset4_logfile.pdf", replace
 
+log using "$do_loc/pset4_logfile_q3.smcl", replace smcl
+
+// analyze
+do "$do_loc/02_q3.do"
+do "$do_loc/02_q3_plot.do"
+
+log close
+translate "$do_loc/pset4_logfile_q3.smcl" "$do_loc/pset4_logfile_q3.pdf", replace
 
